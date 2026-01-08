@@ -50,6 +50,90 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          asset_tag: string | null
+          co2_equivalent_tonnes: number | null
+          company_id: string
+          created_at: string
+          id: string
+          inspection_frequency_months: number | null
+          installation_date: string | null
+          is_active: boolean
+          last_inspection_date: string | null
+          location_description: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          next_inspection_due: string | null
+          notes: string | null
+          refrigerant_charge_kg: number
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          serial_number: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_tag?: string | null
+          co2_equivalent_tonnes?: number | null
+          company_id: string
+          created_at?: string
+          id?: string
+          inspection_frequency_months?: number | null
+          installation_date?: string | null
+          is_active?: boolean
+          last_inspection_date?: string | null
+          location_description?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          next_inspection_due?: string | null
+          notes?: string | null
+          refrigerant_charge_kg: number
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          serial_number?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_tag?: string | null
+          co2_equivalent_tonnes?: number | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          inspection_frequency_months?: number | null
+          installation_date?: string | null
+          is_active?: boolean
+          last_inspection_date?: string | null
+          location_description?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          next_inspection_due?: string | null
+          notes?: string | null
+          refrigerant_charge_kg?: number
+          refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
+          serial_number?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -223,6 +307,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_co2_equivalent: {
+        Args: {
+          _charge_kg: number
+          _refrigerant: Database["public"]["Enums"]["refrigerant_type"]
+        }
+        Returns: number
+      }
       generate_unique_slug: { Args: { company_name: string }; Returns: string }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -235,6 +326,20 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "manager" | "engineer"
+      refrigerant_type:
+        | "R-32"
+        | "R-134a"
+        | "R-404A"
+        | "R-407C"
+        | "R-410A"
+        | "R-422D"
+        | "R-448A"
+        | "R-449A"
+        | "R-452A"
+        | "R-454B"
+        | "R-507A"
+        | "R-744"
+        | "Other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -363,6 +468,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "manager", "engineer"],
+      refrigerant_type: [
+        "R-32",
+        "R-134a",
+        "R-404A",
+        "R-407C",
+        "R-410A",
+        "R-422D",
+        "R-448A",
+        "R-449A",
+        "R-452A",
+        "R-454B",
+        "R-507A",
+        "R-744",
+        "Other",
+      ],
     },
   },
 } as const
