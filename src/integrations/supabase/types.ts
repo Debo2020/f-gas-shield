@@ -134,6 +134,87 @@ export type Database = {
           },
         ]
       }
+      inspections: {
+        Row: {
+          company_id: string
+          created_at: string
+          equipment_id: string
+          findings: string | null
+          id: string
+          inspection_date: string
+          inspector_certificate_number: string | null
+          inspector_id: string | null
+          inspector_name: string
+          leak_check_performed: boolean
+          leak_detected: boolean
+          leak_location: string | null
+          leak_repaired: boolean | null
+          next_inspection_due: string | null
+          recommendations: string | null
+          refrigerant_added_kg: number | null
+          refrigerant_recovered_kg: number | null
+          result: Database["public"]["Enums"]["inspection_result"]
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          equipment_id: string
+          findings?: string | null
+          id?: string
+          inspection_date: string
+          inspector_certificate_number?: string | null
+          inspector_id?: string | null
+          inspector_name: string
+          leak_check_performed?: boolean
+          leak_detected?: boolean
+          leak_location?: string | null
+          leak_repaired?: boolean | null
+          next_inspection_due?: string | null
+          recommendations?: string | null
+          refrigerant_added_kg?: number | null
+          refrigerant_recovered_kg?: number | null
+          result: Database["public"]["Enums"]["inspection_result"]
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          equipment_id?: string
+          findings?: string | null
+          id?: string
+          inspection_date?: string
+          inspector_certificate_number?: string | null
+          inspector_id?: string | null
+          inspector_name?: string
+          leak_check_performed?: boolean
+          leak_detected?: boolean
+          leak_location?: string | null
+          leak_repaired?: boolean | null
+          next_inspection_due?: string | null
+          recommendations?: string | null
+          refrigerant_added_kg?: number | null
+          refrigerant_recovered_kg?: number | null
+          result?: Database["public"]["Enums"]["inspection_result"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -326,6 +407,7 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "manager" | "engineer"
+      inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
       refrigerant_type:
         | "R-32"
         | "R-134a"
@@ -468,6 +550,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "manager", "engineer"],
+      inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
       refrigerant_type: [
         "R-32",
         "R-134a",
