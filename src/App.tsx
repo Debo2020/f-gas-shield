@@ -14,6 +14,7 @@ import Sites from "./pages/Sites";
 import Equipment from "./pages/Equipment";
 import Inspections from "./pages/Inspections";
 import AcceptInvite from "./pages/AcceptInvite";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route
               path="/dashboard"
               element={
