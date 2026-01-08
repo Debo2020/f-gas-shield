@@ -13,6 +13,8 @@ import Team from "./pages/Team";
 import Sites from "./pages/Sites";
 import Equipment from "./pages/Equipment";
 import Inspections from "./pages/Inspections";
+import GasLog from "./pages/GasLog";
+import Reports from "./pages/Reports";
 import AcceptInvite from "./pages/AcceptInvite";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
@@ -84,6 +86,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Inspections />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gas-log"
+              element={
+                <ProtectedRoute>
+                  <GasLog />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
                 </ProtectedRoute>
               }
             />
