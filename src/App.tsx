@@ -7,6 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import CompanySetup from "./pages/company/CompanySetup";
+import CompanySettings from "./pages/settings/CompanySettings";
+import Team from "./pages/Team";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,11 +25,36 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/company/setup"
+              element={
+                <ProtectedRoute>
+                  <CompanySetup />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/company"
+              element={
+                <ProtectedRoute>
+                  <CompanySettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <Team />
                 </ProtectedRoute>
               }
             />
