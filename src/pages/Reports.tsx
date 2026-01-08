@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, startOfYear, endOfYear } from "date-fns";
 import { FileText, Wrench, Droplets, ClipboardCheck } from "lucide-react";
 import { jsPDF } from "jspdf";
@@ -17,13 +17,62 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+// Brand colors from design system
+const BRAND_COLORS = {
+  navy: [30, 58, 95] as [number, number, number],      // #1e3a5f
+  slateGrey: [100, 116, 139] as [number, number, number], // #64748b
+  green: [34, 197, 94] as [number, number, number],    // #22c55e
+};
+
+interface CompanyInfo {
+  name: string;
+  logo_url: string | null;
+  address: string | null;
+}
+
 export default function Reports() {
   const { profile } = useAuth();
   const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
   const [loadingType, setLoadingType] = useState<"pdf" | "csv" | null>(null);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+
+  useEffect(() => {
+    if (profile?.company_id) {
+      fetchCompanyInfo();
+    }
+  }, [profile?.company_id]);
+
+  const fetchCompanyInfo = async () => {
+    if (!profile?.company_id) return;
+    
+    const { data, error } = await supabase
+      .from("companies")
+      .select("name, logo_url, address")
+      .eq("id", profile.company_id)
+      .single();
+    
+    if (!error && data) {
+      setCompanyInfo(data);
+    }
+  };
+
+  const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
 
   const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
     const csv = [headers.join(","), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(","))].join("\n");
@@ -36,7 +85,7 @@ export default function Reports() {
     URL.revokeObjectURL(url);
   };
 
-  const createPDF = (
+  const createBrandedPDF = async (
     title: string,
     subtitle: string,
     headers: string[],
@@ -45,32 +94,66 @@ export default function Reports() {
   ) => {
     const doc = new jsPDF({ orientation: "landscape" });
     const generatedAt = format(new Date(), "dd MMM yyyy 'at' HH:mm:ss 'UTC'");
+    const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Header
-    doc.setFontSize(20);
+    let headerHeight = 45;
+    let logoLoaded = false;
+
+    // Try to load company logo
+    if (companyInfo?.logo_url) {
+      const logoBase64 = await loadImageAsBase64(companyInfo.logo_url);
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 14, 10, 30, 30);
+          logoLoaded = true;
+        } catch {
+          // Logo failed to load, continue without it
+        }
+      }
+    }
+
+    const textStartX = logoLoaded ? 50 : 14;
+
+    // Company name header with brand color
+    doc.setFillColor(...BRAND_COLORS.navy);
+    doc.rect(0, 0, pageWidth, 8, "F");
+    
+    // Company name
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(title, 14, 20);
+    doc.setTextColor(...BRAND_COLORS.navy);
+    doc.text(companyInfo?.name || "Company Report", textStartX, 18);
     
+    // Report title
+    doc.setFontSize(20);
+    doc.text(title, textStartX, 28);
+    
+    // Subtitle
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100);
-    doc.text(subtitle, 14, 28);
+    doc.setTextColor(...BRAND_COLORS.slateGrey);
+    doc.text(subtitle, textStartX, 36);
     
     // Generation timestamp for audit compliance
     doc.setFontSize(9);
-    doc.text(`Generated: ${generatedAt}`, 14, 35);
+    doc.text(`Generated: ${generatedAt}`, textStartX, 43);
     
-    // Table
+    // Divider line
+    doc.setDrawColor(...BRAND_COLORS.navy);
+    doc.setLineWidth(0.5);
+    doc.line(14, headerHeight, pageWidth - 14, headerHeight);
+    
+    // Table with branded header
     autoTable(doc, {
       head: [headers],
       body: rows,
-      startY: 42,
+      startY: headerHeight + 5,
       styles: { 
         fontSize: 8,
         cellPadding: 3,
       },
       headStyles: { 
-        fillColor: [59, 130, 246],
+        fillColor: BRAND_COLORS.navy,
         textColor: 255,
         fontStyle: "bold",
       },
@@ -80,16 +163,26 @@ export default function Reports() {
       margin: { left: 14, right: 14 },
     });
     
-    // Footer with page numbers
+    // Footer with page numbers and branding
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
+      
+      // Footer bar
+      doc.setFillColor(...BRAND_COLORS.navy);
+      doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, "F");
+      
       doc.setFontSize(8);
-      doc.setTextColor(150);
+      doc.setTextColor(255);
       doc.text(
-        `Page ${i} of ${pageCount} | F-Gas Compliance Report | ${generatedAt}`,
-        doc.internal.pageSize.getWidth() / 2,
-        doc.internal.pageSize.getHeight() - 10,
+        `Page ${i} of ${pageCount}`,
+        14,
+        doc.internal.pageSize.getHeight() - 6
+      );
+      doc.text(
+        `${companyInfo?.name || "F-Gas"} Compliance Report | ${generatedAt}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 6,
         { align: "center" }
       );
     }
@@ -147,7 +240,7 @@ export default function Reports() {
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       if (type === "pdf") {
-        createPDF(
+        await createBrandedPDF(
           "Equipment Register",
           `Complete F-Gas equipment inventory as of ${format(new Date(), "dd MMMM yyyy")}`,
           headers,
@@ -224,7 +317,7 @@ export default function Reports() {
       ]);
 
       if (type === "pdf") {
-        createPDF(
+        await createBrandedPDF(
           "Leak Check Records",
           `F-Gas inspection records for ${yearFilter}`,
           headers,
@@ -301,36 +394,84 @@ export default function Reports() {
       if (type === "pdf") {
         const doc = new jsPDF({ orientation: "landscape" });
         const generatedAt = format(new Date(), "dd MMM yyyy 'at' HH:mm:ss 'UTC'");
+        const pageWidth = doc.internal.pageSize.getWidth();
+        
+        let logoLoaded = false;
+        if (companyInfo?.logo_url) {
+          const logoBase64 = await loadImageAsBase64(companyInfo.logo_url);
+          if (logoBase64) {
+            try {
+              doc.addImage(logoBase64, "PNG", 14, 10, 30, 30);
+              logoLoaded = true;
+            } catch {}
+          }
+        }
+
+        const textStartX = logoLoaded ? 50 : 14;
+        
+        // Header bar
+        doc.setFillColor(...BRAND_COLORS.navy);
+        doc.rect(0, 0, pageWidth, 8, "F");
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BRAND_COLORS.navy);
+        doc.text(companyInfo?.name || "Company Report", textStartX, 18);
         
         doc.setFontSize(20);
-        doc.setFont("helvetica", "bold");
-        doc.text("Refrigerant Movement Log", 14, 20);
+        doc.text("Refrigerant Movement Log", textStartX, 28);
         
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(100);
-        doc.text(`Annual refrigerant movements for ${yearFilter}`, 14, 28);
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text(`Annual refrigerant movements for ${yearFilter}`, textStartX, 36);
         doc.setFontSize(9);
-        doc.text(`Generated: ${generatedAt}`, 14, 35);
+        doc.text(`Generated: ${generatedAt}`, textStartX, 43);
         
-        // Summary box
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(14, 40, 80, 25, 2, 2, "F");
-        doc.setFontSize(10);
-        doc.setTextColor(0);
-        doc.text(`Total Added: ${totalAdded.toFixed(2)} kg`, 20, 50);
-        doc.text(`Total Recovered: ${totalRecovered.toFixed(2)} kg`, 20, 58);
+        // Divider
+        doc.setDrawColor(...BRAND_COLORS.navy);
+        doc.setLineWidth(0.5);
+        doc.line(14, 48, pageWidth - 14, 48);
         
-        doc.setFillColor(248, 250, 252);
-        doc.roundedRect(100, 40, 80, 25, 2, 2, "F");
-        doc.text(`Net Emissions: ${(totalAdded - totalRecovered).toFixed(2)} kg`, 106, 54);
+        // Summary boxes with brand colors
+        doc.setFillColor(254, 226, 226);
+        doc.roundedRect(14, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Total Added", 20, 60);
+        doc.setFontSize(14);
+        doc.setTextColor(185, 28, 28);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${totalAdded.toFixed(2)} kg`, 20, 70);
+        
+        doc.setFillColor(220, 252, 231);
+        doc.roundedRect(90, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Total Recovered", 96, 60);
+        doc.setFontSize(14);
+        doc.setTextColor(...BRAND_COLORS.green);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${totalRecovered.toFixed(2)} kg`, 96, 70);
+        
+        doc.setFillColor(241, 245, 249);
+        doc.roundedRect(166, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Net Emissions", 172, 60);
+        doc.setFontSize(14);
+        doc.setTextColor(...BRAND_COLORS.navy);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${(totalAdded - totalRecovered).toFixed(2)} kg`, 172, 70);
         
         autoTable(doc, {
           head: [headers],
           body: rows,
-          startY: 72,
+          startY: 80,
           styles: { fontSize: 8, cellPadding: 3 },
-          headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: "bold" },
+          headStyles: { fillColor: BRAND_COLORS.navy, textColor: 255, fontStyle: "bold" },
           alternateRowStyles: { fillColor: [248, 250, 252] },
           margin: { left: 14, right: 14 },
         });
@@ -338,12 +479,15 @@ export default function Reports() {
         const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
           doc.setPage(i);
+          doc.setFillColor(...BRAND_COLORS.navy);
+          doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, "F");
           doc.setFontSize(8);
-          doc.setTextColor(150);
+          doc.setTextColor(255);
+          doc.text(`Page ${i} of ${pageCount}`, 14, doc.internal.pageSize.getHeight() - 6);
           doc.text(
-            `Page ${i} of ${pageCount} | F-Gas Compliance Report | ${generatedAt}`,
-            doc.internal.pageSize.getWidth() / 2,
-            doc.internal.pageSize.getHeight() - 10,
+            `${companyInfo?.name || "F-Gas"} Compliance Report | ${generatedAt}`,
+            pageWidth / 2,
+            doc.internal.pageSize.getHeight() - 6,
             { align: "center" }
           );
         }
@@ -427,41 +571,84 @@ export default function Reports() {
       if (type === "pdf") {
         const doc = new jsPDF({ orientation: "landscape" });
         const generatedAt = format(new Date(), "dd MMM yyyy 'at' HH:mm:ss 'UTC'");
+        const pageWidth = doc.internal.pageSize.getWidth();
+        
+        let logoLoaded = false;
+        if (companyInfo?.logo_url) {
+          const logoBase64 = await loadImageAsBase64(companyInfo.logo_url);
+          if (logoBase64) {
+            try {
+              doc.addImage(logoBase64, "PNG", 14, 10, 30, 30);
+              logoLoaded = true;
+            } catch {}
+          }
+        }
+
+        const textStartX = logoLoaded ? 50 : 14;
+        
+        // Header bar
+        doc.setFillColor(...BRAND_COLORS.navy);
+        doc.rect(0, 0, pageWidth, 8, "F");
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...BRAND_COLORS.navy);
+        doc.text(companyInfo?.name || "Company Report", textStartX, 18);
         
         doc.setFontSize(20);
-        doc.setFont("helvetica", "bold");
-        doc.text("Compliance Summary", 14, 20);
+        doc.text("Compliance Summary", textStartX, 28);
         
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
-        doc.setTextColor(100);
-        doc.text(`Equipment inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, 14, 28);
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text(`Equipment inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, textStartX, 36);
         doc.setFontSize(9);
-        doc.text(`Generated: ${generatedAt}`, 14, 35);
+        doc.text(`Generated: ${generatedAt}`, textStartX, 43);
+        
+        // Divider
+        doc.setDrawColor(...BRAND_COLORS.navy);
+        doc.setLineWidth(0.5);
+        doc.line(14, 48, pageWidth - 14, 48);
         
         // Status summary boxes
         doc.setFillColor(254, 226, 226);
-        doc.roundedRect(14, 40, 60, 20, 2, 2, "F");
+        doc.roundedRect(14, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Overdue", 20, 60);
+        doc.setFontSize(18);
         doc.setTextColor(185, 28, 28);
-        doc.setFontSize(10);
-        doc.text(`Overdue: ${overdueCount}`, 20, 52);
+        doc.setFont("helvetica", "bold");
+        doc.text(overdueCount.toString(), 20, 70);
         
         doc.setFillColor(254, 243, 199);
-        doc.roundedRect(80, 40, 60, 20, 2, 2, "F");
+        doc.roundedRect(90, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Due Soon", 96, 60);
+        doc.setFontSize(18);
         doc.setTextColor(161, 98, 7);
-        doc.text(`Due Soon: ${dueSoonCount}`, 86, 52);
+        doc.setFont("helvetica", "bold");
+        doc.text(dueSoonCount.toString(), 96, 70);
         
         doc.setFillColor(220, 252, 231);
-        doc.roundedRect(146, 40, 60, 20, 2, 2, "F");
-        doc.setTextColor(22, 101, 52);
-        doc.text(`Compliant: ${compliantCount}`, 152, 52);
+        doc.roundedRect(166, 52, 70, 22, 2, 2, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...BRAND_COLORS.slateGrey);
+        doc.text("Compliant", 172, 60);
+        doc.setFontSize(18);
+        doc.setTextColor(...BRAND_COLORS.green);
+        doc.setFont("helvetica", "bold");
+        doc.text(compliantCount.toString(), 172, 70);
         
         autoTable(doc, {
           head: [headers],
           body: rows,
-          startY: 68,
+          startY: 80,
           styles: { fontSize: 8, cellPadding: 3 },
-          headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: "bold" },
+          headStyles: { fillColor: BRAND_COLORS.navy, textColor: 255, fontStyle: "bold" },
           alternateRowStyles: { fillColor: [248, 250, 252] },
           margin: { left: 14, right: 14 },
           didParseCell: (data) => {
@@ -473,7 +660,7 @@ export default function Reports() {
               } else if (status === "Due Soon") {
                 data.cell.styles.textColor = [161, 98, 7];
               } else {
-                data.cell.styles.textColor = [22, 101, 52];
+                data.cell.styles.textColor = BRAND_COLORS.green;
               }
             }
           },
@@ -482,12 +669,15 @@ export default function Reports() {
         const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
           doc.setPage(i);
+          doc.setFillColor(...BRAND_COLORS.navy);
+          doc.rect(0, doc.internal.pageSize.getHeight() - 15, pageWidth, 15, "F");
           doc.setFontSize(8);
-          doc.setTextColor(150);
+          doc.setTextColor(255);
+          doc.text(`Page ${i} of ${pageCount}`, 14, doc.internal.pageSize.getHeight() - 6);
           doc.text(
-            `Page ${i} of ${pageCount} | F-Gas Compliance Report | ${generatedAt}`,
-            doc.internal.pageSize.getWidth() / 2,
-            doc.internal.pageSize.getHeight() - 10,
+            `${companyInfo?.name || "F-Gas"} Compliance Report | ${generatedAt}`,
+            pageWidth / 2,
+            doc.internal.pageSize.getHeight() - 6,
             { align: "center" }
           );
         }
