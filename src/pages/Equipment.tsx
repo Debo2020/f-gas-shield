@@ -1,0 +1,508 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { format, differenceInDays } from "date-fns";
+import {
+  Thermometer,
+  Plus,
+  Search,
+  MapPin,
+  Calendar,
+  AlertTriangle,
+  CheckCircle2,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Filter,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { EquipmentDialog } from "@/components/equipment/EquipmentDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { EquipmentFormValues } from "@/components/equipment/EquipmentForm";
+
+interface Equipment {
+  id: string;
+  site_id: string;
+  name: string;
+  manufacturer: string | null;
+  model: string | null;
+  serial_number: string | null;
+  asset_tag: string | null;
+  refrigerant_type: string;
+  refrigerant_charge_kg: number;
+  co2_equivalent_tonnes: number | null;
+  installation_date: string | null;
+  last_inspection_date: string | null;
+  next_inspection_due: string | null;
+  inspection_frequency_months: number | null;
+  location_description: string | null;
+  notes: string | null;
+  is_active: boolean;
+  sites: {
+    name: string;
+  };
+}
+
+interface Site {
+  id: string;
+  name: string;
+}
+
+export default function Equipment() {
+  const { profile, hasRole } = useAuth();
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [siteFilter, setSiteFilter] = useState<string>("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
+  const [deletingEquipment, setDeletingEquipment] = useState<Equipment | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isOwner = hasRole("owner");
+  const isManager = hasRole("manager");
+  const canEdit = isOwner || isManager;
+  const canDelete = isOwner;
+
+  const fetchData = async () => {
+    if (!profile?.company_id) return;
+
+    try {
+      const [equipmentRes, sitesRes] = await Promise.all([
+        supabase
+          .from("equipment")
+          .select(`
+            id, site_id, name, manufacturer, model, serial_number, asset_tag,
+            refrigerant_type, refrigerant_charge_kg, co2_equivalent_tonnes,
+            installation_date, last_inspection_date, next_inspection_due,
+            inspection_frequency_months, location_description, notes, is_active,
+            sites!inner(name)
+          `)
+          .eq("company_id", profile.company_id)
+          .order("name"),
+        supabase
+          .from("sites")
+          .select("id, name")
+          .eq("company_id", profile.company_id)
+          .order("name"),
+      ]);
+
+      if (equipmentRes.error) throw equipmentRes.error;
+      if (sitesRes.error) throw sitesRes.error;
+
+      setEquipment(equipmentRes.data || []);
+      setSites(sitesRes.data || []);
+    } catch (error: any) {
+      toast.error("Failed to load equipment");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [profile?.company_id]);
+
+  const handleAddEquipment = async (values: EquipmentFormValues) => {
+    if (!profile?.company_id) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("equipment").insert({
+        company_id: profile.company_id,
+        site_id: values.site_id,
+        name: values.name,
+        manufacturer: values.manufacturer || null,
+        model: values.model || null,
+        serial_number: values.serial_number || null,
+        asset_tag: values.asset_tag || null,
+        refrigerant_type: values.refrigerant_type,
+        refrigerant_charge_kg: values.refrigerant_charge_kg,
+        installation_date: values.installation_date?.toISOString().split("T")[0] || null,
+        inspection_frequency_months: values.inspection_frequency_months || 12,
+        location_description: values.location_description || null,
+        notes: values.notes || null,
+      });
+
+      if (error) throw error;
+
+      toast.success("Equipment registered successfully");
+      setIsDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add equipment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditEquipment = async (values: EquipmentFormValues) => {
+    if (!editingEquipment) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("equipment")
+        .update({
+          site_id: values.site_id,
+          name: values.name,
+          manufacturer: values.manufacturer || null,
+          model: values.model || null,
+          serial_number: values.serial_number || null,
+          asset_tag: values.asset_tag || null,
+          refrigerant_type: values.refrigerant_type,
+          refrigerant_charge_kg: values.refrigerant_charge_kg,
+          installation_date: values.installation_date?.toISOString().split("T")[0] || null,
+          inspection_frequency_months: values.inspection_frequency_months || 12,
+          location_description: values.location_description || null,
+          notes: values.notes || null,
+        })
+        .eq("id", editingEquipment.id);
+
+      if (error) throw error;
+
+      toast.success("Equipment updated successfully");
+      setEditingEquipment(null);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update equipment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteEquipment = async () => {
+    if (!deletingEquipment) return;
+
+    try {
+      const { error } = await supabase
+        .from("equipment")
+        .delete()
+        .eq("id", deletingEquipment.id);
+
+      if (error) throw error;
+
+      toast.success("Equipment deleted successfully");
+      setDeletingEquipment(null);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete equipment");
+    }
+  };
+
+  const getInspectionStatus = (nextDue: string | null) => {
+    if (!nextDue) return { status: "unknown", label: "Not scheduled", variant: "outline" as const };
+
+    const daysUntil = differenceInDays(new Date(nextDue), new Date());
+
+    if (daysUntil < 0) {
+      return { status: "overdue", label: "Overdue", variant: "destructive" as const };
+    } else if (daysUntil <= 30) {
+      return { status: "due-soon", label: "Due soon", variant: "secondary" as const };
+    } else {
+      return { status: "compliant", label: "Compliant", variant: "default" as const };
+    }
+  };
+
+  const filteredEquipment = equipment.filter((eq) => {
+    const matchesSearch =
+      eq.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      eq.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      eq.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      eq.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      eq.asset_tag?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesSite = siteFilter === "all" || eq.site_id === siteFilter;
+
+    return matchesSearch && matchesSite;
+  });
+
+  const totalCo2 = equipment.reduce((sum, eq) => sum + (eq.co2_equivalent_tonnes || 0), 0);
+
+  return (
+    <AppLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-3">
+              <Thermometer className="h-8 w-8 text-primary" />
+              Equipment Register
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {equipment.length} units · {totalCo2.toFixed(2)} tonnes CO₂e total
+            </p>
+          </div>
+
+          {canEdit && (
+            <Button onClick={() => setIsDialogOpen(true)} disabled={sites.length === 0}>
+              <Plus className="h-4 w-4 mr-2" />
+              Register Equipment
+            </Button>
+          )}
+        </div>
+
+        {/* No Sites Warning */}
+        {sites.length === 0 && !isLoading && (
+          <Card className="mb-6 border-warning bg-warning/5">
+            <CardContent className="py-4 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              <div>
+                <p className="font-medium">No sites available</p>
+                <p className="text-sm text-muted-foreground">
+                  You need to{" "}
+                  <Link to="/sites" className="text-primary hover:underline">
+                    add a site
+                  </Link>{" "}
+                  before you can register equipment.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search equipment..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={siteFilter} onValueChange={setSiteFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by site" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sites</SelectItem>
+                {sites.map((site) => (
+                  <SelectItem key={site.id} value={site.id}>
+                    {site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Equipment Table */}
+        {isLoading ? (
+          <div className="text-center py-12 text-muted-foreground">Loading equipment...</div>
+        ) : filteredEquipment.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              {equipment.length === 0 ? (
+                <>
+                  <Thermometer className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No equipment registered</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Register your refrigeration equipment to start tracking F-Gas compliance
+                  </p>
+                  {canEdit && sites.length > 0 && (
+                    <Button onClick={() => setIsDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Register Your First Equipment
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No equipment found</h3>
+                  <p className="text-muted-foreground">Try adjusting your search or filters</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Equipment</TableHead>
+                  <TableHead>Site</TableHead>
+                  <TableHead>Refrigerant</TableHead>
+                  <TableHead className="text-right">Charge (kg)</TableHead>
+                  <TableHead className="text-right">CO₂e (t)</TableHead>
+                  <TableHead>Next Inspection</TableHead>
+                  <TableHead>Status</TableHead>
+                  {(canEdit || canDelete) && <TableHead className="w-10"></TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEquipment.map((eq) => {
+                  const inspectionStatus = getInspectionStatus(eq.next_inspection_due);
+                  return (
+                    <TableRow key={eq.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{eq.name}</p>
+                          {(eq.manufacturer || eq.model) && (
+                            <p className="text-sm text-muted-foreground">
+                              {[eq.manufacturer, eq.model].filter(Boolean).join(" ")}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-sm">{eq.sites.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{eq.refrigerant_type}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {eq.refrigerant_charge_kg.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {eq.co2_equivalent_tonnes?.toFixed(2) || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {eq.next_inspection_due ? (
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm">
+                              {format(new Date(eq.next_inspection_due), "dd MMM yyyy")}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Not scheduled</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={inspectionStatus.variant} className="flex items-center gap-1 w-fit">
+                          {inspectionStatus.status === "compliant" ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : inspectionStatus.status === "overdue" ? (
+                            <AlertTriangle className="h-3 w-3" />
+                          ) : null}
+                          {inspectionStatus.label}
+                        </Badge>
+                      </TableCell>
+                      {(canEdit || canDelete) && (
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canEdit && (
+                                <DropdownMenuItem onClick={() => setEditingEquipment(eq)}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {canDelete && (
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => setDeletingEquipment(eq)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+      </div>
+
+      {/* Add Equipment Dialog */}
+      {profile?.company_id && (
+        <EquipmentDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleAddEquipment}
+          isSubmitting={isSubmitting}
+          companyId={profile.company_id}
+        />
+      )}
+
+      {/* Edit Equipment Dialog */}
+      {profile?.company_id && (
+        <EquipmentDialog
+          open={!!editingEquipment}
+          onOpenChange={(open) => !open && setEditingEquipment(null)}
+          onSubmit={handleEditEquipment}
+          equipment={editingEquipment}
+          isSubmitting={isSubmitting}
+          companyId={profile.company_id}
+        />
+      )}
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingEquipment} onOpenChange={(open) => !open && setDeletingEquipment(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Equipment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingEquipment?.name}"? This action cannot be
+              undone and will remove all associated inspection records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEquipment}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppLayout>
+  );
+}

@@ -11,6 +11,7 @@ import CompanySetup from "./pages/company/CompanySetup";
 import CompanySettings from "./pages/settings/CompanySettings";
 import Team from "./pages/Team";
 import Sites from "./pages/Sites";
+import Equipment from "./pages/Equipment";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Sites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/equipment"
+              element={
+                <ProtectedRoute>
+                  <Equipment />
                 </ProtectedRoute>
               }
             />
