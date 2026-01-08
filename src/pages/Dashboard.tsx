@@ -9,44 +9,91 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   Clock,
-  Plus 
+  Plus,
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const today = startOfToday();
+  const in30Days = addDays(today, 30);
 
-  // Placeholder stats - will be replaced with real data
+  // Fetch sites count
+  const { data: sitesCount = 0, isLoading: sitesLoading } = useQuery({
+    queryKey: ["sites-count", profile?.company_id],
+    queryFn: async () => {
+      if (!profile?.company_id) return 0;
+      const { count } = await supabase
+        .from("sites")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", profile.company_id);
+      return count || 0;
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  // Fetch equipment with inspection dates
+  const { data: equipmentData, isLoading: equipmentLoading } = useQuery({
+    queryKey: ["equipment-stats", profile?.company_id],
+    queryFn: async () => {
+      if (!profile?.company_id) return { count: 0, totalCo2: 0, dueSoon: 0, overdue: 0 };
+      const { data } = await supabase
+        .from("equipment")
+        .select("id, co2_equivalent_tonnes, next_inspection_due, is_active")
+        .eq("company_id", profile.company_id)
+        .eq("is_active", true);
+      
+      if (!data) return { count: 0, totalCo2: 0, dueSoon: 0, overdue: 0 };
+
+      const totalCo2 = data.reduce((sum, eq) => sum + (eq.co2_equivalent_tonnes || 0), 0);
+      const overdue = data.filter(eq => eq.next_inspection_due && isBefore(new Date(eq.next_inspection_due), today)).length;
+      const dueSoon = data.filter(eq => {
+        if (!eq.next_inspection_due) return false;
+        const dueDate = new Date(eq.next_inspection_due);
+        return isAfter(dueDate, today) && isBefore(dueDate, in30Days);
+      }).length;
+
+      return { count: data.length, totalCo2, dueSoon, overdue };
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  const isLoading = sitesLoading || equipmentLoading;
+
   const stats = [
     {
       title: "Total Sites",
-      value: "0",
+      value: isLoading ? "..." : sitesCount.toString(),
       icon: Building2,
       description: "Registered locations",
       href: "/sites",
     },
     {
       title: "Equipment",
-      value: "0",
+      value: isLoading ? "..." : (equipmentData?.count || 0).toString(),
       icon: Shield,
-      description: "F-Gas units tracked",
+      description: `${equipmentData?.totalCo2?.toFixed(1) || 0} tCO₂e total`,
       href: "/equipment",
     },
     {
-      title: "Inspections Due",
-      value: "0",
+      title: "Due Soon",
+      value: isLoading ? "..." : (equipmentData?.dueSoon || 0).toString(),
       icon: Clock,
       description: "Next 30 days",
       href: "/inspections",
-      variant: "warning" as const,
+      variant: (equipmentData?.dueSoon || 0) > 0 ? "warning" as const : undefined,
     },
     {
       title: "Overdue",
-      value: "0",
+      value: isLoading ? "..." : (equipmentData?.overdue || 0).toString(),
       icon: AlertTriangle,
       description: "Require attention",
       href: "/inspections?status=overdue",
-      variant: "destructive" as const,
+      variant: (equipmentData?.overdue || 0) > 0 ? "destructive" as const : undefined,
     },
   ];
 
