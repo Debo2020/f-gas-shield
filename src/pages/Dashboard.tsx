@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
+import { InspectionTrendsChart } from "@/components/dashboard/InspectionTrendsChart";
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -149,6 +150,9 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
+
+        {/* Inspection Trends Chart */}
+        <InspectionTrendsChart />
 
         {/* Quick Actions & Recent Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
