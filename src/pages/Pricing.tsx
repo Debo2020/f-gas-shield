@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
-import { SUBSCRIPTION_TIERS, formatPrice, SubscriptionTier } from "@/lib/subscription";
+import { SUBSCRIPTION_TIERS, formatPrice, SubscriptionTier, getAnnualSavingsPercent } from "@/lib/subscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const tierIcons = {
   basic: Users,
@@ -20,6 +22,7 @@ export default function Pricing() {
   const { user } = useAuth();
   const { subscribed, tier: currentTier, createCheckout, openCustomerPortal, loading } = useSubscription();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(true);
   const navigate = useNavigate();
 
   const handleSubscribe = async (tier: SubscriptionTier) => {
@@ -30,7 +33,11 @@ export default function Pricing() {
 
     setLoadingTier(tier);
     try {
-      await createCheckout(SUBSCRIPTION_TIERS[tier].price_id);
+      const config = SUBSCRIPTION_TIERS[tier];
+      const priceId = isAnnual && "annual_price_id" in config 
+        ? config.annual_price_id 
+        : config.price_id;
+      await createCheckout(priceId);
     } catch (err) {
       toast.error("Failed to start checkout");
     } finally {
@@ -47,6 +54,14 @@ export default function Pricing() {
     } finally {
       setLoadingTier(null);
     }
+  };
+
+  const getDisplayPrice = (tier: SubscriptionTier) => {
+    const config = SUBSCRIPTION_TIERS[tier];
+    if (isAnnual && "annual_price" in config) {
+      return config.annual_price;
+    }
+    return config.price;
   };
 
   return (
@@ -83,10 +98,40 @@ export default function Pricing() {
           <h1 className="text-4xl font-bold tracking-tight mb-4">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             User-based pricing for SMEs. Platform-led pricing for enterprises.
             Choose the plan that fits your compliance needs.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4">
+            <Label 
+              htmlFor="billing-toggle" 
+              className={cn(
+                "text-sm font-medium cursor-pointer transition-colors",
+                !isAnnual ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              Monthly
+            </Label>
+            <Switch
+              id="billing-toggle"
+              checked={isAnnual}
+              onCheckedChange={setIsAnnual}
+            />
+            <Label 
+              htmlFor="billing-toggle" 
+              className={cn(
+                "text-sm font-medium cursor-pointer transition-colors flex items-center gap-2",
+                isAnnual ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              Annual
+              <Badge variant="secondary" className="text-xs">
+                Save 17%
+              </Badge>
+            </Label>
+          </div>
         </div>
 
         {loading ? (
@@ -99,6 +144,8 @@ export default function Pricing() {
               const Icon = tierIcons[tier];
               const isCurrentPlan = subscribed && currentTier === tier;
               const isPopular = "popular" in config && config.popular;
+              const hasAnnual = "annual_price" in config;
+              const savingsPercent = getAnnualSavingsPercent(tier);
 
               return (
                 <Card
@@ -140,12 +187,28 @@ export default function Pricing() {
                   
                   <CardContent className="flex-1">
                     <div className="text-center mb-6">
-                      <span className="text-4xl font-bold">
-                        {formatPrice(config.price, config.currency)}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {tier === "enterprise" ? "/month" : " per user/month"}
-                      </span>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl font-bold">
+                          {formatPrice(getDisplayPrice(tier), config.currency)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {tier === "enterprise" ? "/month" : "/user/month"}
+                        </span>
+                      </div>
+                      {tier !== "enterprise" && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {isAnnual ? (
+                            <>billed annually ({formatPrice(getDisplayPrice(tier) * 12, config.currency)}/year)</>
+                          ) : (
+                            <>or {formatPrice(hasAnnual ? config.annual_price : config.price, config.currency)}/month billed annually</>
+                          )}
+                        </p>
+                      )}
+                      {isAnnual && hasAnnual && savingsPercent > 0 && (
+                        <Badge variant="outline" className="mt-2 text-primary border-primary">
+                          Save {savingsPercent}%
+                        </Badge>
+                      )}
                     </div>
 
                     <div className="space-y-3">

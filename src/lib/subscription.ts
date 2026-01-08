@@ -3,8 +3,10 @@ export const SUBSCRIPTION_TIERS = {
   basic: {
     name: "Basic Business",
     price_id: "price_1SnLONF9KjzL48NkDMmoDPq1",
+    annual_price_id: "price_1SnLZ9F9KjzL48Nkwq1dmZOH",
     product_id: "prod_Tkr6tR0MQAMZ4S",
     price: 18,
+    annual_price: 15,
     currency: "GBP",
     features: [
       "F-Gas compliance essentials",
@@ -22,8 +24,10 @@ export const SUBSCRIPTION_TIERS = {
   premium: {
     name: "Premium",
     price_id: "price_1SnLOdF9KjzL48NkPZ4u3cQ1",
+    annual_price_id: "price_1SnLZZF9KjzL48Nk6IJW7XR9",
     product_id: "prod_Tkr6z4LLzOAMfG",
     price: 36,
+    annual_price: 30,
     currency: "GBP",
     features: [
       "Everything in Basic",
@@ -85,4 +89,12 @@ export function formatPrice(price: number, currency: string): string {
     currency,
     minimumFractionDigits: 0,
   }).format(price);
+}
+
+export function getAnnualSavingsPercent(tier: SubscriptionTier): number {
+  const config = SUBSCRIPTION_TIERS[tier];
+  if (!("annual_price" in config)) return 0;
+  const monthlyTotal = config.price * 12;
+  const annualTotal = config.annual_price * 12;
+  return Math.round(((monthlyTotal - annualTotal) / monthlyTotal) * 100);
 }
