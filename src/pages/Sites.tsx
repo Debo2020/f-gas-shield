@@ -1,0 +1,285 @@
+import { useEffect, useState } from "react";
+import { MapPin, Plus, Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { SiteCard } from "@/components/sites/SiteCard";
+import { SiteDialog } from "@/components/sites/SiteDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { SiteFormValues } from "@/components/sites/SiteForm";
+
+interface Site {
+  id: string;
+  name: string;
+  address: string;
+  city: string | null;
+  postcode: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  notes: string | null;
+}
+
+export default function Sites() {
+  const { profile, hasRole } = useAuth();
+  const [sites, setSites] = useState<Site[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
+  const [deletingSite, setDeletingSite] = useState<Site | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isOwner = hasRole("owner");
+  const isManager = hasRole("manager");
+  const canEdit = isOwner || isManager;
+  const canDelete = isOwner;
+
+  const fetchSites = async () => {
+    if (!profile?.company_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("sites")
+        .select("id, name, address, city, postcode, contact_name, contact_phone, contact_email, notes")
+        .eq("company_id", profile.company_id)
+        .order("name");
+
+      if (error) throw error;
+      setSites(data || []);
+    } catch (error: any) {
+      toast.error("Failed to load sites");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSites();
+  }, [profile?.company_id]);
+
+  const handleAddSite = async (values: SiteFormValues) => {
+    if (!profile?.company_id) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("sites").insert({
+        company_id: profile.company_id,
+        name: values.name,
+        address: values.address,
+        city: values.city || null,
+        postcode: values.postcode || null,
+        contact_name: values.contact_name || null,
+        contact_phone: values.contact_phone || null,
+        contact_email: values.contact_email || null,
+        notes: values.notes || null,
+      });
+
+      if (error) throw error;
+
+      toast.success("Site added successfully");
+      setIsDialogOpen(false);
+      fetchSites();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add site");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditSite = async (values: SiteFormValues) => {
+    if (!editingSite) return;
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("sites")
+        .update({
+          name: values.name,
+          address: values.address,
+          city: values.city || null,
+          postcode: values.postcode || null,
+          contact_name: values.contact_name || null,
+          contact_phone: values.contact_phone || null,
+          contact_email: values.contact_email || null,
+          notes: values.notes || null,
+        })
+        .eq("id", editingSite.id);
+
+      if (error) throw error;
+
+      toast.success("Site updated successfully");
+      setEditingSite(null);
+      fetchSites();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update site");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteSite = async () => {
+    if (!deletingSite) return;
+
+    try {
+      const { error } = await supabase
+        .from("sites")
+        .delete()
+        .eq("id", deletingSite.id);
+
+      if (error) throw error;
+
+      toast.success("Site deleted successfully");
+      setDeletingSite(null);
+      fetchSites();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete site");
+    }
+  };
+
+  const filteredSites = sites.filter(
+    (site) =>
+      site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      site.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      site.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      site.postcode?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <AppLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-3">
+              <MapPin className="h-8 w-8 text-primary" />
+              Sites
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your company locations
+            </p>
+          </div>
+
+          {canEdit && (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Site
+            </Button>
+          )}
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sites..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Sites Grid */}
+        {isLoading ? (
+          <div className="text-center py-12 text-muted-foreground">
+            Loading sites...
+          </div>
+        ) : filteredSites.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              {sites.length === 0 ? (
+                <>
+                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No sites yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Add your first site to start tracking equipment and inspections
+                  </p>
+                  {canEdit && (
+                    <Button onClick={() => setIsDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Site
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No sites found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search query
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSites.map((site) => (
+              <SiteCard
+                key={site.id}
+                site={site}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={() => setEditingSite(site)}
+                onDelete={() => setDeletingSite(site)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Add Site Dialog */}
+      <SiteDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={handleAddSite}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Edit Site Dialog */}
+      <SiteDialog
+        open={!!editingSite}
+        onOpenChange={(open) => !open && setEditingSite(null)}
+        onSubmit={handleEditSite}
+        site={editingSite}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingSite} onOpenChange={(open) => !open && setDeletingSite(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Site</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingSite?.name}"? This action cannot be undone
+              and will remove all associated equipment and inspection records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSite}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppLayout>
+  );
+}
