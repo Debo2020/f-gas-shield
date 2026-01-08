@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, ArrowLeft } from "lucide-react";
+import { Building2, ArrowLeft, Upload, X, ImageIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -8,6 +8,8 @@ import { CompanyDetailsForm, type CompanyFormValues } from "@/components/company
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 
 interface CompanyData {
   id: string;
@@ -15,6 +17,7 @@ interface CompanyData {
   address: string | null;
   phone: string | null;
   email: string | null;
+  logo_url: string | null;
 }
 
 export default function CompanySettings() {
@@ -23,6 +26,8 @@ export default function CompanySettings() {
   const [company, setCompany] = useState<CompanyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = hasRole("owner");
 
@@ -35,7 +40,7 @@ export default function CompanySettings() {
 
       const { data, error } = await supabase
         .from("companies")
-        .select("id, name, address, phone, email")
+        .select("id, name, address, phone, email, logo_url")
         .eq("id", profile.company_id)
         .single();
 
@@ -76,6 +81,92 @@ export default function CompanySettings() {
     }
   };
 
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !company || !isOwner) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo must be less than 2MB");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${company.id}/logo.${fileExt}`;
+
+      // Upload the file
+      const { error: uploadError } = await supabase.storage
+        .from("company-logos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from("company-logos")
+        .getPublicUrl(filePath);
+
+      // Add cache-busting query param
+      const logoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      // Update company record
+      const { error: updateError } = await supabase
+        .from("companies")
+        .update({ logo_url: logoUrl })
+        .eq("id", company.id);
+
+      if (updateError) throw updateError;
+
+      setCompany({ ...company, logo_url: logoUrl });
+      toast.success("Company logo updated");
+    } catch (error: any) {
+      console.error("Logo upload error:", error);
+      toast.error(error.message || "Failed to upload logo");
+    } finally {
+      setIsUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!company || !isOwner || !company.logo_url) return;
+
+    setIsUploadingLogo(true);
+    try {
+      // Extract file path from URL
+      const urlParts = company.logo_url.split("/company-logos/");
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1].split("?")[0];
+        await supabase.storage.from("company-logos").remove([filePath]);
+      }
+
+      // Update company record
+      const { error } = await supabase
+        .from("companies")
+        .update({ logo_url: null })
+        .eq("id", company.id);
+
+      if (error) throw error;
+
+      setCompany({ ...company, logo_url: null });
+      toast.success("Company logo removed");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
   if (!profile?.company_id) {
     return (
       <AppLayout>
@@ -107,11 +198,79 @@ export default function CompanySettings() {
           Back
         </Button>
 
+        {/* Logo Upload Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              Company Logo
+            </CardTitle>
+            <CardDescription>
+              Your logo appears on PDF reports and documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24 rounded-lg border">
+                <AvatarImage 
+                  src={company?.logo_url || undefined} 
+                  className="object-contain"
+                />
+                <AvatarFallback className="rounded-lg bg-muted text-2xl">
+                  {company?.name?.slice(0, 2).toUpperCase() || "CO"}
+                </AvatarFallback>
+              </Avatar>
+
+              {isOwner && (
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingLogo}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploadingLogo ? "Uploading..." : "Upload Logo"}
+                  </Button>
+                  {company?.logo_url && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveLogo}
+                      disabled={isUploadingLogo}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPG up to 2MB. Square logos work best.
+                  </p>
+                </div>
+              )}
+
+              {!isOwner && !company?.logo_url && (
+                <p className="text-sm text-muted-foreground">
+                  No logo uploaded. Only owners can upload a logo.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Company Details Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" />
-              Company Settings
+              Company Details
             </CardTitle>
             <CardDescription>
               {isOwner
