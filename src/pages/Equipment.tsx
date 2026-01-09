@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
   Filter,
+  Tag,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EquipmentDialog } from "@/components/equipment/EquipmentDialog";
-import { ComplianceThresholdBadge, getComplianceThreshold } from "@/components/equipment/ComplianceThresholdBadge";
+import { ComplianceThresholdBadge } from "@/components/equipment/ComplianceThresholdBadge";
+import { LabelGenerator } from "@/components/equipment/LabelGenerator";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -88,16 +90,24 @@ interface Site {
   name: string;
 }
 
+interface Company {
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
+
 export default function Equipment() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [siteFilter, setSiteFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [deletingEquipment, setDeletingEquipment] = useState<Equipment | null>(null);
+  const [labelEquipment, setLabelEquipment] = useState<Equipment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isOwner = hasRole("owner");
@@ -110,7 +120,7 @@ export default function Equipment() {
     if (!profile?.company_id) return;
 
     try {
-      const [equipmentRes, sitesRes] = await Promise.all([
+      const [equipmentRes, sitesRes, companyRes] = await Promise.all([
         supabase
           .from("equipment")
           .select(`
@@ -127,6 +137,11 @@ export default function Equipment() {
           .select("id, name")
           .eq("company_id", profile.company_id)
           .order("name"),
+        supabase
+          .from("companies")
+          .select("name, phone, email")
+          .eq("id", profile.company_id)
+          .single(),
       ]);
 
       if (equipmentRes.error) throw equipmentRes.error;
@@ -134,6 +149,9 @@ export default function Equipment() {
 
       setEquipment(equipmentRes.data || []);
       setSites(sitesRes.data || []);
+      if (companyRes.data) {
+        setCompany(companyRes.data);
+      }
     } catch (error: any) {
       toast.error("Failed to load equipment");
     } finally {
@@ -461,6 +479,10 @@ export default function Equipment() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setLabelEquipment(eq)}>
+                                <Tag className="h-4 w-4 mr-2" />
+                                Generate Label
+                              </DropdownMenuItem>
                               {canPerformActions && (
                                 <DropdownMenuItem onClick={() => setEditingEquipment(eq)}>
                                   <Pencil className="h-4 w-4 mr-2" />
@@ -534,6 +556,21 @@ export default function Equipment() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Label Generator */}
+      {labelEquipment && company && (
+        <LabelGenerator
+          open={!!labelEquipment}
+          onOpenChange={(open) => !open && setLabelEquipment(null)}
+          equipment={labelEquipment}
+          company={{
+            name: company.name,
+            phone: company.phone,
+            email: company.email,
+          }}
+          siteName={labelEquipment.sites.name}
+        />
+      )}
     </AppLayout>
   );
 }
