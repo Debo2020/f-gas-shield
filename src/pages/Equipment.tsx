@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { format, differenceInDays } from "date-fns";
 import {
   Thermometer,
@@ -14,6 +14,7 @@ import {
   Trash2,
   Filter,
   Tag,
+  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,7 @@ interface Company {
 export default function Equipment() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
@@ -504,6 +506,10 @@ export default function Equipment() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => navigate(`/inspections?equipment=${eq.id}`)}>
+                                <ClipboardCheck className="h-4 w-4 mr-2" />
+                                View Inspections
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setLabelEquipment(eq)}>
                                 <Tag className="h-4 w-4 mr-2" />
                                 Generate Label
