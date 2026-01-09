@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { MapPin, Plus, Search } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { MapPin, Plus, Search, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SiteCard } from "@/components/sites/SiteCard";
 import { SiteDialog } from "@/components/sites/SiteDialog";
@@ -39,6 +40,7 @@ interface Site {
 
 export default function Sites() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,11 +50,12 @@ export default function Sites() {
   const [deletingSite, setDeletingSite] = useState<Site | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const hasCompany = !!profile?.company_id;
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canEdit = isOwner || isManager;
   const canDelete = isOwner;
-  const canPerformActions = canEdit && (isOwner || hasActiveLicense);
+  const canPerformActions = canEdit && hasCompany && (isOwner || hasActiveLicense);
 
   const fetchSites = async () => {
     if (!profile?.company_id) return;
@@ -86,7 +89,10 @@ export default function Sites() {
   }, [searchParams, canPerformActions, isLoading]);
 
   const handleAddSite = async (values: SiteFormValues) => {
-    if (!profile?.company_id) return;
+    if (!profile?.company_id) {
+      toast.error("Please complete company setup first");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -195,7 +201,7 @@ export default function Sites() {
               <Button 
                 onClick={() => setIsDialogOpen(true)} 
                 disabled={!canPerformActions}
-                title={!canPerformActions ? "License required" : undefined}
+                title={!hasCompany ? "Complete company setup first" : !canPerformActions ? "License required" : undefined}
                 className="animate-scale-in"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -204,6 +210,25 @@ export default function Sites() {
             )}
           </div>
         </div>
+
+        {/* Company Setup Warning */}
+        {!hasCompany && (
+          <Alert variant="destructive" className="mb-6 animate-fade-in">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Company Setup Required</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span>You need to create or join a company before you can add sites.</span>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => navigate("/company/setup")}
+                className="w-fit"
+              >
+                Set Up Company
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Search */}
         <div className="mb-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
