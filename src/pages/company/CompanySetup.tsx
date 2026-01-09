@@ -78,7 +78,15 @@ export default function CompanySetup() {
       setCurrentStep("team");
     } catch (error: any) {
       console.error("Error creating company:", error);
-      toast.error(error.message || "Failed to create company");
+      
+      // Provide more specific error messages for common issues
+      if (error.code === '42501' || error.message?.includes('row-level security')) {
+        toast.error("Unable to create company. Please try refreshing the page and signing in again.");
+      } else if (error.code === '23505') {
+        toast.error("A company with this name already exists. Please choose a different name.");
+      } else {
+        toast.error(error.message || "Failed to create company. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
