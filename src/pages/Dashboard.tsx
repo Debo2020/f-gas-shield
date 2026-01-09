@@ -10,13 +10,15 @@ import {
   CheckCircle2, 
   Clock,
   Plus,
-  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
 import { InspectionTrendsChart } from "@/components/dashboard/InspectionTrendsChart";
+import { LiveClock } from "@/components/ui/live-clock";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { StatusIndicator } from "@/components/ui/status-indicator";
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -68,21 +70,21 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Total Sites",
-      value: isLoading ? "..." : sitesCount.toString(),
+      value: sitesCount,
       icon: Building2,
       description: "Registered locations",
       href: "/sites",
     },
     {
       title: "Equipment",
-      value: isLoading ? "..." : (equipmentData?.count || 0).toString(),
+      value: equipmentData?.count || 0,
       icon: Shield,
       description: `${equipmentData?.totalCo2?.toFixed(1) || 0} tCO₂e total`,
       href: "/equipment",
     },
     {
       title: "Due Soon",
-      value: isLoading ? "..." : (equipmentData?.dueSoon || 0).toString(),
+      value: equipmentData?.dueSoon || 0,
       icon: Clock,
       description: "Next 30 days",
       href: "/inspections",
@@ -90,7 +92,7 @@ export default function Dashboard() {
     },
     {
       title: "Overdue",
-      value: isLoading ? "..." : (equipmentData?.overdue || 0).toString(),
+      value: equipmentData?.overdue || 0,
       icon: AlertTriangle,
       description: "Require attention",
       href: "/inspections?status=overdue",
@@ -102,17 +104,19 @@ export default function Dashboard() {
     <AppLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Welcome Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-heading font-bold">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 header-gradient p-6 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 mb-2 rounded-b-2xl">
+          <div className="animate-fade-in">
+            <h1 className="text-2xl md:text-3xl font-heading font-bold gradient-text">
               Welcome back, {profile?.full_name?.split(" ")[0] || "there"}
             </h1>
             <p className="text-muted-foreground mt-1">
               Here's your F-Gas compliance overview
             </p>
+            <StatusIndicator status="live" label="Data synced" className="mt-2" />
           </div>
-          <div className="flex gap-2">
-            <Button asChild>
+          <div className="flex flex-col items-end gap-3">
+            <LiveClock showDate className="animate-slide-up" />
+            <Button asChild className="animate-scale-in">
               <Link to="/sites/new">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Site
@@ -123,25 +127,34 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
+          {stats.map((stat, index) => (
             <Link key={stat.title} to={stat.href}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <Card 
+                className={`card-interactive card-gradient h-full animate-slide-up opacity-0`}
+                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+              >
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
                   <stat.icon
-                    className={`h-5 w-5 ${
+                    className={`h-5 w-5 icon-float ${
                       stat.variant === "destructive"
-                        ? "text-destructive"
+                        ? "text-destructive animate-pulse"
                         : stat.variant === "warning"
                         ? "text-warning"
-                        : "text-muted-foreground"
+                        : "text-primary"
                     }`}
                   />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <div className="text-3xl font-bold">
+                    {isLoading ? (
+                      <span className="animate-pulse">...</span>
+                    ) : (
+                      <AnimatedCounter value={stat.value as number} />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {stat.description}
                   </p>
@@ -152,12 +165,14 @@ export default function Dashboard() {
         </div>
 
         {/* Inspection Trends Chart */}
-        <InspectionTrendsChart />
+        <div className="animate-scale-in opacity-0" style={{ animationDelay: '400ms', animationFillMode: 'forwards' }}>
+          <InspectionTrendsChart />
+        </div>
 
         {/* Quick Actions & Recent Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Getting Started */}
-          <Card>
+          <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-success" />
@@ -178,7 +193,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <Link to="/company/setup" className="block">
-                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
                     <Building2 className="h-4 w-4" />
                   </div>
@@ -189,7 +204,7 @@ export default function Dashboard() {
                 </div>
               </Link>
               <Link to="/sites/new" className="block">
-                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
                     <Building2 className="h-4 w-4" />
                   </div>
@@ -200,7 +215,7 @@ export default function Dashboard() {
                 </div>
               </Link>
               <Link to="/equipment/new" className="block">
-                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
                     <Shield className="h-4 w-4" />
                   </div>
@@ -214,7 +229,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Compliance Status */}
-          <Card>
+          <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
             <CardHeader>
               <CardTitle>Compliance Status</CardTitle>
               <CardDescription>
@@ -223,7 +238,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
                   <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="font-medium">No equipment registered yet</h3>

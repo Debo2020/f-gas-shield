@@ -161,7 +161,56 @@
     @apply bg-warning/10 text-warning border-warning/20;
   }
 
-  .status-overdue {
-    @apply bg-destructive/10 text-destructive border-destructive/20;
-  }
+.status-overdue {
+  @apply bg-destructive/10 text-destructive border-destructive/20;
+}
+
+/* Interactive card styles */
+.card-interactive {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20;
+}
+
+.card-gradient {
+  @apply relative overflow-hidden;
+}
+
+.card-gradient::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-300;
+}
+
+.card-gradient:hover::before {
+  @apply opacity-100;
+}
+
+/* Glass morphism effect */
+.glass {
+  @apply bg-background/80 backdrop-blur-sm border-border/50;
+}
+
+/* Staggered animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* Icon hover effects */
+.icon-float {
+  @apply transition-transform duration-300;
+}
+
+.icon-float:hover {
+  @apply animate-float;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70;
+}
+
+/* Page header gradient */
+.header-gradient {
+  @apply bg-gradient-to-r from-background via-background to-primary/5;
+}
 }

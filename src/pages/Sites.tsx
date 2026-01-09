@@ -20,6 +20,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SiteFormValues } from "@/components/sites/SiteForm";
+import { LiveClock } from "@/components/ui/live-clock";
+import { StatusIndicator } from "@/components/ui/status-indicator";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 interface Site {
   id: string;
@@ -161,27 +164,33 @@ export default function Sites() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8 header-gradient p-6 -mx-4 -mt-8 rounded-b-2xl">
+          <div className="animate-fade-in">
             <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-3">
-              <MapPin className="h-8 w-8 text-primary" />
-              Sites
+              <div className="p-2 rounded-lg bg-primary/10 animate-float">
+                <MapPin className="h-7 w-7 text-primary" />
+              </div>
+              <span className="gradient-text">Sites</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your company locations
+            <p className="text-muted-foreground mt-1 ml-14">
+              <AnimatedCounter value={sites.length} /> registered locations
             </p>
+            <StatusIndicator status="synced" label="Data synced" className="mt-2 ml-14" />
           </div>
 
-          {canEdit && (
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Site
-            </Button>
-          )}
+          <div className="flex flex-col items-end gap-3">
+            <LiveClock showDate className="animate-slide-up" />
+            {canEdit && (
+              <Button onClick={() => setIsDialogOpen(true)} className="animate-scale-in">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Site
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -194,52 +203,61 @@ export default function Sites() {
         </div>
 
         {/* Sites Grid */}
-        {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading sites...
-          </div>
-        ) : filteredSites.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              {sites.length === 0 ? (
-                <>
-                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No sites yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Add your first site to start tracking equipment and inspections
-                  </p>
-                  {canEdit && (
-                    <Button onClick={() => setIsDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Your First Site
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No sites found</h3>
-                  <p className="text-muted-foreground">
-                    Try adjusting your search query
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSites.map((site) => (
-              <SiteCard
-                key={site.id}
-                site={site}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                onEdit={() => setEditingSite(site)}
-                onDelete={() => setDeletingSite(site)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="animate-scale-in opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Loading sites...
+            </div>
+          ) : filteredSites.length === 0 ? (
+            <Card className="card-interactive">
+              <CardContent className="py-12 text-center">
+                {sites.length === 0 ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 animate-float">
+                      <MapPin className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No sites yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Add your first site to start tracking equipment and inspections
+                    </p>
+                    {canEdit && (
+                      <Button onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Your First Site
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No sites found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your search query
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredSites.map((site, index) => (
+                <div 
+                  key={site.id} 
+                  className="animate-slide-up opacity-0"
+                  style={{ animationDelay: `${(index + 3) * 50}ms`, animationFillMode: 'forwards' }}
+                >
+                  <SiteCard
+                    site={site}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                    onEdit={() => setEditingSite(site)}
+                    onDelete={() => setDeletingSite(site)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add Site Dialog */}
