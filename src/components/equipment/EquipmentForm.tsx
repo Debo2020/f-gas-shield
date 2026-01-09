@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -25,8 +26,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Thermometer, Building, Tag, FileText } from "lucide-react";
+import { CalendarIcon, Thermometer, Building, Tag, FileText, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ComplianceThresholdBadge, getComplianceThreshold, getRequiredFrequency } from "./ComplianceThresholdBadge";
 
 const REFRIGERANT_TYPES = [
   "R-32",
@@ -43,6 +45,23 @@ const REFRIGERANT_TYPES = [
   "R-744",
   "Other",
 ] as const;
+
+// GWP values for CO2e calculation (client-side preview)
+const GWP_VALUES: Record<string, number> = {
+  "R-32": 675,
+  "R-134a": 1430,
+  "R-404A": 3922,
+  "R-407C": 1774,
+  "R-410A": 2088,
+  "R-422D": 2729,
+  "R-448A": 1387,
+  "R-449A": 1397,
+  "R-452A": 2140,
+  "R-454B": 466,
+  "R-507A": 3985,
+  "R-744": 1,
+  "Other": 0,
+};
 
 const equipmentSchema = z.object({
   site_id: z.string().min(1, "Please select a site"),
@@ -118,6 +137,22 @@ export function EquipmentForm({
 
     fetchSites();
   }, [companyId]);
+
+  // Watch refrigerant values for live CO2e calculation
+  const refrigerantType = useWatch({ control: form.control, name: "refrigerant_type" });
+  const refrigerantCharge = useWatch({ control: form.control, name: "refrigerant_charge_kg" });
+  const selectedFrequency = useWatch({ control: form.control, name: "inspection_frequency_months" });
+
+  // Calculate estimated CO2e for preview
+  const estimatedCo2e = useMemo(() => {
+    if (!refrigerantType || !refrigerantCharge || refrigerantCharge <= 0) return null;
+    const gwp = GWP_VALUES[refrigerantType] || 0;
+    return (refrigerantCharge * gwp) / 1000;
+  }, [refrigerantType, refrigerantCharge]);
+
+  const threshold = getComplianceThreshold(estimatedCo2e);
+  const requiredFrequency = getRequiredFrequency(estimatedCo2e);
+  const isFrequencyTooLong = selectedFrequency && selectedFrequency > requiredFrequency;
 
   return (
     <Form {...form}>
@@ -281,6 +316,19 @@ export function EquipmentForm({
               )}
             />
           </div>
+
+          {/* CO2e Preview & Threshold Info */}
+          {estimatedCo2e !== null && estimatedCo2e > 0 && (
+            <Alert className="bg-muted/50">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  Estimated CO₂e: <strong>{estimatedCo2e.toFixed(2)} tonnes</strong>
+                </span>
+                <ComplianceThresholdBadge co2eTonnes={estimatedCo2e} showFrequency />
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         {/* Installation & Inspection */}
@@ -329,19 +377,27 @@ export function EquipmentForm({
                 <FormLabel>Inspection Frequency</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className={isFrequencyTooLong ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select frequency" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="3">Every 3 months</SelectItem>
-                    <SelectItem value="6">Every 6 months</SelectItem>
-                    <SelectItem value="12">Every 12 months</SelectItem>
+                    <SelectItem value="3">Every 3 months (Quarterly)</SelectItem>
+                    <SelectItem value="6">Every 6 months (Bi-annual)</SelectItem>
+                    <SelectItem value="12">Every 12 months (Annual)</SelectItem>
                     <SelectItem value="24">Every 24 months</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Based on CO₂ equivalent and F-Gas requirements
+                  {isFrequencyTooLong ? (
+                    <span className="text-destructive">
+                      ⚠️ F-Gas regulation requires at least every {requiredFrequency} months for this CO₂e level
+                    </span>
+                  ) : threshold ? (
+                    <span>Minimum required: every {requiredFrequency} months based on CO₂e threshold</span>
+                  ) : (
+                    "Based on CO₂ equivalent and F-Gas requirements"
+                  )}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

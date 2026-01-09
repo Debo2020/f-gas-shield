@@ -580,6 +580,10 @@ export type Database = {
         Args: { company_uuid: string }
         Returns: number
       }
+      get_required_inspection_frequency: {
+        Args: { co2e_tonnes: number }
+        Returns: number
+      }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_available_license: {
         Args: { company_uuid: string }
