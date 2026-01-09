@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   ClipboardCheck,
@@ -77,6 +77,7 @@ interface Inspection {
 export default function Inspections() {
   const { user, profile, hasRole, hasActiveLicense } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const isOwner = hasRole("owner");
   const canRecordInspection = isOwner || hasActiveLicense;
   const [inspections, setInspections] = useState<Inspection[]>([]);
@@ -365,14 +366,26 @@ export default function Inspections() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setViewingInspection(insp)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => navigate(`/equipment?highlight=${insp.equipment_id}`)}
+                          title="View Equipment"
+                        >
+                          <Thermometer className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setViewingInspection(insp)}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -491,6 +504,19 @@ export default function Inspections() {
                   </p>
                 </div>
               )}
+
+              <div className="border-t pt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setViewingInspection(null);
+                    navigate(`/equipment?highlight=${viewingInspection.equipment_id}`);
+                  }}
+                >
+                  <Thermometer className="h-4 w-4 mr-2" />
+                  View Equipment
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
