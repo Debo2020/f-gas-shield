@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
   ClipboardCheck,
@@ -75,6 +76,7 @@ interface Inspection {
 
 export default function Inspections() {
   const { user, profile, hasRole, hasActiveLicense } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isOwner = hasRole("owner");
   const canRecordInspection = isOwner || hasActiveLicense;
   const [inspections, setInspections] = useState<Inspection[]>([]);
@@ -113,6 +115,14 @@ export default function Inspections() {
   useEffect(() => {
     fetchInspections();
   }, [profile?.company_id]);
+
+  // Handle ?action=new from URL
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && canRecordInspection && !isLoading) {
+      setIsDialogOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, canRecordInspection, isLoading]);
 
   const handleAddInspection = async (values: InspectionFormValues) => {
     if (!profile?.company_id || !user) return;
