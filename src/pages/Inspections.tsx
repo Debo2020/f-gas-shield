@@ -14,6 +14,7 @@ import {
   Filter,
   Eye,
   Thermometer,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ export default function Inspections() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [resultFilter, setResultFilter] = useState<string>("all");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingInspection, setViewingInspection] = useState<Inspection | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,6 +126,15 @@ export default function Inspections() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, canRecordInspection, isLoading]);
+
+  // Handle ?equipment=id from URL (filter by equipment)
+  useEffect(() => {
+    const equipmentId = searchParams.get("equipment");
+    if (equipmentId && !isLoading) {
+      setEquipmentFilter(equipmentId);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, isLoading]);
 
   const handleAddInspection = async (values: InspectionFormValues) => {
     if (!profile?.company_id || !user) return;
@@ -195,6 +206,11 @@ export default function Inspections() {
     }
   };
 
+  // Get unique equipment list for filter dropdown
+  const uniqueEquipment = Array.from(
+    new Map(inspections.map((insp) => [insp.equipment_id, { id: insp.equipment_id, name: insp.equipment.name }])).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
   const filteredInspections = inspections.filter((insp) => {
     const matchesSearch =
       insp.equipment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,8 +218,9 @@ export default function Inspections() {
       insp.equipment.sites.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesResult = resultFilter === "all" || insp.result === resultFilter;
+    const matchesEquipment = equipmentFilter === "all" || insp.equipment_id === equipmentFilter;
 
-    return matchesSearch && matchesResult;
+    return matchesSearch && matchesResult && matchesEquipment;
   });
 
   return (
@@ -262,6 +279,33 @@ export default function Inspections() {
                 <SelectItem value="deferred">Deferred</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Thermometer className="h-4 w-4 text-muted-foreground" />
+            <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by equipment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Equipment</SelectItem>
+                {uniqueEquipment.map((eq) => (
+                  <SelectItem key={eq.id} value={eq.id}>
+                    {eq.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {equipmentFilter !== "all" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setEquipmentFilter("all")}
+                title="Clear equipment filter"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
