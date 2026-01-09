@@ -33,45 +33,20 @@ export default function CompanySetup() {
 
     setIsSubmitting(true);
     try {
-      // First generate a slug for the company
-      const { data: slugData, error: slugError } = await supabase.rpc(
-        "generate_unique_slug",
-        { company_name: values.name }
+      // Use the atomic RPC function that bypasses RLS safely
+      const { data: newCompanyId, error: rpcError } = await supabase.rpc(
+        "create_company_for_current_user",
+        {
+          company_name: values.name,
+          company_address: values.address || null,
+          company_phone: values.phone || null,
+          company_email: values.email || null,
+        }
       );
 
-      if (slugError) throw slugError;
+      if (rpcError) throw rpcError;
 
-      // Create company
-      const { data: company, error: companyError } = await supabase
-        .from("companies")
-        .insert({
-          name: values.name,
-          slug: slugData,
-          address: values.address || null,
-          phone: values.phone || null,
-          email: values.email || null,
-        })
-        .select()
-        .single();
-
-      if (companyError) throw companyError;
-
-      // Update profile with company_id
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ company_id: company.id })
-        .eq("user_id", user.id);
-
-      if (profileError) throw profileError;
-
-      // Assign owner role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ user_id: user.id, role: "owner" });
-
-      if (roleError) throw roleError;
-
-      setCompanyId(company.id);
+      setCompanyId(newCompanyId);
       await refreshProfile();
       
       toast.success("Company created successfully!");
@@ -79,9 +54,9 @@ export default function CompanySetup() {
     } catch (error: any) {
       console.error("Error creating company:", error);
       
-      // Provide more specific error messages for common issues
-      if (error.code === '42501' || error.message?.includes('row-level security')) {
-        toast.error("Unable to create company. Please try refreshing the page and signing in again.");
+      if (error.message?.includes("already belongs to a company")) {
+        toast.error("You are already associated with a company. Redirecting to dashboard...");
+        setTimeout(() => navigate("/dashboard"), 2000);
       } else if (error.code === '23505') {
         toast.error("A company with this name already exists. Please choose a different name.");
       } else {

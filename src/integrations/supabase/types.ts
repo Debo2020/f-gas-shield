@@ -575,6 +575,15 @@ export type Database = {
         }
         Returns: number
       }
+      create_company_for_current_user: {
+        Args: {
+          company_address?: string
+          company_email?: string
+          company_name: string
+          company_phone?: string
+        }
+        Returns: string
+      }
       generate_unique_slug: { Args: { company_name: string }; Returns: string }
       get_company_license_count: {
         Args: { company_uuid: string }
