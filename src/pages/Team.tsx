@@ -29,14 +29,15 @@ interface PendingInvitation {
 }
 
 export default function Team() {
-  const { user, profile, hasRole } = useAuth();
+  const { user, profile, hasRole, hasActiveLicense } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   const isOwner = hasRole("owner");
-  const canInvite = hasRole("owner") || hasRole("manager");
+  const canInvite = isOwner || hasRole("manager");
+  const canInviteWithLicense = canInvite && (isOwner || hasActiveLicense);
 
   const fetchTeamData = async () => {
     if (!profile?.company_id) return;
@@ -178,7 +179,11 @@ export default function Team() {
           </div>
 
           {canInvite && (
-            <Button onClick={() => setIsInviteOpen(true)}>
+            <Button 
+              onClick={() => setIsInviteOpen(true)}
+              disabled={!canInviteWithLicense}
+              title={!canInviteWithLicense ? "License required to invite members" : undefined}
+            >
               <UserPlus className="h-4 w-4 mr-2" />
               Invite Member
             </Button>

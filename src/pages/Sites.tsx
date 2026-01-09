@@ -37,7 +37,7 @@ interface Site {
 }
 
 export default function Sites() {
-  const { profile, hasRole } = useAuth();
+  const { profile, hasRole, hasActiveLicense } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,6 +50,7 @@ export default function Sites() {
   const isManager = hasRole("manager");
   const canEdit = isOwner || isManager;
   const canDelete = isOwner;
+  const canPerformActions = canEdit && (isOwner || hasActiveLicense);
 
   const fetchSites = async () => {
     if (!profile?.company_id) return;
@@ -181,7 +182,12 @@ export default function Sites() {
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
             {canEdit && (
-              <Button onClick={() => setIsDialogOpen(true)} className="animate-scale-in">
+              <Button 
+                onClick={() => setIsDialogOpen(true)} 
+                disabled={!canPerformActions}
+                title={!canPerformActions ? "License required" : undefined}
+                className="animate-scale-in"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Site
               </Button>
@@ -221,7 +227,11 @@ export default function Sites() {
                       Add your first site to start tracking equipment and inspections
                     </p>
                     {canEdit && (
-                      <Button onClick={() => setIsDialogOpen(true)}>
+                      <Button 
+                        onClick={() => setIsDialogOpen(true)}
+                        disabled={!canPerformActions}
+                        title={!canPerformActions ? "License required" : undefined}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Your First Site
                       </Button>
@@ -248,8 +258,8 @@ export default function Sites() {
                 >
                   <SiteCard
                     site={site}
-                    canEdit={canEdit}
-                    canDelete={canDelete}
+                    canEdit={canPerformActions}
+                    canDelete={canDelete && (isOwner || hasActiveLicense)}
                     onEdit={() => setEditingSite(site)}
                     onDelete={() => setDeletingSite(site)}
                   />
