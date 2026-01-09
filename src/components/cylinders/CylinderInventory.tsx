@@ -42,6 +42,7 @@ import {
 import { CylinderStatusBadge } from "./CylinderStatusBadge";
 import { CylinderDialog } from "./CylinderDialog";
 import { CylinderCheckInOutDialog } from "./CylinderCheckInOutDialog";
+import { BulkCylinderDialog } from "./BulkCylinderDialog";
 import { QRScannerDialog } from "./QRScannerDialog";
 import { CylinderQRCode } from "./CylinderQRCode";
 import {
@@ -72,6 +73,7 @@ export function CylinderInventory() {
   const [checkAction, setCheckAction] = useState<"check_out" | "check_in">("check_out");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [qrDialogCylinder, setQrDialogCylinder] = useState<Cylinder | null>(null);
+  const [bulkAction, setBulkAction] = useState<"bulk_check_out" | "bulk_check_in" | null>(null);
 
   useEffect(() => {
     if (profile?.company_id) {
@@ -178,7 +180,7 @@ export function CylinderInventory() {
 
       {/* Actions & Filters */}
       <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {canManage && (
             <Button onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -189,6 +191,26 @@ export function CylinderInventory() {
             <QrCode className="h-4 w-4 mr-2" />
             Scan QR
           </Button>
+          {canManage && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setBulkAction("bulk_check_out")}
+                disabled={summary.inStock === 0}
+              >
+                <ArrowUpFromLine className="h-4 w-4 mr-2" />
+                Bulk Check Out
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setBulkAction("bulk_check_in")}
+                disabled={summary.checkedOut === 0}
+              >
+                <ArrowDownToLine className="h-4 w-4 mr-2" />
+                Bulk Check In
+              </Button>
+            </>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -397,6 +419,14 @@ export function CylinderInventory() {
           )}
         </DialogContent>
       </Dialog>
+
+      <BulkCylinderDialog
+        open={!!bulkAction}
+        onOpenChange={(o) => !o && setBulkAction(null)}
+        onSuccess={fetchCylinders}
+        cylinders={cylinders}
+        action={bulkAction || "bulk_check_out"}
+      />
     </div>
   );
 }
