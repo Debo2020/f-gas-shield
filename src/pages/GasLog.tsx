@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { format, startOfYear, endOfYear } from "date-fns";
-import { Download, Plus, Calendar } from "lucide-react";
+import { Download, Plus, Snowflake, Filter, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -18,6 +18,8 @@ import { GasLogSummary } from "@/components/gas-log/GasLogSummary";
 import { GasLogTable } from "@/components/gas-log/GasLogTable";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { LiveClock } from "@/components/ui/live-clock";
+import { StatusIndicator } from "@/components/ui/status-indicator";
 
 // GWP values for CO2e calculation
 const GWP_VALUES: Record<string, number> = {
@@ -184,24 +186,40 @@ export default function GasLog() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">F-Gas Log</h1>
-            <p className="text-muted-foreground">
-              Track all refrigerant additions and recoveries
-            </p>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 header-gradient p-6 -mx-4 md:-mx-6 lg:-mx-8 -mt-4 md:-mt-6 lg:-mt-8 mb-2 rounded-b-2xl">
+          <div className="animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10 animate-float">
+                <Snowflake className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-heading font-bold gradient-text">F-Gas Log</h1>
+                <p className="text-muted-foreground">
+                  Track refrigerant usage and calculate CO₂ equivalent emissions
+                </p>
+              </div>
+            </div>
+            <StatusIndicator status="live" label="Live tracking" className="mt-3" />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCSV} disabled={filteredMovements.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={() => navigate("/inspections")}>
-              <Plus className="mr-2 h-4 w-4" />
-              Record Inspection
-            </Button>
+          <div className="flex flex-col items-end gap-3">
+            <LiveClock showDate className="animate-slide-up" />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExportCSV}
+                disabled={filteredMovements.length === 0}
+                className="animate-scale-in"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button onClick={() => navigate("/inspections")} className="animate-scale-in">
+                <Plus className="h-4 w-4 mr-2" />
+                Record Inspection
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -209,51 +227,68 @@ export default function GasLog() {
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-[100px]" />
+              <Card key={i} className="p-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-20" />
+              </Card>
             ))}
           </div>
         ) : (
-          <GasLogSummary {...summary} />
+          <div className="animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
+            <GasLogSummary {...summary} />
+          </div>
         )}
 
         {/* Filters */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Card className="p-4 animate-slide-up opacity-0 card-interactive" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>Filters:</span>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Select value={siteFilter} onValueChange={setSiteFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All Sites" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sites</SelectItem>
+                  {sites.map((site) => (
+                    <SelectItem key={site.id} value={site.id}>
+                      {site.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Select value={siteFilter} onValueChange={setSiteFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Sites" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sites</SelectItem>
-              {sites.map((site) => (
-                <SelectItem key={site.id} value={site.id}>
-                  {site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        </Card>
 
         {/* Table */}
-        {isLoading ? (
-          <Skeleton className="h-[400px]" />
-        ) : (
-          <GasLogTable movements={filteredMovements} />
-        )}
+        <div className="animate-scale-in opacity-0" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
+          {isLoading ? (
+            <Card className="p-6">
+              <Skeleton className="h-[400px] w-full" />
+            </Card>
+          ) : (
+            <GasLogTable movements={filteredMovements} />
+          )}
+        </div>
       </div>
     </AppLayout>
   );

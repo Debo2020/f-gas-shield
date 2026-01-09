@@ -55,6 +55,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { EquipmentFormValues } from "@/components/equipment/EquipmentForm";
+import { LiveClock } from "@/components/ui/live-clock";
+import { StatusIndicator } from "@/components/ui/status-indicator";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 interface Equipment {
   id: string;
@@ -259,30 +262,36 @@ export default function Equipment() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8 header-gradient p-6 -mx-4 -mt-8 rounded-b-2xl">
+          <div className="animate-fade-in">
             <h1 className="text-3xl font-heading font-bold text-foreground flex items-center gap-3">
-              <Thermometer className="h-8 w-8 text-primary" />
-              Equipment Register
+              <div className="p-2 rounded-lg bg-primary/10 animate-float">
+                <Thermometer className="h-7 w-7 text-primary" />
+              </div>
+              <span className="gradient-text">Equipment Register</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
-              {equipment.length} units · {totalCo2.toFixed(2)} tonnes CO₂e total
+            <p className="text-muted-foreground mt-1 ml-14">
+              <AnimatedCounter value={equipment.length} /> units · <AnimatedCounter value={totalCo2} decimals={2} /> tonnes CO₂e
             </p>
+            <StatusIndicator status="synced" label="Data synced" className="mt-2 ml-14" />
           </div>
 
-          {canEdit && (
-            <Button onClick={() => setIsDialogOpen(true)} disabled={sites.length === 0}>
-              <Plus className="h-4 w-4 mr-2" />
-              Register Equipment
-            </Button>
-          )}
+          <div className="flex flex-col items-end gap-3">
+            <LiveClock showDate className="animate-slide-up" />
+            {canEdit && (
+              <Button onClick={() => setIsDialogOpen(true)} disabled={sites.length === 0} className="animate-scale-in">
+                <Plus className="h-4 w-4 mr-2" />
+                Register Equipment
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* No Sites Warning */}
         {sites.length === 0 && !isLoading && (
-          <Card className="mb-6 border-warning bg-warning/5">
+          <Card className="mb-6 border-warning bg-warning/5 animate-slide-up">
             <CardContent className="py-4 flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+              <AlertTriangle className="h-5 w-5 text-warning animate-pulse" />
               <div>
                 <p className="font-medium">No sites available</p>
                 <p className="text-sm text-muted-foreground">
@@ -298,7 +307,7 @@ export default function Equipment() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -327,37 +336,40 @@ export default function Equipment() {
         </div>
 
         {/* Equipment Table */}
-        {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading equipment...</div>
-        ) : filteredEquipment.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              {equipment.length === 0 ? (
-                <>
-                  <Thermometer className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No equipment registered</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Register your refrigeration equipment to start tracking F-Gas compliance
-                  </p>
-                  {canEdit && sites.length > 0 && (
-                    <Button onClick={() => setIsDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Register Your First Equipment
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No equipment found</h3>
-                  <p className="text-muted-foreground">Try adjusting your search or filters</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <Table>
+        <div className="animate-scale-in opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading equipment...</div>
+          ) : filteredEquipment.length === 0 ? (
+            <Card className="card-interactive">
+              <CardContent className="py-12 text-center">
+                {equipment.length === 0 ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 animate-float">
+                      <Thermometer className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No equipment registered</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Register your refrigeration equipment to start tracking F-Gas compliance
+                    </p>
+                    {canEdit && sites.length > 0 && (
+                      <Button onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Register Your First Equipment
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No equipment found</h3>
+                    <p className="text-muted-foreground">Try adjusting your search or filters</p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="card-interactive">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Equipment</TableHead>
@@ -457,6 +469,7 @@ export default function Equipment() {
             </Table>
           </Card>
         )}
+        </div>
       </div>
 
       {/* Add Equipment Dialog */}
