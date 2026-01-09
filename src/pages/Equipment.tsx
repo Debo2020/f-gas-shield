@@ -88,7 +88,7 @@ interface Site {
 }
 
 export default function Equipment() {
-  const { profile, hasRole } = useAuth();
+  const { profile, hasRole, hasActiveLicense } = useAuth();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,6 +103,7 @@ export default function Equipment() {
   const isManager = hasRole("manager");
   const canEdit = isOwner || isManager;
   const canDelete = isOwner;
+  const canPerformActions = canEdit && (isOwner || hasActiveLicense);
 
   const fetchData = async () => {
     if (!profile?.company_id) return;
@@ -279,7 +280,12 @@ export default function Equipment() {
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
             {canEdit && (
-              <Button onClick={() => setIsDialogOpen(true)} disabled={sites.length === 0} className="animate-scale-in">
+              <Button 
+                onClick={() => setIsDialogOpen(true)} 
+                disabled={sites.length === 0 || !canPerformActions}
+                title={sites.length > 0 && !canPerformActions ? "License required" : undefined}
+                className="animate-scale-in"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Register Equipment
               </Button>
@@ -352,7 +358,11 @@ export default function Equipment() {
                       Register your refrigeration equipment to start tracking F-Gas compliance
                     </p>
                     {canEdit && sites.length > 0 && (
-                      <Button onClick={() => setIsDialogOpen(true)}>
+                      <Button 
+                        onClick={() => setIsDialogOpen(true)}
+                        disabled={!canPerformActions}
+                        title={!canPerformActions ? "License required" : undefined}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Register Your First Equipment
                       </Button>
@@ -443,13 +453,13 @@ export default function Equipment() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {canEdit && (
+                              {canPerformActions && (
                                 <DropdownMenuItem onClick={() => setEditingEquipment(eq)}>
                                   <Pencil className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
                               )}
-                              {canDelete && (
+                              {canDelete && (isOwner || hasActiveLicense) && (
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
                                   onClick={() => setDeletingEquipment(eq)}

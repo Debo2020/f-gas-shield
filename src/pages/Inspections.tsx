@@ -74,7 +74,9 @@ interface Inspection {
 }
 
 export default function Inspections() {
-  const { user, profile } = useAuth();
+  const { user, profile, hasRole, hasActiveLicense } = useAuth();
+  const isOwner = hasRole("owner");
+  const canRecordInspection = isOwner || hasActiveLicense;
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -212,7 +214,12 @@ export default function Inspections() {
 
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            <Button onClick={() => setIsDialogOpen(true)} className="animate-scale-in">
+            <Button 
+              onClick={() => setIsDialogOpen(true)} 
+              disabled={!canRecordInspection}
+              title={!canRecordInspection ? "License required" : undefined}
+              className="animate-scale-in"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Record Inspection
             </Button>
@@ -263,7 +270,11 @@ export default function Inspections() {
                     <p className="text-muted-foreground mb-4">
                       Record your first equipment inspection to start tracking compliance
                     </p>
-                    <Button onClick={() => setIsDialogOpen(true)}>
+                    <Button 
+                      onClick={() => setIsDialogOpen(true)}
+                      disabled={!canRecordInspection}
+                      title={!canRecordInspection ? "License required" : undefined}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Record First Inspection
                     </Button>

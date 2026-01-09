@@ -55,7 +55,9 @@ interface Site {
 }
 
 export default function GasLog() {
-  const { profile } = useAuth();
+  const { profile, hasRole, hasActiveLicense } = useAuth();
+  const isOwner = hasRole("owner");
+  const canRecord = isOwner || hasActiveLicense;
   const navigate = useNavigate();
   const [movements, setMovements] = useState<GasMovement[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -215,7 +217,12 @@ export default function GasLog() {
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
-              <Button onClick={() => navigate("/inspections")} className="animate-scale-in">
+              <Button 
+                onClick={() => canRecord ? navigate("/inspections") : null} 
+                disabled={!canRecord}
+                title={!canRecord ? "License required" : undefined}
+                className="animate-scale-in"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Record Inspection
               </Button>
