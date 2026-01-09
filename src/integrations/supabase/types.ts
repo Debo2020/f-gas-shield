@@ -398,10 +398,79 @@ export type Database = {
           },
         ]
       }
+      refrigerant_cylinders: {
+        Row: {
+          batch_number: string | null
+          checked_out_at: string | null
+          checked_out_to: string | null
+          company_id: string
+          created_at: string
+          current_weight_kg: number
+          cylinder_code: string
+          expiry_date: string | null
+          id: string
+          initial_weight_kg: number
+          notes: string | null
+          purchase_date: string | null
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          status: Database["public"]["Enums"]["cylinder_status"]
+          supplier: string | null
+          tare_weight_kg: number | null
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          checked_out_at?: string | null
+          checked_out_to?: string | null
+          company_id: string
+          created_at?: string
+          current_weight_kg: number
+          cylinder_code: string
+          expiry_date?: string | null
+          id?: string
+          initial_weight_kg: number
+          notes?: string | null
+          purchase_date?: string | null
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          status?: Database["public"]["Enums"]["cylinder_status"]
+          supplier?: string | null
+          tare_weight_kg?: number | null
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          checked_out_at?: string | null
+          checked_out_to?: string | null
+          company_id?: string
+          created_at?: string
+          current_weight_kg?: number
+          cylinder_code?: string
+          expiry_date?: string | null
+          id?: string
+          initial_weight_kg?: number
+          notes?: string | null
+          purchase_date?: string | null
+          refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
+          status?: Database["public"]["Enums"]["cylinder_status"]
+          supplier?: string | null
+          tare_weight_kg?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refrigerant_cylinders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       refrigerant_movements: {
         Row: {
           company_id: string
           created_at: string
+          cylinder_id: string | null
           cylinder_reference: string | null
           engineer_id: string
           engineer_name: string
@@ -418,6 +487,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          cylinder_id?: string | null
           cylinder_reference?: string | null
           engineer_id: string
           engineer_name: string
@@ -434,6 +504,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          cylinder_id?: string | null
           cylinder_reference?: string | null
           engineer_id?: string
           engineer_name?: string
@@ -453,6 +524,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refrigerant_movements_cylinder_id_fkey"
+            columns: ["cylinder_id"]
+            isOneToOne: false
+            referencedRelation: "refrigerant_cylinders"
             referencedColumns: ["id"]
           },
           {
@@ -675,6 +753,7 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "manager" | "engineer"
+      cylinder_status: "in_stock" | "checked_out" | "empty" | "disposed"
       document_type:
         | "certificate"
         | "invoice"
@@ -827,6 +906,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "manager", "engineer"],
+      cylinder_status: ["in_stock", "checked_out", "empty", "disposed"],
       document_type: [
         "certificate",
         "invoice",

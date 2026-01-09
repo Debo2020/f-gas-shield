@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format, startOfYear, endOfYear } from "date-fns";
-import { Download, Plus, Snowflake, Filter, Calendar, User, Building2 } from "lucide-react";
+import { Download, Plus, Snowflake, Filter, Calendar, User, Building2, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -19,6 +19,7 @@ import { GasLogSummary } from "@/components/gas-log/GasLogSummary";
 import { GasLogTable } from "@/components/gas-log/GasLogTable";
 import { EngineerGasLog } from "@/components/gas-log/EngineerGasLog";
 import { ManagerGasLog } from "@/components/gas-log/ManagerGasLog";
+import { CylinderInventory } from "@/components/cylinders/CylinderInventory";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LiveClock } from "@/components/ui/live-clock";
@@ -233,7 +234,7 @@ export default function GasLog() {
 
         {/* Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl" style={{ gridTemplateColumns: canViewCompanyLog ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)' }}>
             <TabsTrigger value="personal" className="gap-2">
               <User className="h-4 w-4" />
               My Gas Log
@@ -244,6 +245,10 @@ export default function GasLog() {
                 Company Log
               </TabsTrigger>
             )}
+            <TabsTrigger value="cylinders" className="gap-2">
+              <Package className="h-4 w-4" />
+              Cylinders
+            </TabsTrigger>
             <TabsTrigger value="inspections" className="gap-2">
               <Snowflake className="h-4 w-4" />
               Inspections
@@ -261,6 +266,11 @@ export default function GasLog() {
               <ManagerGasLog yearFilter={yearFilter} />
             </TabsContent>
           )}
+
+          {/* Cylinder Inventory Tab */}
+          <TabsContent value="cylinders" className="space-y-6">
+            <CylinderInventory />
+          </TabsContent>
 
           {/* Inspection-based Gas Log Tab */}
           <TabsContent value="inspections" className="space-y-6">
