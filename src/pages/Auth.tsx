@@ -104,9 +104,11 @@ export default function Auth() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       {/* Logo & Branding */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
-          <Shield className="h-7 w-7" />
-        </div>
+        <img 
+          src="/favicon.png" 
+          alt="FTrack Logo" 
+          className="w-12 h-12 rounded-xl"
+        />
         <div>
           <h1 className="text-2xl font-heading font-bold text-foreground">FTrack</h1>
           <p className="text-sm text-muted-foreground">F-Gas Compliance Management</p>
