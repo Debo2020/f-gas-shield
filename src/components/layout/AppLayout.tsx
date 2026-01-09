@@ -16,7 +16,7 @@ import {
   Building2,
   Gauge,
   ClipboardCheck,
-  Fuel,
+  Snowflake,
   FileText,
   Users,
   Settings,
@@ -36,7 +36,7 @@ const navigation = [
   { name: "Sites", href: "/sites", icon: Building2 },
   { name: "Equipment", href: "/equipment", icon: Shield },
   { name: "Inspections", href: "/inspections", icon: ClipboardCheck },
-  { name: "Gas Log", href: "/gas-log", icon: Fuel },
+  { name: "F-Gas", href: "/gas-log", icon: Snowflake },
   { name: "Reports", href: "/reports", icon: FileText },
 ];
 
