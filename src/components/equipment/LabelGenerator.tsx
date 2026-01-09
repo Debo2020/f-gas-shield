@@ -84,7 +84,7 @@ export function LabelGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
 
   const gwp = GWP_VALUES[equipment.refrigerant_type] || 0;
-  const equipmentUrl = `${window.location.origin}/equipment?id=${equipment.id}`;
+  const equipmentUrl = `${window.location.origin}/equipment/${equipment.id}`;
   const size = LABEL_SIZES[labelSize];
 
   const handlePrint = () => {

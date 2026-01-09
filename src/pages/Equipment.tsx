@@ -446,7 +446,12 @@ export default function Equipment() {
                     <TableRow key={eq.id} id={`equipment-${eq.id}`} className="transition-colors duration-500">
                       <TableCell>
                         <div>
-                          <p className="font-medium">{eq.name}</p>
+                          <Link
+                            to={`/equipment/${eq.id}`}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            {eq.name}
+                          </Link>
                           {(eq.manufacturer || eq.model) && (
                             <p className="text-sm text-muted-foreground">
                               {[eq.manufacturer, eq.model].filter(Boolean).join(" ")}
