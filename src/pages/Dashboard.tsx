@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
 import { InspectionTrendsChart } from "@/components/dashboard/InspectionTrendsChart";
+import { LicenseWidget } from "@/components/dashboard/LicenseWidget";
 import { LiveClock } from "@/components/ui/live-clock";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { StatusIndicator } from "@/components/ui/status-indicator";
@@ -228,29 +229,35 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Compliance Status */}
-          <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
-            <CardHeader>
-              <CardTitle>Compliance Status</CardTitle>
-              <CardDescription>
-                Overview of your F-Gas compliance position
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
-                  <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
+          {/* License Widget & Compliance Status */}
+          <div className="space-y-6">
+            <div className="animate-slide-up opacity-0" style={{ animationDelay: '550ms', animationFillMode: 'forwards' }}>
+              <LicenseWidget />
+            </div>
+            
+            <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '600ms', animationFillMode: 'forwards' }}>
+              <CardHeader>
+                <CardTitle>Compliance Status</CardTitle>
+                <CardDescription>
+                  Overview of your F-Gas compliance position
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
+                    <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="font-medium">No equipment registered yet</h3>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                    Add your first site and equipment to start tracking F-Gas compliance
+                  </p>
+                  <Button asChild className="mt-4" variant="outline">
+                    <Link to="/sites/new">Get Started</Link>
+                  </Button>
                 </div>
-                <h3 className="font-medium">No equipment registered yet</h3>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Add your first site and equipment to start tracking F-Gas compliance
-                </p>
-                <Button asChild className="mt-4" variant="outline">
-                  <Link to="/sites/new">Get Started</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
