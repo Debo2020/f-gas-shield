@@ -11,7 +11,7 @@ import {
   Clock,
   Plus,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
@@ -23,6 +23,7 @@ import { StatusIndicator } from "@/components/ui/status-indicator";
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const today = startOfToday();
   const in30Days = addDays(today, 30);
 
@@ -117,11 +118,9 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            <Button asChild className="animate-scale-in">
-              <Link to="/sites/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Site
-              </Link>
+            <Button onClick={() => navigate("/sites?action=new")} className="animate-scale-in">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Site
             </Button>
           </div>
         </div>
@@ -204,7 +203,10 @@ export default function Dashboard() {
                   </div>
                 </div>
               </Link>
-              <Link to="/sites/new" className="block">
+              <div 
+                onClick={() => navigate("/sites?action=new")} 
+                className="block cursor-pointer"
+              >
                 <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
                     <Building2 className="h-4 w-4" />
@@ -214,8 +216,11 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground">Register a customer location</p>
                   </div>
                 </div>
-              </Link>
-              <Link to="/equipment/new" className="block">
+              </div>
+              <div 
+                onClick={() => navigate("/equipment?action=new")} 
+                className="block cursor-pointer"
+              >
                 <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
                     <Shield className="h-4 w-4" />
@@ -225,7 +230,7 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground">Add F-Gas equipment to track</p>
                   </div>
                 </div>
-              </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -251,8 +256,8 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mt-1 max-w-xs">
                     Add your first site and equipment to start tracking F-Gas compliance
                   </p>
-                  <Button asChild className="mt-4" variant="outline">
-                    <Link to="/sites/new">Get Started</Link>
+                  <Button onClick={() => navigate("/sites?action=new")} className="mt-4" variant="outline">
+                    Get Started
                   </Button>
                 </div>
               </CardContent>

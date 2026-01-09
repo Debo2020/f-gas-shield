@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { format, differenceInDays } from "date-fns";
 import {
   Thermometer,
@@ -98,6 +98,7 @@ interface Company {
 
 export default function Equipment() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
@@ -162,6 +163,14 @@ export default function Equipment() {
   useEffect(() => {
     fetchData();
   }, [profile?.company_id]);
+
+  // Handle ?action=new from URL
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && canPerformActions && sites.length > 0 && !isLoading) {
+      setIsDialogOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, canPerformActions, sites.length, isLoading]);
 
   const handleAddEquipment = async (values: EquipmentFormValues) => {
     if (!profile?.company_id) return;

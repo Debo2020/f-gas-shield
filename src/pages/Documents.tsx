@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FileText, Search, Filter, Upload, File, Image, Loader2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, { label: string; variant: "default" |
 export default function Documents() {
   const { profile } = useAuth();
   const companyId = profile?.company_id;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +100,14 @@ export default function Documents() {
   useEffect(() => {
     fetchDocuments();
   }, [companyId]);
+
+  // Handle ?action=new from URL
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && companyId && !loading) {
+      setUploadDialogOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, companyId, loading]);
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());

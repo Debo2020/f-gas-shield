@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MapPin, Plus, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ interface Site {
 
 export default function Sites() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,6 +76,14 @@ export default function Sites() {
   useEffect(() => {
     fetchSites();
   }, [profile?.company_id]);
+
+  // Handle ?action=new from URL
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && canPerformActions && !isLoading) {
+      setIsDialogOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, canPerformActions, isLoading]);
 
   const handleAddSite = async (values: SiteFormValues) => {
     if (!profile?.company_id) return;
