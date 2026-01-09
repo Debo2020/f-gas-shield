@@ -19,6 +19,8 @@ import Reports from "./pages/Reports";
 import AcceptInvite from "./pages/AcceptInvite";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import Licenses from "./pages/settings/Licenses";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +106,15 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route
+              path="/settings/licenses"
+              element={
+                <ProtectedRoute>
+                  <Licenses />
                 </ProtectedRoute>
               }
             />

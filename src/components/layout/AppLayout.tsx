@@ -23,6 +23,7 @@ import {
   LogOut,
   Menu,
   X,
+  Key,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState } from "react";
@@ -43,7 +44,8 @@ const navigation = [
 
 const managementNav = [
   { name: "Team", href: "/team", icon: Users, roles: ["owner", "manager"] as const },
-  { name: "Settings", href: "/settings", icon: Settings, roles: ["owner"] as const },
+  { name: "Licenses", href: "/settings/licenses", icon: Key, roles: ["owner", "manager"] as const },
+  { name: "Settings", href: "/settings/company", icon: Settings, roles: ["owner"] as const },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
