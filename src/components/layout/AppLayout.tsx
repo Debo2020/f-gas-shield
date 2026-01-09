@@ -26,6 +26,7 @@ import {
   Key,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LicenseWarningBanner } from "./LicenseWarningBanner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -216,6 +217,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           </nav>
         )}
       </header>
+
+      {/* License Warning Banner */}
+      <LicenseWarningBanner />
 
       {/* Main Content */}
       <main className="flex-1">{children}</main>
