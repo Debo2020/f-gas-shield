@@ -398,6 +398,72 @@ export type Database = {
           },
         ]
       }
+      refrigerant_movements: {
+        Row: {
+          company_id: string
+          created_at: string
+          cylinder_reference: string | null
+          engineer_id: string
+          engineer_name: string
+          equipment_id: string | null
+          id: string
+          movement_date: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes: string | null
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          source: string | null
+          updated_at: string
+          weight_kg: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          cylinder_reference?: string | null
+          engineer_id: string
+          engineer_name: string
+          equipment_id?: string | null
+          id?: string
+          movement_date?: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          source?: string | null
+          updated_at?: string
+          weight_kg: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          cylinder_reference?: string | null
+          engineer_id?: string
+          engineer_name?: string
+          equipment_id?: string | null
+          id?: string
+          movement_date?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
+          source?: string | null
+          updated_at?: string
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refrigerant_movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refrigerant_movements_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           address: string
@@ -618,6 +684,7 @@ export type Database = {
         | "report"
         | "other"
       inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
+      movement_type: "book_out" | "book_in" | "recovered"
       refrigerant_type:
         | "R-32"
         | "R-134a"
@@ -770,6 +837,7 @@ export const Constants = {
         "other",
       ],
       inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
+      movement_type: ["book_out", "book_in", "recovered"],
       refrigerant_type: [
         "R-32",
         "R-134a",

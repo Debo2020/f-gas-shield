@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format, startOfYear, endOfYear } from "date-fns";
-import { Download, Plus, Snowflake, Filter, Calendar } from "lucide-react";
+import { Download, Plus, Snowflake, Filter, Calendar, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -14,8 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GasLogSummary } from "@/components/gas-log/GasLogSummary";
 import { GasLogTable } from "@/components/gas-log/GasLogTable";
+import { EngineerGasLog } from "@/components/gas-log/EngineerGasLog";
+import { ManagerGasLog } from "@/components/gas-log/ManagerGasLog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LiveClock } from "@/components/ui/live-clock";
@@ -57,6 +60,8 @@ interface Site {
 export default function GasLog() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
   const isOwner = hasRole("owner");
+  const isManager = hasRole("manager");
+  const canViewCompanyLog = isOwner || isManager;
   const canRecord = isOwner || hasActiveLicense;
   const navigate = useNavigate();
   const [movements, setMovements] = useState<GasMovement[]>([]);
@@ -64,12 +69,13 @@ export default function GasLog() {
   const [isLoading, setIsLoading] = useState(true);
   const [siteFilter, setSiteFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
+  const [activeTab, setActiveTab] = useState<string>(canViewCompanyLog ? "company" : "personal");
 
   useEffect(() => {
-    if (profile?.company_id) {
+    if (profile?.company_id && activeTab === "inspections") {
       fetchData();
     }
-  }, [profile?.company_id, yearFilter]);
+  }, [profile?.company_id, yearFilter, activeTab]);
 
   const fetchData = async () => {
     if (!profile?.company_id) return;
@@ -199,7 +205,7 @@ export default function GasLog() {
               <div>
                 <h1 className="text-2xl md:text-3xl font-heading font-bold gradient-text">F-Gas Log</h1>
                 <p className="text-muted-foreground">
-                  Track refrigerant usage and calculate CO₂ equivalent emissions
+                  Track refrigerant stock, usage and CO₂ equivalent emissions
                 </p>
               </div>
             </div>
@@ -207,68 +213,80 @@ export default function GasLog() {
           </div>
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleExportCSV}
-                disabled={filteredMovements.length === 0}
-                className="animate-scale-in"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <Button 
-                onClick={() => canRecord ? navigate("/inspections") : null} 
-                disabled={!canRecord}
-                title={!canRecord ? "License required" : undefined}
-                className="animate-scale-in"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Record Inspection
-              </Button>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="p-6">
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-8 w-20" />
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
-            <GasLogSummary {...summary} />
-          </div>
-        )}
+        {/* Tabs for different views */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="personal" className="gap-2">
+              <User className="h-4 w-4" />
+              My Gas Log
+            </TabsTrigger>
+            {canViewCompanyLog && (
+              <TabsTrigger value="company" className="gap-2">
+                <Building2 className="h-4 w-4" />
+                Company Log
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="inspections" className="gap-2">
+              <Snowflake className="h-4 w-4" />
+              Inspections
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filters */}
-        <Card className="p-4 animate-slide-up opacity-0 card-interactive" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span>Filters:</span>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select value={yearFilter} onValueChange={setYearFilter}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Personal Gas Log Tab */}
+          <TabsContent value="personal" className="space-y-6">
+            <EngineerGasLog yearFilter={yearFilter} />
+          </TabsContent>
+
+          {/* Company Gas Log Tab (Managers/Owners only) */}
+          {canViewCompanyLog && (
+            <TabsContent value="company" className="space-y-6">
+              <ManagerGasLog yearFilter={yearFilter} />
+            </TabsContent>
+          )}
+
+          {/* Inspection-based Gas Log Tab */}
+          <TabsContent value="inspections" className="space-y-6">
+            <div className="flex flex-wrap gap-2 items-center justify-between">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleExportCSV}
+                  disabled={filteredMovements.length === 0}
+                  className="animate-scale-in"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+                <Button 
+                  onClick={() => canRecord ? navigate("/inspections") : null} 
+                  disabled={!canRecord}
+                  title={!canRecord ? "License required" : undefined}
+                  className="animate-scale-in"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Inspection
+                </Button>
               </div>
+
+              {/* Site Filter */}
               <Select value={siteFilter} onValueChange={setSiteFilter}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="All Sites" />
@@ -283,19 +301,35 @@ export default function GasLog() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </Card>
 
-        {/* Table */}
-        <div className="animate-scale-in opacity-0" style={{ animationDelay: '300ms', animationFillMode: 'forwards' }}>
-          {isLoading ? (
-            <Card className="p-6">
-              <Skeleton className="h-[400px] w-full" />
-            </Card>
-          ) : (
-            <GasLogTable movements={filteredMovements} />
-          )}
-        </div>
+            {/* Summary Cards */}
+            {isLoading ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                  <Card key={i} className="p-6">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-8 w-20" />
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
+                <GasLogSummary {...summary} />
+              </div>
+            )}
+
+            {/* Table */}
+            <div className="animate-scale-in opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
+              {isLoading ? (
+                <Card className="p-6">
+                  <Skeleton className="h-[400px] w-full" />
+                </Card>
+              ) : (
+                <GasLogTable movements={filteredMovements} />
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
