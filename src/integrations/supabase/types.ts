@@ -512,6 +512,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_can_create_company: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "owner" | "manager" | "engineer"
