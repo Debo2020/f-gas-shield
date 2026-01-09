@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "owner" | "manager" | "engineer";
+type LicenseStatus = "active" | "disabled" | "pending" | null;
 
 interface Profile {
   id: string;
@@ -22,12 +23,15 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  licenseStatus: LicenseStatus;
+  hasActiveLicense: boolean;
   isLoading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   refreshProfile: () => Promise<void>;
+  refreshLicense: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -48,6 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (profileData) {
       setProfile(profileData as Profile);
+      
+      // Fetch license status if user has a company
+      if (profileData.company_id) {
+        const { data: licenseData } = await supabase
+          .from("user_licenses")
+          .select("status")
+          .eq("user_id", userId)
+          .eq("company_id", profileData.company_id)
+          .single();
+        
+        setLicenseStatus(licenseData?.status as LicenseStatus || null);
+      }
     }
 
     const { data: rolesData } = await supabase
@@ -63,6 +80,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
+    }
+  };
+
+  const refreshLicense = async () => {
+    if (user && profile?.company_id) {
+      const { data: licenseData } = await supabase
+        .from("user_licenses")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("company_id", profile.company_id)
+        .single();
+      
+      setLicenseStatus(licenseData?.status as LicenseStatus || null);
     }
   };
 
@@ -149,9 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);
+    setLicenseStatus(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
+  
+  // Owners are always considered to have an active license
+  const hasActiveLicense = roles.includes("owner") || licenseStatus === "active";
 
   return (
     <AuthContext.Provider
@@ -160,12 +194,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         roles,
+        licenseStatus,
+        hasActiveLicense,
         isLoading,
         signUp,
         signIn,
         signOut,
         hasRole,
         refreshProfile,
+        refreshLicense,
       }}
     >
       {children}
