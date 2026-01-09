@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,8 +12,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { CylinderStatusBadge } from "./CylinderStatusBadge";
+
+interface TeamMember {
+  user_id: string;
+  full_name: string;
+  email: string;
+}
 
 interface Cylinder {
   id: string;
@@ -43,42 +56,76 @@ export function CylinderCheckInOutDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newWeight, setNewWeight] = useState<string>("");
 
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedEngineerId, setSelectedEngineerId] = useState<string>("");
+
+  // Fetch team members when dialog opens for check-out
+  useEffect(() => {
+    if (open && profile?.company_id && action === "check_out") {
+      const fetchTeamMembers = async () => {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .eq("company_id", profile.company_id);
+
+        if (!error && data) {
+          setTeamMembers(data);
+        }
+      };
+      fetchTeamMembers();
+    }
+  }, [open, profile?.company_id, action]);
+
+  // Pre-select current user
+  useEffect(() => {
+    if (user?.id && open) {
+      setSelectedEngineerId(user.id);
+    }
+  }, [user?.id, open]);
+
   const handleAction = async () => {
     if (!user || !profile?.company_id || !cylinder) {
       toast.error("Missing required information");
       return;
     }
 
+    if (action === "check_out" && !selectedEngineerId) {
+      toast.error("Please select an engineer");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (action === "check_out") {
-        // Check out cylinder to current user
+        const selectedMember = teamMembers.find(m => m.user_id === selectedEngineerId);
+        
+        // Check out cylinder to selected engineer
         const { error } = await supabase
           .from("refrigerant_cylinders")
           .update({
             status: "checked_out",
-            checked_out_to: user.id,
+            checked_out_to: selectedEngineerId,
             checked_out_at: new Date().toISOString(),
           })
           .eq("id", cylinder.id);
 
         if (error) throw error;
 
-        // Record movement
+        // Record movement for the selected engineer
         await supabase.from("refrigerant_movements").insert([{
           company_id: profile.company_id,
-          engineer_id: user.id,
-          engineer_name: profile.full_name || "Unknown",
+          engineer_id: selectedEngineerId,
+          engineer_name: selectedMember?.full_name || "Unknown",
           movement_type: "book_out" as const,
           refrigerant_type: cylinder.refrigerant_type as any,
           weight_kg: cylinder.current_weight_kg,
           cylinder_reference: cylinder.cylinder_code,
           cylinder_id: cylinder.id,
           movement_date: new Date().toISOString().split("T")[0],
-          notes: `Checked out cylinder ${cylinder.cylinder_code}`,
+          notes: `Checked out to ${selectedMember?.full_name}${selectedEngineerId !== user.id ? ` by ${profile.full_name}` : ""}`,
         }]);
 
-        toast.success(`Cylinder ${cylinder.cylinder_code} checked out`);
+        toast.success(`Cylinder ${cylinder.cylinder_code} checked out to ${selectedMember?.full_name}`);
       } else {
         // Check in cylinder
         const weight = newWeight ? parseFloat(newWeight) : cylinder.current_weight_kg;
@@ -144,7 +191,7 @@ export function CylinderCheckInOutDialog({
           </DialogTitle>
           <DialogDescription>
             {action === "check_out"
-              ? "Assign this cylinder to yourself for field use"
+              ? "Assign this cylinder to a team member"
               : "Return this cylinder to inventory"}
           </DialogDescription>
         </DialogHeader>
@@ -164,6 +211,27 @@ export function CylinderCheckInOutDialog({
             <Label>Current Weight</Label>
             <p className="text-2xl font-bold">{cylinder.current_weight_kg} kg</p>
           </div>
+
+          {action === "check_out" && (
+            <div className="space-y-2">
+              <Label htmlFor="engineer-select">Assign To</Label>
+              <Select value={selectedEngineerId} onValueChange={setSelectedEngineerId}>
+                <SelectTrigger id="engineer-select">
+                  <SelectValue placeholder="Select engineer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.user_id} value={member.user_id}>
+                      <span>{member.full_name}</span>
+                      {member.user_id === user?.id && (
+                        <span className="text-muted-foreground ml-1">(You)</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {action === "check_in" && (
             <div className="space-y-2">
