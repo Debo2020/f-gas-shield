@@ -172,6 +172,22 @@ export default function Equipment() {
     }
   }, [searchParams, canPerformActions, sites.length, isLoading]);
 
+  // Handle ?highlight=id from URL (scroll to and highlight equipment row)
+  useEffect(() => {
+    const highlightId = searchParams.get("highlight");
+    if (highlightId && !isLoading && equipment.length > 0) {
+      setSearchParams({}, { replace: true });
+      setTimeout(() => {
+        const row = document.getElementById(`equipment-${highlightId}`);
+        if (row) {
+          row.scrollIntoView({ behavior: "smooth", block: "center" });
+          row.classList.add("bg-primary/10");
+          setTimeout(() => row.classList.remove("bg-primary/10"), 2000);
+        }
+      }, 100);
+    }
+  }, [searchParams, isLoading, equipment.length]);
+
   const handleAddEquipment = async (values: EquipmentFormValues) => {
     if (!profile?.company_id) return;
 
@@ -425,7 +441,7 @@ export default function Equipment() {
                 {filteredEquipment.map((eq) => {
                   const inspectionStatus = getInspectionStatus(eq.next_inspection_due);
                   return (
-                    <TableRow key={eq.id}>
+                    <TableRow key={eq.id} id={`equipment-${eq.id}`} className="transition-colors duration-500">
                       <TableCell>
                         <div>
                           <p className="font-medium">{eq.name}</p>
