@@ -16,6 +16,7 @@ import Equipment from "./pages/Equipment";
 import Inspections from "./pages/Inspections";
 import GasLog from "./pages/GasLog";
 import Reports from "./pages/Reports";
+import Documents from "./pages/Documents";
 import AcceptInvite from "./pages/AcceptInvite";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
@@ -106,6 +107,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents"
+              element={
+                <ProtectedRoute requireLicense>
+                  <Documents />
                 </ProtectedRoute>
               }
             />

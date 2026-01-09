@@ -100,6 +100,86 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
+          equipment_id: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          inspection_id: string | null
+          mime_type: string | null
+          name: string
+          site_id: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
+          equipment_id?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          inspection_id?: string | null
+          mime_type?: string | null
+          name: string
+          site_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
+          equipment_id?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          inspection_id?: string | null
+          mime_type?: string | null
+          name?: string
+          site_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           asset_tag: string | null
@@ -516,6 +596,14 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "manager" | "engineer"
+      document_type:
+        | "certificate"
+        | "invoice"
+        | "photo"
+        | "declaration"
+        | "label"
+        | "report"
+        | "other"
       inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
       refrigerant_type:
         | "R-32"
@@ -659,6 +747,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "manager", "engineer"],
+      document_type: [
+        "certificate",
+        "invoice",
+        "photo",
+        "declaration",
+        "label",
+        "report",
+        "other",
+      ],
       inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
       refrigerant_type: [
         "R-32",

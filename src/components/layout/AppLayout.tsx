@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   Snowflake,
   FileText,
+  FolderOpen,
   Users,
   Settings,
   LogOut,
@@ -40,6 +41,7 @@ const navigation = [
   { name: "Equipment", href: "/equipment", icon: Shield },
   { name: "Inspections", href: "/inspections", icon: ClipboardCheck },
   { name: "F-Gas", href: "/gas-log", icon: Snowflake },
+  { name: "Documents", href: "/documents", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileText },
 ];
 
