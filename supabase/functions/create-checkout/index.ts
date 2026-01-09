@@ -25,9 +25,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { priceId } = await req.json();
+    const { priceId, quantity = 1, companyName, tier } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Price ID received", { priceId });
+    logStep("Request received", { priceId, quantity, companyName, tier });
 
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
@@ -51,15 +51,29 @@ serve(async (req) => {
       line_items: [
         {
           price: priceId,
-          quantity: 1,
+          quantity: quantity,
         },
       ],
       mode: "subscription",
       success_url: `${origin}/dashboard?subscription=success`,
       cancel_url: `${origin}/pricing?subscription=cancelled`,
+      metadata: {
+        user_id: user.id,
+        company_name: companyName || "",
+        tier: tier || "",
+        license_count: quantity.toString(),
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          company_name: companyName || "",
+          tier: tier || "",
+          license_count: quantity.toString(),
+        },
+      },
     });
 
-    logStep("Checkout session created", { sessionId: session.id });
+    logStep("Checkout session created", { sessionId: session.id, quantity });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

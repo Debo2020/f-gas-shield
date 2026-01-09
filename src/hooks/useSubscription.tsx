@@ -7,6 +7,8 @@ interface SubscriptionState {
   subscribed: boolean;
   tier: SubscriptionTier | null;
   subscriptionEnd: string | null;
+  licenseCount: number;
+  licensesUsed: number;
   loading: boolean;
   error: string | null;
 }
@@ -17,6 +19,8 @@ export function useSubscription() {
     subscribed: false,
     tier: null,
     subscriptionEnd: null,
+    licenseCount: 0,
+    licensesUsed: 0,
     loading: true,
     error: null,
   });
@@ -27,6 +31,8 @@ export function useSubscription() {
         subscribed: false,
         tier: null,
         subscriptionEnd: null,
+        licenseCount: 0,
+        licensesUsed: 0,
         loading: false,
         error: null,
       });
@@ -46,6 +52,8 @@ export function useSubscription() {
         subscribed: data.subscribed,
         tier,
         subscriptionEnd: data.subscription_end,
+        licenseCount: data.license_count || 0,
+        licensesUsed: data.licenses_used || 0,
         loading: false,
         error: null,
       });
@@ -70,10 +78,10 @@ export function useSubscription() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  const createCheckout = async (priceId: string) => {
+  const createCheckout = async (priceId: string, quantity = 1, companyName?: string, tier?: string) => {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId },
+        body: { priceId, quantity, companyName, tier },
       });
       
       if (error) throw new Error(error.message);
