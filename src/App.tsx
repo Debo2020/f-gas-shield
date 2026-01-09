@@ -72,7 +72,7 @@ const App = () => (
             <Route
               path="/sites"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireLicense>
                   <Sites />
                 </ProtectedRoute>
               }
@@ -80,7 +80,7 @@ const App = () => (
             <Route
               path="/equipment"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireLicense>
                   <Equipment />
                 </ProtectedRoute>
               }
@@ -88,7 +88,7 @@ const App = () => (
             <Route
               path="/inspections"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireLicense>
                   <Inspections />
                 </ProtectedRoute>
               }
@@ -96,7 +96,7 @@ const App = () => (
             <Route
               path="/gas-log"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireLicense>
                   <GasLog />
                 </ProtectedRoute>
               }

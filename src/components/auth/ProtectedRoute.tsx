@@ -2,13 +2,15 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { LicenseBlockedPage } from "./LicenseBlockedPage";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  requireLicense?: boolean;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+export function ProtectedRoute({ children, requireLicense = false }: ProtectedRouteProps) {
+  const { user, isLoading, hasRole, hasActiveLicense } = useAuth();
 
   if (isLoading) {
     return (
@@ -20,6 +22,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // License check: owners are exempt, others need active license if required
+  if (requireLicense && !hasRole("owner") && !hasActiveLicense) {
+    return <LicenseBlockedPage />;
   }
 
   return <>{children}</>;
