@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { EquipmentDialog } from "@/components/equipment/EquipmentDialog";
+import { ComplianceThresholdBadge, getComplianceThreshold } from "@/components/equipment/ComplianceThresholdBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -387,6 +388,7 @@ export default function Equipment() {
                   <TableHead>Refrigerant</TableHead>
                   <TableHead className="text-right">Charge (kg)</TableHead>
                   <TableHead className="text-right">CO₂e (t)</TableHead>
+                  <TableHead>Threshold</TableHead>
                   <TableHead>Next Inspection</TableHead>
                   <TableHead>Status</TableHead>
                   {(canEdit || canDelete) && <TableHead className="w-10"></TableHead>}
@@ -421,6 +423,12 @@ export default function Equipment() {
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {eq.co2_equivalent_tonnes?.toFixed(2) || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <ComplianceThresholdBadge 
+                          co2eTonnes={eq.co2_equivalent_tonnes} 
+                          showFrequency 
+                        />
                       </TableCell>
                       <TableCell>
                         {eq.next_inspection_due ? (
