@@ -13,6 +13,7 @@ import CompanySettings from "./pages/settings/CompanySettings";
 import Team from "./pages/Team";
 import Sites from "./pages/Sites";
 import Equipment from "./pages/Equipment";
+import EquipmentDetail from "./pages/EquipmentDetail";
 import Inspections from "./pages/Inspections";
 import GasLog from "./pages/GasLog";
 import Reports from "./pages/Reports";
@@ -83,6 +84,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireLicense>
                   <Equipment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/equipment/:id"
+              element={
+                <ProtectedRoute requireLicense>
+                  <EquipmentDetail />
                 </ProtectedRoute>
               }
             />
