@@ -24,6 +24,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -101,6 +102,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Right side */}
           <div className="flex items-center gap-2 ml-auto">
+            {/* Theme toggle */}
+            <ThemeToggle />
+            
             {/* Management dropdown for owners/managers */}
             {(hasRole("owner") || hasRole("manager")) && (
               <div className="hidden md:flex items-center gap-1">
