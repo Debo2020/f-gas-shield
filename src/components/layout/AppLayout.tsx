@@ -80,9 +80,11 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex h-16 items-center px-4 md:px-6">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-2 mr-6">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
-              <Shield className="h-5 w-5" />
-            </div>
+            <img 
+              src="/favicon.png" 
+              alt="FTrack Logo" 
+              className="w-9 h-9 rounded-lg"
+            />
             <span className="font-heading font-bold text-lg hidden sm:inline">FTrack</span>
           </Link>
 
