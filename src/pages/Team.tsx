@@ -96,16 +96,22 @@ export default function Team() {
   const handleInvite = async (email: string, role: "manager" | "engineer") => {
     if (!profile?.company_id || !user) return;
 
-    const { error } = await supabase.from("team_invitations").insert({
-      company_id: profile.company_id,
-      email: email.toLowerCase(),
-      role,
-      invited_by: user.id,
+    // Call the invite-member edge function which handles:
+    // 1. Creating the invitation record
+    // 2. Creating the user in auth system
+    // 3. Generating a magic link
+    // 4. Sending the invitation email via Resend
+    const { data, error } = await supabase.functions.invoke("invite-member", {
+      body: {
+        org_id: profile.company_id,
+        email: email.toLowerCase(),
+        role,
+      },
     });
 
-    if (error) {
-      toast.error(error.message || "Failed to send invitation");
-      throw error;
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to send invitation");
+      throw error || new Error(data?.error);
     }
 
     toast.success(`Invitation sent to ${email}`);
