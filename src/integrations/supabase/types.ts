@@ -765,7 +765,13 @@ export type Database = {
       user_can_create_company: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "owner" | "manager" | "engineer"
+      app_role:
+        | "owner"
+        | "manager"
+        | "engineer"
+        | "admin"
+        | "auditor"
+        | "read_only"
       cylinder_status: "in_stock" | "checked_out" | "empty" | "disposed"
       document_type:
         | "certificate"
@@ -918,7 +924,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "manager", "engineer"],
+      app_role: [
+        "owner",
+        "manager",
+        "engineer",
+        "admin",
+        "auditor",
+        "read_only",
+      ],
       cylinder_status: ["in_stock", "checked_out", "empty", "disposed"],
       document_type: [
         "certificate",
