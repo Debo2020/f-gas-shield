@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { offlineDb, hashCredentials, CachedProfile } from "@/lib/offline-db";
+import { cacheCompanyData } from "@/lib/sync-service";
 
 type AppRole = "owner" | "manager" | "engineer";
 type LicenseStatus = "active" | "disabled" | "pending" | null;
@@ -26,8 +28,10 @@ interface AuthContextType {
   licenseStatus: LicenseStatus;
   hasActiveLicense: boolean;
   isLoading: boolean;
+  isOfflineMode: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInOffline: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   refreshProfile: () => Promise<void>;
@@ -43,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data: profileData } = await supabase
@@ -74,6 +79,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (rolesData) {
       setRoles(rolesData.map((r) => r.role as AppRole));
+    }
+
+    // Cache profile for offline use
+    if (profileData) {
+      try {
+        const credentialHash = await hashCredentials(profileData.email);
+        await offlineDb.cachedProfile.put({
+          user_id: userId,
+          profile: profileData as Profile,
+          roles: rolesData?.map((r) => r.role) || [],
+          license_status: licenseStatus,
+          cached_at: new Date().toISOString(),
+          credential_hash: credentialHash,
+        });
+
+        // Cache company data for offline access
+        if (profileData.company_id && navigator.onLine) {
+          cacheCompanyData(profileData.company_id).catch(console.error);
+        }
+      } catch (err) {
+        console.error("Failed to cache profile:", err);
+      }
     }
   };
 
@@ -180,6 +207,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setRoles([]);
     setLicenseStatus(null);
+    setIsOfflineMode(false);
+  };
+
+  // Offline login using cached credentials
+  const signInOffline = async (email: string): Promise<{ error: Error | null }> => {
+    try {
+      const credentialHash = await hashCredentials(email);
+      
+      // Find cached profile matching the email hash
+      const cachedProfiles = await offlineDb.cachedProfile.toArray();
+      const cached = cachedProfiles.find(p => p.credential_hash === credentialHash);
+      
+      if (!cached) {
+        return { error: new Error("No cached credentials found. Please sign in online first.") };
+      }
+
+      // Check if cache is not too old (7 days)
+      const cacheAge = Date.now() - new Date(cached.cached_at).getTime();
+      const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+      
+      if (cacheAge > maxAge) {
+        return { error: new Error("Cached credentials expired. Please sign in online.") };
+      }
+
+      // Set offline mode and load cached data
+      setIsOfflineMode(true);
+      setProfile(cached.profile);
+      setRoles(cached.roles as AppRole[]);
+      setLicenseStatus(cached.license_status as LicenseStatus);
+      
+      // Create a minimal user object for compatibility
+      setUser({
+        id: cached.user_id,
+        email: cached.profile.email,
+      } as User);
+
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error("Offline login failed") };
+    }
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -197,8 +264,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         licenseStatus,
         hasActiveLicense,
         isLoading,
+        isOfflineMode,
         signUp,
         signIn,
+        signInOffline,
         signOut,
         hasRole,
         refreshProfile,
