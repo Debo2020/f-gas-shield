@@ -38,6 +38,7 @@ interface UseLicensesReturn {
   toggleLicense: (licenseId: string, enable: boolean) => Promise<boolean>;
   revokeLicense: (licenseId: string) => Promise<boolean>;
   updateLicenseCount: (newCount: number) => Promise<boolean>;
+  resendInvitation: (license: License) => Promise<boolean>;
 }
 
 export function useLicenses(): UseLicensesReturn {
@@ -252,6 +253,45 @@ export function useLicenses(): UseLicensesReturn {
     }
   };
 
+  const resendInvitation = async (license: License): Promise<boolean> => {
+    if (!profile?.company_id || !license.email) return false;
+
+    try {
+      // Fetch company name for the invitation email
+      let companyName = "Your Company";
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", profile.company_id)
+        .single();
+      
+      if (companyData?.name) {
+        companyName = companyData.name;
+      }
+
+      // Send invitation email
+      const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
+        body: {
+          email: license.email.toLowerCase(),
+          licenseType: license.license_type,
+          companyName,
+          invitedByName: profile.full_name,
+          appUrl: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (emailError) {
+        throw new Error(emailError.message);
+      }
+
+      toast.success(`Invitation resent to ${license.email}`);
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resend invitation");
+      return false;
+    }
+  };
+
   return {
     licenses,
     stats,
@@ -262,5 +302,6 @@ export function useLicenses(): UseLicensesReturn {
     toggleLicense,
     revokeLicense,
     updateLicenseCount,
+    resendInvitation,
   };
 }

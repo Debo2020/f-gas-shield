@@ -57,7 +57,7 @@ import { cn } from "@/lib/utils";
 
 export default function Licenses() {
   const { hasRole } = useAuth();
-  const { licenses, stats, loading, refetch, assignLicense, toggleLicense, revokeLicense, updateLicenseCount } = useLicenses();
+  const { licenses, stats, loading, refetch, assignLicense, toggleLicense, revokeLicense, updateLicenseCount, resendInvitation } = useLicenses();
   const { tier, openCustomerPortal, subscribed, checkSubscription, loading: subscriptionLoading } = useSubscription();
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
@@ -70,6 +70,7 @@ export default function Licenses() {
   const [licensesToAdd, setLicensesToAdd] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -126,6 +127,12 @@ export default function Licenses() {
     if (!confirmRevokeDialog) return;
     await revokeLicense(confirmRevokeDialog.id);
     setConfirmRevokeDialog(null);
+  };
+
+  const handleResendInvitation = async (license: License) => {
+    setResendingId(license.id);
+    await resendInvitation(license);
+    setResendingId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -372,13 +379,25 @@ export default function Licenses() {
                           {license.license_type !== "owner" && (
                             <div className="flex justify-end gap-2">
                               {license.status === "pending" ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setConfirmRevokeDialog(license)}
-                                >
-                                  <UserX className="h-4 w-4" />
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleResendInvitation(license)}
+                                    disabled={resendingId === license.id}
+                                    title="Resend invitation"
+                                  >
+                                    <RefreshCw className={`h-4 w-4 ${resendingId === license.id ? "animate-spin" : ""}`} />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setConfirmRevokeDialog(license)}
+                                    title="Revoke license"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                  </Button>
+                                </>
                               ) : (
                                 <Button
                                   variant="ghost"
