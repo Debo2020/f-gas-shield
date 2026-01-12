@@ -2,6 +2,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Printer } from "lucide-react";
+import { escapeHtml } from "@/lib/html-escape";
 
 interface CylinderQRCodeProps {
   cylinderCode: string;
@@ -59,10 +60,18 @@ export function CylinderQRCode({
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
+    // Escape user-controlled data to prevent XSS
+    const safeCylinderCode = escapeHtml(cylinderCode);
+    const safeRefrigerantType = escapeHtml(refrigerantType);
+    
+    // Get QR SVG content safely
+    const qrElement = document.getElementById(`qr-${cylinderId}`);
+    const qrContent = qrElement ? qrElement.innerHTML : '';
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Cylinder Label - ${cylinderCode}</title>
+          <title>Cylinder Label - ${safeCylinderCode}</title>
           <style>
             body { 
               display: flex; 
@@ -85,9 +94,9 @@ export function CylinderQRCode({
         </head>
         <body>
           <div class="label">
-            <svg id="print-qr">${document.getElementById(`qr-${cylinderId}`)?.innerHTML}</svg>
-            <h2>${cylinderCode}</h2>
-            <p>${refrigerantType}</p>
+            <svg id="print-qr">${qrContent}</svg>
+            <h2>${safeCylinderCode}</h2>
+            <p>${safeRefrigerantType}</p>
           </div>
           <script>window.onload = () => window.print();</script>
         </body>

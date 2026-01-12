@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Printer, Download } from "lucide-react";
+import { escapeHtml } from "@/lib/html-escape";
 
 // GWP values for display
 const GWP_VALUES: Record<string, number> = {
@@ -94,11 +95,14 @@ export function LabelGenerator({
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
+    // Escape user-controlled data to prevent XSS
+    const safeEquipmentName = escapeHtml(equipment.name);
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>F-Gas Label - ${equipment.name}</title>
+          <title>F-Gas Label - ${safeEquipmentName}</title>
           <style>
             @page {
               size: ${size.width} ${size.height};
