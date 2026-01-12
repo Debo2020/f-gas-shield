@@ -26,6 +26,8 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Licenses from "./pages/settings/Licenses";
+import CheckoutRedirect from "./pages/CheckoutRedirect";
+import SetupCompany from "./pages/SetupCompany";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,15 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
+            <Route
+              path="/setup-company"
+              element={
+                <ProtectedRoute>
+                  <SetupCompany />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={

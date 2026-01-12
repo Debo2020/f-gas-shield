@@ -5,9 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Check, Briefcase, Zap, Building } from "lucide-react";
+import { Check, Briefcase, Zap, Building, Loader2 } from "lucide-react";
 import { SUBSCRIPTION_TIERS, SubscriptionTier, formatPrice, getAnnualSavingsPercent } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { toast } from "sonner";
 
 const tierIcons: Record<SubscriptionTier, React.ComponentType<{ className?: string }>> = {
   basic: Briefcase,
@@ -21,10 +24,39 @@ interface PricingSectionProps {
 
 export function PricingSection({ showHeader = true }: PricingSectionProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createCheckout } = useSubscription();
   const [isAnnual, setIsAnnual] = useState(true);
+  const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
 
-  const handleSelectTier = (tier: SubscriptionTier) => {
-    navigate(`/onboarding?tier=${tier}&annual=${isAnnual}`);
+  const handleSelectTier = async (tier: SubscriptionTier) => {
+    // Enterprise tier always goes to contact sales
+    if (tier === "enterprise") {
+      window.location.href = "mailto:sales@fgascomply.com?subject=Enterprise%20Inquiry";
+      return;
+    }
+
+    // If not authenticated, redirect to auth with checkout params
+    if (!user) {
+      navigate(`/auth?redirect=checkout&tier=${tier}&annual=${isAnnual}`);
+      return;
+    }
+
+    // Authenticated user - go directly to Stripe checkout
+    setLoadingTier(tier);
+    try {
+      const config = SUBSCRIPTION_TIERS[tier];
+      const priceId = isAnnual && "annual_price_id" in config 
+        ? config.annual_price_id 
+        : config.price_id;
+      
+      await createCheckout(priceId, 1, undefined, tier);
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setLoadingTier(null);
+    }
   };
 
   return (
@@ -145,8 +177,18 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                       className="w-full" 
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => handleSelectTier(tier)}
+                      disabled={loadingTier === tier}
                     >
-                      {tier === "enterprise" ? "Contact Sales" : "Get Started"}
+                      {loadingTier === tier ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : tier === "enterprise" ? (
+                        "Contact Sales"
+                      ) : (
+                        "Get Started"
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>

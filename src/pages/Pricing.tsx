@@ -26,8 +26,15 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   const handleSubscribe = async (tier: SubscriptionTier) => {
+    // Enterprise tier always goes to contact sales
+    if (tier === "enterprise") {
+      window.location.href = "mailto:sales@fgascomply.com?subject=Enterprise%20Inquiry";
+      return;
+    }
+
+    // If not authenticated, redirect to auth with checkout params
     if (!user) {
-      navigate("/auth");
+      navigate(`/auth?redirect=checkout&tier=${tier}&annual=${isAnnual}`);
       return;
     }
 
@@ -37,7 +44,7 @@ export default function Pricing() {
       const priceId = isAnnual && "annual_price_id" in config 
         ? config.annual_price_id 
         : config.price_id;
-      await createCheckout(priceId);
+      await createCheckout(priceId, 1, undefined, tier);
     } catch (err) {
       toast.error("Failed to start checkout");
     } finally {

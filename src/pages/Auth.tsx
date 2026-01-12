@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isLoading, signIn, signUp } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -25,11 +26,28 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
 
+  // Check for checkout redirect params
+  const redirectToCheckout = searchParams.get("redirect") === "checkout";
+  const tier = searchParams.get("tier");
+  const annual = searchParams.get("annual");
+
   useEffect(() => {
     if (user && !isLoading) {
-      navigate("/");
+      // If there's a checkout redirect, go to checkout redirect page
+      if (redirectToCheckout && tier) {
+        navigate(`/checkout-redirect?tier=${tier}&annual=${annual || "true"}`);
+      } else {
+        navigate("/");
+      }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, redirectToCheckout, tier, annual]);
+
+  // Default to signup tab if coming from checkout flow
+  useEffect(() => {
+    if (redirectToCheckout) {
+      setActiveTab("signup");
+    }
+  }, [redirectToCheckout]);
 
   const validateSignIn = () => {
     const emailResult = emailSchema.safeParse(email);

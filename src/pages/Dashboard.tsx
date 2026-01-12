@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import {
   Plus,
   ScanLine,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter, startOfToday } from "date-fns";
@@ -27,6 +27,7 @@ import { EquipmentQuickActions } from "@/components/equipment/EquipmentQuickActi
 import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
 import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 type ScannedEquipment = Tables<"equipment"> & {
   sites?: { name: string } | null;
@@ -38,9 +39,22 @@ export default function Dashboard() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { alerts, hasCriticalAlerts } = useExpiryAlerts();
   const today = startOfToday();
   const in30Days = addDays(today, 30);
+
+  // Check for subscription success and redirect to company setup if needed
+  useEffect(() => {
+    const subscriptionSuccess = searchParams.get("subscription") === "success";
+    if (subscriptionSuccess) {
+      toast.success("Subscription activated successfully!");
+      // If no company, redirect to setup
+      if (!profile?.company_id) {
+        navigate("/setup-company", { replace: true });
+      }
+    }
+  }, [searchParams, profile?.company_id, navigate]);
 
   // Fetch sites count
   const { data: sitesCount = 0, isLoading: sitesLoading } = useQuery({
