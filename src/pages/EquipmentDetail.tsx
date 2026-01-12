@@ -104,6 +104,7 @@ interface Company {
   name: string;
   phone: string | null;
   email: string | null;
+  logo_url: string | null;
 }
 
 const RESULT_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -164,7 +165,7 @@ export default function EquipmentDetail() {
           .order("inspection_date", { ascending: false }),
         supabase
           .from("companies")
-          .select("name, phone, email")
+          .select("name, phone, email, logo_url")
           .eq("id", profile.company_id)
           .single(),
       ]);

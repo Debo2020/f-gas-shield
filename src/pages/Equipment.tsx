@@ -115,6 +115,7 @@ interface Company {
   name: string;
   phone: string | null;
   email: string | null;
+  logo_url: string | null;
 }
 
 export default function Equipment() {
@@ -167,7 +168,7 @@ export default function Equipment() {
           .order("name"),
         supabase
           .from("companies")
-          .select("name, phone, email")
+          .select("name, phone, email, logo_url")
           .eq("id", profile.company_id)
           .single(),
       ]);
