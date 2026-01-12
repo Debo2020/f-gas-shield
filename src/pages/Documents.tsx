@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { FileText, Search, Filter, Upload, File, Image, Loader2, Building2, Thermometer, Grid3X3, List } from "lucide-react";
+import { FileText, Search, Filter, Upload, File, Image, Loader2, Building2, Thermometer, Grid3X3, List, AlertTriangle } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
+import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
+import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -86,6 +88,7 @@ export default function Documents() {
   const navigate = useNavigate();
   const companyId = profile?.company_id;
   const [searchParams, setSearchParams] = useSearchParams();
+  const { alerts, criticalAlerts, warningAlerts } = useExpiryAlerts();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -95,6 +98,7 @@ export default function Documents() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [activeTab, setActiveTab] = useState("all");
 
   const fetchData = async () => {
     if (!companyId) return;
@@ -209,6 +213,7 @@ export default function Documents() {
     certificates: documents.filter((d) => d.document_type === "certificate").length,
     photos: documents.filter((d) => d.document_type === "photo").length,
     reports: documents.filter((d) => d.document_type === "report").length,
+    expiring: alerts.length,
   };
 
   const renderDocumentRow = (doc: Document) => {
@@ -298,8 +303,31 @@ export default function Documents() {
           </Button>
         </div>
 
+        {/* Expiry Alerts */}
+        {alerts.length > 0 && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Expiring Documents & Certificates
+              </CardTitle>
+              <CardDescription>
+                {criticalAlerts.length > 0 && (
+                  <Badge variant="destructive" className="mr-2">{criticalAlerts.length} critical</Badge>
+                )}
+                {warningAlerts.length > 0 && (
+                  <Badge variant="secondary">{warningAlerts.length} due soon</Badge>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpiryAlertBanner alerts={alerts} variant="full" maxVisible={5} />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-card rounded-lg border p-4">
             <p className="text-sm text-muted-foreground">Total Documents</p>
             <p className="text-2xl font-bold">{stats.total}</p>
@@ -315,6 +343,12 @@ export default function Documents() {
           <div className="bg-card rounded-lg border p-4">
             <p className="text-sm text-muted-foreground">Reports</p>
             <p className="text-2xl font-bold">{stats.reports}</p>
+          </div>
+          <div className={`bg-card rounded-lg border p-4 ${stats.expiring > 0 ? "border-amber-500/50" : ""}`}>
+            <p className="text-sm text-muted-foreground">Expiring Soon</p>
+            <p className={`text-2xl font-bold ${stats.expiring > 0 ? "text-amber-500" : ""}`}>
+              {stats.expiring}
+            </p>
           </div>
         </div>
 
