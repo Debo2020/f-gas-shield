@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react";
+import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -18,7 +19,8 @@ const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isLoading, signIn, signUp } = useAuth();
+  const { user, isLoading, signIn, signUp, signInOffline } = useAuth();
+  const { isOffline } = useNetworkStatus();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,6 +80,26 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Handle offline login
+    if (isOffline) {
+      const emailResult = emailSchema.safeParse(email);
+      if (!emailResult.success) {
+        setError(emailResult.error.errors[0].message);
+        return;
+      }
+      
+      setIsSubmitting(true);
+      const { error } = await signInOffline(email);
+      setIsSubmitting(false);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        navigate("/dashboard");
+      }
+      return;
+    }
 
     if (!validateSignIn()) return;
 
@@ -292,6 +314,15 @@ export default function Auth() {
               </Alert>
             )}
 
+            {isOffline && (
+              <Alert className="mb-4 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
+                <WifiOff className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-700 dark:text-amber-400">
+                  You're offline. Enter your email to access cached data (read-only mode).
+                </AlertDescription>
+              </Alert>
+            )}
+
             <TabsContent value="signin" className="mt-0">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
@@ -308,13 +339,15 @@ export default function Auth() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="signin-password">Password</Label>
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotPassword(true)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
+                    {!isOffline && (
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
                   </div>
                   <Input
                     id="signin-password"
@@ -322,14 +355,20 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isOffline}
                   />
+                </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
+                      {isOffline ? "Accessing offline..." : "Signing in..."}
+                    </>
+                  ) : isOffline ? (
+                    <>
+                      <WifiOff className="mr-2 h-4 w-4" />
+                      Access Offline
                     </>
                   ) : (
                     "Sign In"

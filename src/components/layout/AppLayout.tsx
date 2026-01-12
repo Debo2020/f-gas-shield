@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
+import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +111,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Right side */}
           <div className="flex items-center gap-2 ml-auto">
+            {/* Offline indicator */}
+            <OfflineIndicator />
+            
             {/* Theme toggle */}
             <ThemeToggle />
             
@@ -231,6 +235,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           </nav>
         )}
       </header>
+
+      {/* Offline Status Banner */}
+      <OfflineBanner />
 
       {/* License Warning Banner */}
       <LicenseWarningBanner />
