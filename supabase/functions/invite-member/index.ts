@@ -1,14 +1,33 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[INVITE-MEMBER] ${step}${detailsStr}`);
+};
+
+const getRoleBadgeColor = (role: string): string => {
+  switch (role) {
+    case "owner": return "#9333ea";
+    case "admin": return "#2563eb";
+    case "manager": return "#0891b2";
+    case "engineer": return "#059669";
+    case "auditor": return "#d97706";
+    case "read_only": return "#6b7280";
+    default: return "#6b7280";
+  }
+};
+
+const formatRole = (role: string): string => {
+  return role.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 };
 
 serve(async (req) => {
@@ -133,6 +152,24 @@ serve(async (req) => {
       });
     }
 
+    // Get company name for the email
+    const { data: company } = await adminClient
+      .from("companies")
+      .select("name")
+      .eq("id", org_id)
+      .single();
+
+    const companyName = company?.name || "Your Organization";
+
+    // Get inviter's name
+    const { data: inviterProfile } = await adminClient
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", userId)
+      .single();
+
+    const inviterName = inviterProfile?.full_name || "A team administrator";
+
     // Create invitation record first
     const { data: invitation, error: inviteError } = await adminClient
       .from("team_invitations")
@@ -157,27 +194,66 @@ serve(async (req) => {
 
     // Get the app URL for redirect
     const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
-    const setPasswordUrl = `${appUrl}/set-password?token=${invitation.token}`;
+    const acceptUrl = `${appUrl}/accept-invite?token=${invitation.token}`;
 
-    // Invite user via Supabase Auth - this creates the user and sends a magic link
-    const { data: inviteAuthData, error: inviteAuthError } = await adminClient.auth.admin.inviteUserByEmail(
-      email.toLowerCase(),
-      {
-        redirectTo: setPasswordUrl,
-        data: {
+    // Create user in auth system (without sending default email)
+    const { data: existingUser } = await adminClient.auth.admin.listUsers();
+    const userExists = existingUser?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
+
+    if (!userExists) {
+      // Create new user with a random password (they'll set their own via magic link)
+      const { error: createUserError } = await adminClient.auth.admin.createUser({
+        email: email.toLowerCase(),
+        email_confirm: false,
+        user_metadata: {
           invited_to_company: org_id,
           invited_role: role,
           invitation_token: invitation.token,
         }
-      }
-    );
+      });
 
-    if (inviteAuthError) {
-      logStep("ERROR: Failed to send auth invitation", { error: inviteAuthError.message });
-      // Don't fail completely - the invitation record exists, they can still be re-invited
-      // or use password reset flow
-    } else {
-      logStep("Auth invitation sent", { userId: inviteAuthData?.user?.id });
+      if (createUserError && !createUserError.message.includes("already been registered")) {
+        logStep("WARN: Failed to create auth user", { error: createUserError.message });
+      } else {
+        logStep("Auth user created or exists");
+      }
+    }
+
+    // Generate magic link for the user
+    const { data: magicLinkData, error: magicLinkError } = await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: email.toLowerCase(),
+      options: {
+        redirectTo: acceptUrl,
+      }
+    });
+
+    let actionUrl = acceptUrl;
+    if (magicLinkData?.properties?.action_link) {
+      actionUrl = magicLinkData.properties.action_link;
+      logStep("Magic link generated");
+    } else if (magicLinkError) {
+      logStep("WARN: Failed to generate magic link, using direct URL", { error: magicLinkError.message });
+    }
+
+    // Send branded invitation email via Resend
+    const roleBadgeColor = getRoleBadgeColor(role);
+    const formattedRole = formatRole(role);
+
+    const emailHtml = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>You've Been Invited!</title><!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--></head><body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f5;"><tr><td align="center" style="padding: 40px 20px;"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"><tr><td style="background-color: #18181b; padding: 32px 40px; text-align: center;"><img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="160" height="40" style="display: block; margin: 0 auto; max-width: 160px; height: auto;" /></td></tr><tr><td style="padding: 40px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="text-align: center; padding-bottom: 24px;"><h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #18181b;">You've Been Invited!</h1></td></tr><tr><td style="padding-bottom: 24px;"><p style="margin: 0; font-size: 16px; line-height: 24px; color: #3f3f46;"><strong>${inviterName}</strong> has invited you to join <strong>${companyName}</strong> on FTrack, the F-Gas compliance management platform.</p></td></tr><tr><td align="center" style="padding-bottom: 24px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color: ${roleBadgeColor}; color: #ffffff; font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">${formattedRole}</td></tr></table></td></tr><tr><td style="padding-bottom: 32px;"><p style="margin: 0; font-size: 16px; line-height: 24px; color: #3f3f46;">Click the button below to accept your invitation and set up your account. This link will expire in 7 days.</p></td></tr><tr><td align="center" style="padding-bottom: 32px;"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${actionUrl}" style="height:48px;v-text-anchor:middle;width:200px;" arcsize="10%" stroke="f" fillcolor="#18181b"><w:anchorlock/><center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Accept Invitation</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${actionUrl}" target="_blank" style="display: inline-block; background-color: #18181b; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">Accept Invitation</a><!--<![endif]--></td></tr><tr><td style="border-top: 1px solid #e4e4e7; padding-top: 24px;"><p style="margin: 0; font-size: 14px; line-height: 20px; color: #71717a;">If you didn't expect this invitation, you can safely ignore this email.</p></td></tr></table></td></tr><tr><td style="background-color: #fafafa; padding: 24px 40px; text-align: center; border-top: 1px solid #e4e4e7;"><p style="margin: 0; font-size: 12px; color: #a1a1aa;">FTrack - F-Gas Compliance Made Simple</p><p style="margin: 8px 0 0 0; font-size: 12px; color: #a1a1aa;">&copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>`;
+
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "FTrack <onboarding@resend.dev>",
+        to: [email.toLowerCase()],
+        subject: `You've been invited to join ${companyName} on FTrack`,
+        html: emailHtml,
+      });
+
+      logStep("Invitation email sent via Resend", { emailId: emailResponse?.data?.id });
+    } catch (emailError) {
+      logStep("ERROR: Failed to send invitation email", { error: String(emailError) });
+      // Don't fail the entire request - the invitation is created, just email failed
     }
 
     // Log audit event
