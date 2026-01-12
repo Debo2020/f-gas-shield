@@ -152,7 +152,41 @@ export function useLicenses(): UseLicensesReturn {
         return false;
       }
 
-      toast.success(`License assigned to ${email}`);
+      // Fetch company name for the invitation email
+      let companyName = "Your Company";
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", profile.company_id)
+        .single();
+      
+      if (companyData?.name) {
+        companyName = companyData.name;
+      }
+
+      // Send invitation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
+          body: {
+            email: email.toLowerCase(),
+            licenseType,
+            companyName,
+            invitedByName: profile.full_name,
+            appUrl: `${window.location.origin}/auth`,
+          },
+        });
+
+        if (emailError) {
+          console.error("Failed to send invitation email:", emailError);
+          toast.warning(`License assigned to ${email}, but invitation email could not be sent`);
+        } else {
+          toast.success(`License assigned and invitation sent to ${email}`);
+        }
+      } catch (emailErr) {
+        console.error("Failed to send invitation email:", emailErr);
+        toast.warning(`License assigned to ${email}, but invitation email could not be sent`);
+      }
+
       await fetchLicenses();
       return true;
     } catch (err) {
