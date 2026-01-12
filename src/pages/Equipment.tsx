@@ -15,6 +15,7 @@ import {
   Filter,
   Tag,
   ClipboardCheck,
+  ScanLine,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { EquipmentDialog } from "@/components/equipment/EquipmentDialog";
 import { ComplianceThresholdBadge } from "@/components/equipment/ComplianceThresholdBadge";
 import { LabelGenerator } from "@/components/equipment/LabelGenerator";
+import { EquipmentQRScanner } from "@/components/equipment/EquipmentQRScanner";
+import { EquipmentQuickActions } from "@/components/equipment/EquipmentQuickActions";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -86,6 +89,22 @@ interface Equipment {
   };
 }
 
+interface ScannedEquipment {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  model: string | null;
+  refrigerant_type: string;
+  refrigerant_charge_kg: number;
+  co2_equivalent_tonnes: number | null;
+  next_inspection_due: string | null;
+  asset_tag: string | null;
+  serial_number: string | null;
+  sites: {
+    name: string;
+  };
+}
+
 interface Site {
   id: string;
   name: string;
@@ -112,6 +131,9 @@ export default function Equipment() {
   const [deletingEquipment, setDeletingEquipment] = useState<Equipment | null>(null);
   const [labelEquipment, setLabelEquipment] = useState<Equipment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedEquipment, setScannedEquipment] = useState<ScannedEquipment | null>(null);
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -325,17 +347,26 @@ export default function Equipment() {
 
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            {canEdit && (
-              <Button 
-                onClick={() => setIsDialogOpen(true)} 
-                disabled={sites.length === 0 || !canPerformActions}
-                title={sites.length > 0 && !canPerformActions ? "License required" : undefined}
-                className="animate-scale-in"
+            <div className="flex items-center gap-2 animate-scale-in">
+              <Button
+                variant="outline"
+                onClick={() => setIsScannerOpen(true)}
+                className="gap-2"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Register Equipment
+                <ScanLine className="h-4 w-4" />
+                Scan QR
               </Button>
-            )}
+              {canEdit && (
+                <Button 
+                  onClick={() => setIsDialogOpen(true)} 
+                  disabled={sites.length === 0 || !canPerformActions}
+                  title={sites.length > 0 && !canPerformActions ? "License required" : undefined}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Register Equipment
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -607,6 +638,40 @@ export default function Equipment() {
           siteName={labelEquipment.sites.name}
         />
       )}
+
+      {/* QR Scanner */}
+      <EquipmentQRScanner
+        open={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+        onEquipmentFound={(eq) => {
+          setScannedEquipment(eq);
+          setIsQuickActionsOpen(true);
+        }}
+      />
+
+      {/* Quick Actions Sheet */}
+      <EquipmentQuickActions
+        equipment={scannedEquipment}
+        open={isQuickActionsOpen}
+        onOpenChange={setIsQuickActionsOpen}
+        onEdit={() => {
+          if (scannedEquipment) {
+            // Find the full equipment data from our list
+            const fullEquipment = equipment.find(e => e.id === scannedEquipment.id);
+            if (fullEquipment) {
+              setEditingEquipment(fullEquipment);
+            }
+          }
+        }}
+        onGenerateLabel={() => {
+          if (scannedEquipment) {
+            const fullEquipment = equipment.find(e => e.id === scannedEquipment.id);
+            if (fullEquipment) {
+              setLabelEquipment(fullEquipment);
+            }
+          }
+        }}
+      />
     </AppLayout>
   );
 }
