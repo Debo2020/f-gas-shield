@@ -17,16 +17,12 @@ export default function Landing() {
   const { user, isLoading: authLoading } = useAuth();
   const { subscribed, loading: subLoading } = useSubscription();
 
-  // Redirect authenticated users appropriately
+  // Redirect all authenticated users to dashboard
   useEffect(() => {
-    if (!authLoading && !subLoading && user) {
-      if (subscribed) {
-        navigate("/dashboard");
-      }
-      // If user is logged in but not subscribed, let them see the landing page
-      // They can choose to go to onboarding from here
+    if (!authLoading && user) {
+      navigate("/dashboard");
     }
-  }, [user, subscribed, authLoading, subLoading, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Show loading while checking auth status
   if (authLoading || (user && subLoading)) {
