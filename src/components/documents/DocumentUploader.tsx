@@ -112,11 +112,7 @@ export function DocumentUploader({
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from("compliance-documents")
-          .getPublicUrl(filePath);
-
+        // Store the file path (not public URL) for private bucket access
         // Create document record
         const { data: docData, error: docError } = await supabase
           .from("documents")
@@ -128,7 +124,7 @@ export function DocumentUploader({
             profile_id: profileId || null,
             document_type: documentType,
             name: file.name,
-            file_url: urlData.publicUrl,
+            file_url: filePath,
             file_size: file.size,
             mime_type: file.type,
             uploaded_by: user.id,

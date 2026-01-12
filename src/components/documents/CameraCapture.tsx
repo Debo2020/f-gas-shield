@@ -149,11 +149,7 @@ export function CameraCapture({
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("compliance-documents")
-        .getPublicUrl(filePath);
-
+      // Store the file path (not public URL) for private bucket access
       // Create document record
       const { data: docData, error: docError } = await supabase
         .from("documents")
@@ -164,7 +160,7 @@ export function CameraCapture({
           inspection_id: inspectionId || null,
           document_type: "photo",
           name: fileName,
-          file_url: urlData.publicUrl,
+          file_url: filePath,
           file_size: blob.size,
           mime_type: "image/jpeg",
           uploaded_by: user.id,
