@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
     logStep("Sending email via Resend");
 
     const emailResponse = await resend.emails.send({
-      from: "FTrack <onboarding@resend.dev>",
+      from: "FTrack <noreply@ftrack.uk>",
       to: [email],
       subject: `${companyName} has invited you to FTrack`,
       html: emailHtml,
