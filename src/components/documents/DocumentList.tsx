@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getDocumentUrl, extractFilePath, downloadDocument } from "@/lib/storage";
 
 interface Document {
   id: string;
@@ -65,6 +66,7 @@ export function DocumentList({
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -92,6 +94,20 @@ export function DocumentList({
 
       if (error) throw error;
       setDocuments(data || []);
+      
+      // Generate signed URLs for all documents
+      if (data && data.length > 0) {
+        const urls: Record<string, string> = {};
+        await Promise.all(
+          data.map(async (doc) => {
+            const signedUrl = await getDocumentUrl(doc.file_url);
+            if (signedUrl) {
+              urls[doc.id] = signedUrl;
+            }
+          })
+        );
+        setSignedUrls(urls);
+      }
     } catch (error: any) {
       console.error("Error fetching documents:", error);
       toast.error("Failed to load documents");
@@ -114,10 +130,8 @@ export function DocumentList({
       const doc = documents.find((d) => d.id === deleteId);
       if (!doc) return;
 
-      // Extract file path from URL
-      const url = new URL(doc.file_url);
-      const pathParts = url.pathname.split("/");
-      const filePath = pathParts.slice(-2).join("/");
+      // Extract file path for deletion
+      const filePath = extractFilePath(doc.file_url);
 
       // Delete from storage
       const { error: storageError } = await supabase.storage
@@ -137,6 +151,11 @@ export function DocumentList({
       if (dbError) throw dbError;
 
       setDocuments((prev) => prev.filter((d) => d.id !== deleteId));
+      setSignedUrls((prev) => {
+        const updated = { ...prev };
+        delete updated[deleteId];
+        return updated;
+      });
       toast.success("Document deleted");
     } catch (error: any) {
       console.error("Delete error:", error);
@@ -144,6 +163,28 @@ export function DocumentList({
     } finally {
       setDeleting(false);
       setDeleteId(null);
+    }
+  };
+
+  const handleViewDocument = async (doc: Document) => {
+    const url = signedUrls[doc.id];
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      const signedUrl = await getDocumentUrl(doc.file_url);
+      if (signedUrl) {
+        window.open(signedUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error("Failed to open document");
+      }
+    }
+  };
+
+  const handleDownloadDocument = async (doc: Document) => {
+    try {
+      await downloadDocument(doc.file_url, doc.name);
+    } catch {
+      toast.error("Failed to download document");
     }
   };
 
@@ -206,21 +247,17 @@ export function DocumentList({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                asChild
+                onClick={() => handleViewDocument(doc)}
               >
-                <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <ExternalLink className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                asChild
+                onClick={() => handleDownloadDocument(doc)}
               >
-                <a href={doc.file_url} download={doc.name}>
-                  <Download className="h-4 w-4" />
-                </a>
+                <Download className="h-4 w-4" />
               </Button>
               {canDelete && (
                 <Button
