@@ -36,17 +36,17 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
-    if (userError || !userData.user) {
-      logStep("ERROR: Authentication failed", { error: userError?.message });
+    if (claimsError || !claimsData?.claims) {
+      logStep("ERROR: Authentication failed", { error: claimsError?.message });
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub as string;
     logStep("User authenticated", { userId });
 
     const { org_id, site_id, asset_id, format = "csv" } = await req.json();
