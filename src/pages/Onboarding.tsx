@@ -73,53 +73,25 @@ export default function Onboarding() {
         return;
       }
       
-      // Create company
+      // Create company using atomic RPC function
       setIsLoading(true);
       try {
-        // Generate slug
-        const { data: slugData, error: slugError } = await supabase
-          .rpc("generate_unique_slug", { company_name: companyName });
-        
-        if (slugError) throw slugError;
-
-        // Create company
-        const { data: company, error: companyError } = await supabase
-          .from("companies")
-          .insert({
-            name: companyName,
-            slug: slugData,
-            address: companyAddress || null,
-            phone: companyPhone || null,
-            email: companyEmail || null,
-          })
-          .select()
-          .single();
+        // Use the atomic RPC function that handles company, profile, and role creation
+        const { data: companyId, error: companyError } = await supabase
+          .rpc("create_company_for_current_user", {
+            company_name: companyName,
+            company_address: companyAddress || null,
+            company_phone: companyPhone || null,
+            company_email: companyEmail || null,
+          });
 
         if (companyError) throw companyError;
 
-        // Update profile with company_id
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ company_id: company.id })
-          .eq("user_id", user!.id);
-
-        if (profileError) throw profileError;
-
-        // Add owner role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: user!.id,
-            role: "owner",
-          });
-
-        if (roleError) throw roleError;
-
-        // Create owner license
+        // Create owner license (RPC handles company, profile, and role)
         const { error: licenseError } = await supabase
           .from("user_licenses")
           .insert({
-            company_id: company.id,
+            company_id: companyId,
             user_id: user!.id,
             email: user!.email,
             status: "active",
