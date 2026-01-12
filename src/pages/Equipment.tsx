@@ -16,6 +16,7 @@ import {
   Tag,
   ClipboardCheck,
   ScanLine,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ import type { EquipmentFormValues } from "@/components/equipment/EquipmentForm";
 import { LiveClock } from "@/components/ui/live-clock";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { generateAssetTag } from "@/lib/asset-tag";
 
 interface Equipment {
   id: string;
@@ -138,6 +140,8 @@ export default function Equipment() {
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraEquipmentId, setCameraEquipmentId] = useState<string | null>(null);
+  const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -332,6 +336,48 @@ export default function Equipment() {
 
   const totalCo2 = equipment.reduce((sum, eq) => sum + (eq.co2_equivalent_tonnes || 0), 0);
 
+  const equipmentWithoutTags = equipment.filter(eq => !eq.asset_tag);
+
+  const handleBulkRegenerate = async () => {
+    if (!profile?.company_id || equipmentWithoutTags.length === 0) return;
+    
+    setIsRegenerating(true);
+    try {
+      // Get current monthly count for sequence numbering
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      
+      const { count: existingCount } = await supabase
+        .from("equipment")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", profile.company_id)
+        .not("asset_tag", "is", null)
+        .gte("created_at", startOfMonth);
+      
+      let sequence = (existingCount || 0) + 1;
+      
+      // Update each equipment item
+      for (const eq of equipmentWithoutTags) {
+        const newTag = generateAssetTag(eq.manufacturer || '', sequence);
+        
+        await supabase
+          .from("equipment")
+          .update({ asset_tag: newTag })
+          .eq("id", eq.id);
+        
+        sequence++;
+      }
+      
+      toast.success(`Generated ${equipmentWithoutTags.length} asset tags`);
+      fetchData();
+      setIsRegenerateDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to generate asset tags");
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
@@ -360,6 +406,25 @@ export default function Equipment() {
                 <ScanLine className="h-4 w-4" />
                 Scan QR
               </Button>
+              {canEdit && equipmentWithoutTags.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Tag className="h-4 w-4" />
+                      Bulk Actions
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      onClick={() => setIsRegenerateDialogOpen(true)}
+                      disabled={!canPerformActions}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Missing Asset Tags ({equipmentWithoutTags.length})
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               {canEdit && (
                 <Button 
                   onClick={() => setIsDialogOpen(true)} 
@@ -711,6 +776,50 @@ export default function Equipment() {
           }}
         />
       )}
+
+      {/* Bulk Asset Tag Regeneration Dialog */}
+      <AlertDialog open={isRegenerateDialogOpen} onOpenChange={setIsRegenerateDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Generate Missing Asset Tags
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate asset tags for {equipmentWithoutTags.length} equipment 
+              item{equipmentWithoutTags.length !== 1 ? 's' : ''} that currently don't have tags.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {equipmentWithoutTags.length > 0 && (
+            <div className="max-h-60 overflow-y-auto space-y-2 my-2">
+              {equipmentWithoutTags.slice(0, 10).map((eq, index) => (
+                <div key={eq.id} className="flex justify-between items-center p-2 bg-muted rounded-md">
+                  <span className="text-sm truncate mr-2">{eq.name}</span>
+                  <Badge variant="secondary" className="font-mono text-xs shrink-0">
+                    {generateAssetTag(eq.manufacturer || '', index + 1)}
+                  </Badge>
+                </div>
+              ))}
+              {equipmentWithoutTags.length > 10 && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  ...and {equipmentWithoutTags.length - 10} more
+                </p>
+              )}
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRegenerating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBulkRegenerate}
+              disabled={isRegenerating}
+            >
+              {isRegenerating ? "Generating..." : "Generate Tags"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
