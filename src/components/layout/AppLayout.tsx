@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   Key,
+  Download,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
@@ -159,6 +160,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <DropdownMenuItem onClick={() => navigate("/settings/profile")}>
                   <Users className="mr-2 h-4 w-4" />
                   My Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/install")}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Install App
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
