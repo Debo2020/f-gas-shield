@@ -14,6 +14,7 @@ import {
   Loader2,
   Plus,
   FolderOpen,
+  Camera,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { SiteDialog } from "@/components/sites/SiteDialog";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
+import { CameraCapture } from "@/components/documents/CameraCapture";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -65,6 +67,7 @@ export default function SiteDetail() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [docRefresh, setDocRefresh] = useState(0);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -201,6 +204,14 @@ export default function SiteDetail() {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsCameraOpen(true)}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo
+              </Button>
               {canPerformActions && (
                 <Button size="sm" onClick={() => setIsEditOpen(true)}>
                   <Pencil className="h-4 w-4 mr-2" />
@@ -463,6 +474,21 @@ export default function SiteDetail() {
         site={site}
         isSubmitting={isSubmitting}
       />
+
+      {/* Camera Capture */}
+      {profile?.company_id && (
+        <CameraCapture
+          open={isCameraOpen}
+          onOpenChange={setIsCameraOpen}
+          companyId={profile.company_id}
+          siteId={site.id}
+          onCaptureComplete={() => {
+            setDocRefresh((prev) => prev + 1);
+            setDocumentCount((prev) => prev + 1);
+            toast.success("Photo saved to site documents");
+          }}
+        />
+      )}
     </AppLayout>
   );
 }

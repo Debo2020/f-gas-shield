@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Camera,
 } from "lucide-react";
 import {
   Sheet,
@@ -47,6 +48,7 @@ interface EquipmentQuickActionsProps {
   onRecordInspection?: () => void;
   onEdit?: () => void;
   onGenerateLabel?: () => void;
+  onTakePhoto?: () => void;
 }
 
 export function EquipmentQuickActions({
@@ -56,6 +58,7 @@ export function EquipmentQuickActions({
   onRecordInspection,
   onEdit,
   onGenerateLabel,
+  onTakePhoto,
 }: EquipmentQuickActionsProps) {
   const navigate = useNavigate();
   const { hasRole, hasActiveLicense } = useAuth();
@@ -121,6 +124,13 @@ export function EquipmentQuickActions({
     if (onGenerateLabel) {
       onOpenChange(false);
       onGenerateLabel();
+    }
+  };
+
+  const handleTakePhoto = () => {
+    if (onTakePhoto) {
+      onOpenChange(false);
+      onTakePhoto();
     }
   };
 
@@ -225,6 +235,17 @@ export function EquipmentQuickActions({
             >
               <Tag className="h-5 w-5" />
               <span className="text-xs">Generate Label</span>
+            </Button>
+          )}
+
+          {onTakePhoto && (
+            <Button 
+              onClick={handleTakePhoto} 
+              variant="outline" 
+              className="h-14 flex flex-col gap-1"
+            >
+              <Camera className="h-5 w-5" />
+              <span className="text-xs">Take Photo</span>
             </Button>
           )}
         </div>

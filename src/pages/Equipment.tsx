@@ -58,6 +58,7 @@ import { ComplianceThresholdBadge } from "@/components/equipment/ComplianceThres
 import { LabelGenerator } from "@/components/equipment/LabelGenerator";
 import { EquipmentQRScanner } from "@/components/equipment/EquipmentQRScanner";
 import { EquipmentQuickActions } from "@/components/equipment/EquipmentQuickActions";
+import { CameraCapture } from "@/components/documents/CameraCapture";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -134,6 +135,8 @@ export default function Equipment() {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannedEquipment, setScannedEquipment] = useState<ScannedEquipment | null>(null);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraEquipmentId, setCameraEquipmentId] = useState<string | null>(null);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -671,7 +674,29 @@ export default function Equipment() {
             }
           }
         }}
+        onTakePhoto={() => {
+          if (scannedEquipment) {
+            setCameraEquipmentId(scannedEquipment.id);
+            setIsCameraOpen(true);
+          }
+        }}
       />
+
+      {/* Camera Capture */}
+      {profile?.company_id && (
+        <CameraCapture
+          open={isCameraOpen}
+          onOpenChange={(open) => {
+            setIsCameraOpen(open);
+            if (!open) setCameraEquipmentId(null);
+          }}
+          companyId={profile.company_id}
+          equipmentId={cameraEquipmentId || undefined}
+          onCaptureComplete={() => {
+            toast.success("Photo attached to equipment");
+          }}
+        />
+      )}
     </AppLayout>
   );
 }
