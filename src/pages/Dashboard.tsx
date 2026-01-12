@@ -28,6 +28,7 @@ import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
 import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { ComplianceAssistantButton } from "@/components/compliance/ComplianceAssistantButton";
 
 type ScannedEquipment = Tables<"equipment"> & {
   sites?: { name: string } | null;
@@ -340,6 +341,9 @@ export default function Dashboard() {
             navigate(`/equipment?action=label&id=${scannedEquipment?.id}`);
           }}
         />
+
+        {/* AI Compliance Assistant */}
+        <ComplianceAssistantButton />
       </div>
     </AppLayout>
   );
