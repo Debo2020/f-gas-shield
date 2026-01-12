@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, ArrowRight, CheckCircle } from "lucide-react";
+import { Shield, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 
 export function HeroSection() {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ export function HeroSection() {
     "UK F-Gas Regulation Compliant",
     "Real-time Inspection Tracking",
     "Automated Compliance Reports",
+    "AI-Powered Regulation Guidance",
   ];
 
   return (
