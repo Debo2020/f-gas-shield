@@ -194,7 +194,7 @@ serve(async (req) => {
 
     // Get the app URL for redirect
     const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
-    const acceptUrl = `${appUrl}/accept-invite?token=${invitation.token}`;
+    const acceptUrl = `${appUrl}/set-password?token=${invitation.token}`;
 
     // Create user in auth system (without sending default email)
     const { data: existingUser } = await adminClient.auth.admin.listUsers();
