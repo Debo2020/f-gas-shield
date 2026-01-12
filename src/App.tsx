@@ -22,6 +22,7 @@ import GasLog from "./pages/GasLog";
 import Reports from "./pages/Reports";
 import Documents from "./pages/Documents";
 import AcceptInvite from "./pages/AcceptInvite";
+import SetPassword from "./pages/SetPassword";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
+            <Route path="/set-password" element={<SetPassword />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
             <Route

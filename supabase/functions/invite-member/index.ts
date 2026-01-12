@@ -133,7 +133,7 @@ serve(async (req) => {
       });
     }
 
-    // Create invitation
+    // Create invitation record first
     const { data: invitation, error: inviteError } = await adminClient
       .from("team_invitations")
       .insert({
@@ -154,6 +154,31 @@ serve(async (req) => {
     }
 
     logStep("Invitation created", { invitationId: invitation.id, email, role });
+
+    // Get the app URL for redirect
+    const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
+    const setPasswordUrl = `${appUrl}/set-password?token=${invitation.token}`;
+
+    // Invite user via Supabase Auth - this creates the user and sends a magic link
+    const { data: inviteAuthData, error: inviteAuthError } = await adminClient.auth.admin.inviteUserByEmail(
+      email.toLowerCase(),
+      {
+        redirectTo: setPasswordUrl,
+        data: {
+          invited_to_company: org_id,
+          invited_role: role,
+          invitation_token: invitation.token,
+        }
+      }
+    );
+
+    if (inviteAuthError) {
+      logStep("ERROR: Failed to send auth invitation", { error: inviteAuthError.message });
+      // Don't fail completely - the invitation record exists, they can still be re-invited
+      // or use password reset flow
+    } else {
+      logStep("Auth invitation sent", { userId: inviteAuthData?.user?.id });
+    }
 
     // Log audit event
     try {
