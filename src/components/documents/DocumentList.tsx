@@ -35,6 +35,7 @@ interface DocumentListProps {
   equipmentId?: string;
   inspectionId?: string;
   siteId?: string;
+  profileId?: string;
   canDelete?: boolean;
   className?: string;
   refreshTrigger?: number;
@@ -55,6 +56,7 @@ export function DocumentList({
   equipmentId,
   inspectionId,
   siteId,
+  profileId,
   canDelete = false,
   className,
   refreshTrigger,
@@ -82,6 +84,9 @@ export function DocumentList({
       if (siteId) {
         query = query.eq("site_id", siteId);
       }
+      if (profileId) {
+        query = query.eq("profile_id", profileId);
+      }
 
       const { data, error } = await query;
 
@@ -99,7 +104,7 @@ export function DocumentList({
     if (companyId) {
       fetchDocuments();
     }
-  }, [companyId, equipmentId, inspectionId, siteId, refreshTrigger]);
+  }, [companyId, equipmentId, inspectionId, siteId, profileId, refreshTrigger]);
 
   const handleDelete = async () => {
     if (!deleteId) return;

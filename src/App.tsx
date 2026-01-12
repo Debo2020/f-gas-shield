@@ -10,8 +10,10 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CompanySetup from "./pages/company/CompanySetup";
 import CompanySettings from "./pages/settings/CompanySettings";
+import Profile from "./pages/settings/Profile";
 import Team from "./pages/Team";
 import Sites from "./pages/Sites";
+import SiteDetail from "./pages/SiteDetail";
 import Equipment from "./pages/Equipment";
 import EquipmentDetail from "./pages/EquipmentDetail";
 import Inspections from "./pages/Inspections";
@@ -80,6 +82,14 @@ const App = () => (
               }
             />
             <Route
+              path="/sites/:id"
+              element={
+                <ProtectedRoute requireLicense>
+                  <SiteDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/equipment"
               element={
                 <ProtectedRoute requireLicense>
@@ -133,6 +143,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Licenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />

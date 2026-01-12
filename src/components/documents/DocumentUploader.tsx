@@ -13,6 +13,7 @@ interface DocumentUploaderProps {
   equipmentId?: string;
   inspectionId?: string;
   siteId?: string;
+  profileId?: string;
   documentType?: "certificate" | "invoice" | "photo" | "declaration" | "label" | "report" | "other";
   onUploadComplete?: (document: UploadedDocument) => void;
   maxFiles?: number;
@@ -42,6 +43,7 @@ export function DocumentUploader({
   equipmentId,
   inspectionId,
   siteId,
+  profileId,
   documentType = "other",
   onUploadComplete,
   maxFiles = 5,
@@ -110,6 +112,7 @@ export function DocumentUploader({
             equipment_id: equipmentId || null,
             inspection_id: inspectionId || null,
             site_id: siteId || null,
+            profile_id: profileId || null,
             document_type: documentType,
             name: file.name,
             file_url: urlData.publicUrl,

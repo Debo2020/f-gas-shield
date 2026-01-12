@@ -113,6 +113,7 @@ export type Database = {
           inspection_id: string | null
           mime_type: string | null
           name: string
+          profile_id: string | null
           site_id: string | null
           updated_at: string
           uploaded_by: string | null
@@ -129,6 +130,7 @@ export type Database = {
           inspection_id?: string | null
           mime_type?: string | null
           name: string
+          profile_id?: string | null
           site_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           inspection_id?: string | null
           mime_type?: string | null
           name?: string
+          profile_id?: string | null
           site_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
@@ -169,6 +172,13 @@ export type Database = {
             columns: ["inspection_id"]
             isOneToOne: false
             referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
