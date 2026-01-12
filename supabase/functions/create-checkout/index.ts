@@ -17,27 +17,46 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
-
   try {
     logStep("Function started");
+
+    // Validate Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Validate JWT using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("JWT validation failed", { error: claimsError?.message });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string;
+    if (!userEmail) throw new Error("User email not available in claims");
+    logStep("User authenticated via getClaims", { userId, email: userEmail });
     
     const { priceId, quantity = 1, companyName, tier } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
     logStep("Request received", { priceId, quantity, companyName, tier });
 
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { email: user.email });
-
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -47,7 +66,7 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "http://localhost:3000";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : userEmail,
       line_items: [
         {
           price: priceId,
@@ -58,14 +77,14 @@ serve(async (req) => {
       success_url: `${origin}/dashboard?subscription=success`,
       cancel_url: `${origin}/pricing?subscription=cancelled`,
       metadata: {
-        user_id: user.id,
+        user_id: userId,
         company_name: companyName || "",
         tier: tier || "",
         license_count: quantity.toString(),
       },
       subscription_data: {
         metadata: {
-          user_id: user.id,
+          user_id: userId,
           company_name: companyName || "",
           tier: tier || "",
           license_count: quantity.toString(),
