@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { FileText, Search, Filter, Upload, File, Image, Loader2, Building2, Thermometer, Grid3X3, List, AlertTriangle } from "lucide-react";
+import { FileText, Search, Filter, Upload, File, Image, Loader2, Building2, Thermometer, Grid3X3, List, AlertTriangle, ImagePlus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,12 +34,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
+import { BulkPhotoUploader } from "@/components/documents/BulkPhotoUploader";
 import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
 import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { getDocumentUrl } from "@/lib/storage";
 
 interface Document {
   id: string;
@@ -97,8 +105,10 @@ export default function Documents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [bulkPhotoDialogOpen, setBulkPhotoDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [activeTab, setActiveTab] = useState("all");
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const fetchData = async () => {
     if (!companyId) return;
@@ -181,6 +191,26 @@ export default function Documents() {
     return documents.filter((doc) => doc.document_type === "photo" || doc.mime_type?.startsWith("image/"));
   }, [documents]);
 
+  // Generate signed URLs for media documents
+  useEffect(() => {
+    const generateSignedUrls = async () => {
+      if (mediaDocuments.length === 0) return;
+      
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        mediaDocuments.map(async (doc) => {
+          const signedUrl = await getDocumentUrl(doc.file_url);
+          if (signedUrl) {
+            urls[doc.id] = signedUrl;
+          }
+        })
+      );
+      setSignedUrls(urls);
+    };
+
+    generateSignedUrls();
+  }, [mediaDocuments]);
+
   // Filter compliance documents
   const complianceDocuments = useMemo(() => {
     return documents.filter((doc) => 
@@ -205,6 +235,7 @@ export default function Documents() {
   const handleUploadComplete = () => {
     fetchData();
     setUploadDialogOpen(false);
+    setBulkPhotoDialogOpen(false);
   };
 
   // Calculate stats
@@ -297,10 +328,24 @@ export default function Documents() {
               Store and manage compliance documents, certificates, and photos
             </p>
           </div>
-          <Button onClick={() => setUploadDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                Single Document
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setBulkPhotoDialogOpen(true)}>
+                <ImagePlus className="h-4 w-4 mr-2" />
+                Bulk Photos
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Expiry Alerts */}
@@ -654,29 +699,40 @@ export default function Documents() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {mediaDocuments.map((doc) => (
-                      <a
-                        key={doc.id}
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative aspect-square rounded-lg overflow-hidden bg-muted"
-                      >
-                        <img
-                          src={doc.file_url}
-                          alt={doc.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
-                          <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="text-white text-xs truncate">{doc.name}</p>
-                            <p className="text-white/70 text-xs">
-                              {doc.equipment?.name || doc.site?.name || ""}
-                            </p>
+                    {mediaDocuments.map((doc) => {
+                      const imageUrl = signedUrls[doc.id];
+                      
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={async () => {
+                            const url = imageUrl || await getDocumentUrl(doc.file_url);
+                            if (url) window.open(url, "_blank", "noopener,noreferrer");
+                          }}
+                          className="group relative aspect-square rounded-lg overflow-hidden bg-muted text-left"
+                        >
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={doc.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
+                            <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                              <p className="text-white text-xs truncate">{doc.name}</p>
+                              <p className="text-white/70 text-xs">
+                                {doc.equipment?.name || doc.site?.name || ""}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </a>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -698,6 +754,28 @@ export default function Documents() {
             <DocumentUploader
               companyId={companyId}
               onUploadComplete={handleUploadComplete}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Photo Upload Dialog */}
+      <Dialog open={bulkPhotoDialogOpen} onOpenChange={setBulkPhotoDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImagePlus className="h-5 w-5" />
+              Bulk Photo Upload
+            </DialogTitle>
+            <DialogDescription>
+              Upload multiple photos at once with drag-and-drop
+            </DialogDescription>
+          </DialogHeader>
+          {companyId && (
+            <BulkPhotoUploader
+              companyId={companyId}
+              onUploadComplete={handleUploadComplete}
+              maxFiles={20}
             />
           )}
         </DialogContent>
