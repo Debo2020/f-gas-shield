@@ -11,6 +11,7 @@ const corsHeaders = {
 
 interface LicenseInvitationRequest {
   licenseId: string;
+  origin?: string; // Frontend origin for dynamic redirect URL
 }
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -33,8 +34,8 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
-    const { licenseId }: LicenseInvitationRequest = await req.json();
-    logStep("Received invitation request", { licenseId });
+    const { licenseId, origin }: LicenseInvitationRequest = await req.json();
+    logStep("Received invitation request", { licenseId, origin });
 
     if (!licenseId) {
       return new Response(
@@ -84,9 +85,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("License details fetched", { email, companyName, licenseType, token });
 
-    // Determine the app URL based on environment
-    const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
+    // Determine the app URL: use origin from frontend, fall back to APP_URL env, then default
+    const appUrl = origin || Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
     const redirectUrl = `${appUrl}/accept-license?token=${token}`;
+    logStep("Using redirect URL", { appUrl, redirectUrl });
 
     // Check if user already exists
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();

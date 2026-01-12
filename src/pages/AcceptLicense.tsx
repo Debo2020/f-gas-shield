@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, EyeOff, CheckCircle, Loader2, AlertTriangle, Building2, Shield } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, Loader2, AlertTriangle, Building2, Shield, RefreshCw } from "lucide-react";
 
 interface LicenseDetails {
   id: string;
@@ -33,6 +33,8 @@ export default function AcceptLicense() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isExpiredLink, setIsExpiredLink] = useState(false);
+  const [resendingInvite, setResendingInvite] = useState(false);
 
   useEffect(() => {
     const initializePage = async () => {
@@ -48,14 +50,22 @@ export default function AcceptLicense() {
         
         if (sessionError) {
           console.error("Session error:", sessionError);
-          setError("Failed to verify your session. Please request a new invitation.");
+          // Check if this is a token expiry issue
+          const errorMessage = sessionError.message?.toLowerCase() || "";
+          if (errorMessage.includes("token") || errorMessage.includes("expired") || errorMessage.includes("invalid")) {
+            setIsExpiredLink(true);
+            setError("Your invitation link has expired. Please request a new one.");
+          } else {
+            setError("Failed to verify your session. Please request a new invitation.");
+          }
           setLoading(false);
           return;
         }
 
         if (!session) {
-          // User may need to click the magic link first
-          setError("Please click the invitation link in your email to sign in.");
+          // User may need to click the magic link first or link has expired
+          setIsExpiredLink(true);
+          setError("Your invitation link has expired or is invalid. Please request a new invitation from your administrator.");
           setLoading(false);
           return;
         }
@@ -275,9 +285,16 @@ export default function AcceptLicense() {
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground">Invitation Error</h2>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {isExpiredLink ? "Invitation Link Expired" : "Invitation Error"}
+                  </h2>
                   <p className="text-muted-foreground mt-1">{error}</p>
                 </div>
+                {isExpiredLink && (
+                  <p className="text-sm text-muted-foreground">
+                    Contact your company administrator to resend your invitation.
+                  </p>
+                )}
                 <Button onClick={() => navigate("/auth")} variant="outline" className="mt-2">
                   Go to Sign In
                 </Button>
