@@ -22,6 +22,7 @@ import GasLog from "./pages/GasLog";
 import Reports from "./pages/Reports";
 import Documents from "./pages/Documents";
 import AcceptInvite from "./pages/AcceptInvite";
+import AcceptLicense from "./pages/AcceptLicense";
 import SetPassword from "./pages/SetPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Install from "./pages/Install";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
+            <Route path="/accept-license" element={<AcceptLicense />} />
             <Route path="/set-password" element={<SetPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/install" element={<Install />} />

@@ -134,7 +134,8 @@ export function useLicenses(): UseLicensesReturn {
         return false;
       }
 
-      const { error } = await supabase
+      // Insert the license record
+      const { data: insertedLicense, error } = await supabase
         .from("user_licenses")
         .insert({
           company_id: profile.company_id,
@@ -142,7 +143,9 @@ export function useLicenses(): UseLicensesReturn {
           license_type: licenseType,
           status: "pending",
           assigned_by: profile.user_id,
-        });
+        })
+        .select("id")
+        .single();
 
       if (error) {
         if (error.code === "23505") {
@@ -153,27 +156,15 @@ export function useLicenses(): UseLicensesReturn {
         return false;
       }
 
-      // Fetch company name for the invitation email
-      let companyName = "Your Company";
-      const { data: companyData } = await supabase
-        .from("companies")
-        .select("name")
-        .eq("id", profile.company_id)
-        .single();
-      
-      if (companyData?.name) {
-        companyName = companyData.name;
+      if (!insertedLicense) {
+        throw new Error("Failed to create license record");
       }
 
-      // Send invitation email
+      // Send invitation email with magic link
       try {
         const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
           body: {
-            email: email.toLowerCase(),
-            licenseType,
-            companyName,
-            invitedByName: profile.full_name,
-            appUrl: `${window.location.origin}/auth`,
+            licenseId: insertedLicense.id,
           },
         });
 
@@ -257,26 +248,10 @@ export function useLicenses(): UseLicensesReturn {
     if (!profile?.company_id || !license.email) return false;
 
     try {
-      // Fetch company name for the invitation email
-      let companyName = "Your Company";
-      const { data: companyData } = await supabase
-        .from("companies")
-        .select("name")
-        .eq("id", profile.company_id)
-        .single();
-      
-      if (companyData?.name) {
-        companyName = companyData.name;
-      }
-
-      // Send invitation email
+      // Send invitation email with magic link using license ID
       const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
         body: {
-          email: license.email.toLowerCase(),
-          licenseType: license.license_type,
-          companyName,
-          invitedByName: profile.full_name,
-          appUrl: `${window.location.origin}/auth`,
+          licenseId: license.id,
         },
       });
 
