@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 
-export default function Auth() {
+const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isLoading, signIn, signUp } = useAuth();
@@ -261,7 +261,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <div ref={ref} className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       {/* Logo & Branding */}
       <div className="flex items-center gap-3 mb-8">
         <img 
@@ -403,4 +403,6 @@ export default function Auth() {
       </p>
     </div>
   );
-}
+});
+
+export default Auth;
