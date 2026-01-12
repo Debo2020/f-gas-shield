@@ -68,7 +68,7 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get user's company and subscription
+    // Get user's company
     const { data: profileData } = await supabaseClient
       .from("profiles")
       .select("company_id")
@@ -78,22 +78,14 @@ serve(async (req) => {
     if (!profileData?.company_id) {
       throw new Error("User has no company");
     }
-
-    const { data: subscription } = await supabaseClient
-      .from("company_subscriptions")
-      .select("*")
-      .eq("company_id", profileData.company_id)
-      .single();
-
-    if (!subscription?.stripe_subscription_id) {
-      throw new Error("No active subscription found");
-    }
+    const companyId = profileData.company_id;
+    logStep("Company found", { companyId });
 
     // Check that new count isn't less than current active licenses
     const { count: activeLicenses } = await supabaseClient
       .from("user_licenses")
       .select("*", { count: "exact", head: true })
-      .eq("company_id", profileData.company_id)
+      .eq("company_id", companyId)
       .in("status", ["active", "pending"]);
 
     if (newLicenseCount < (activeLicenses || 0)) {
@@ -102,12 +94,56 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get the subscription from Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+    // Try to get subscription from database first
+    const { data: subscription } = await supabaseClient
+      .from("company_subscriptions")
+      .select("*")
+      .eq("company_id", companyId)
+      .single();
+
+    let stripeSubscriptionId = subscription?.stripe_subscription_id;
+    let stripeCustomerId = subscription?.stripe_customer_id;
+
+    // If no subscription in DB, or missing subscription ID, try to find it from Stripe directly
+    if (!stripeSubscriptionId) {
+      logStep("No subscription in DB, looking up from Stripe", { email: userEmail });
+      
+      // Find customer by email
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (customers.data.length === 0) {
+        throw new Error("No Stripe customer found for your email. Please ensure you have an active subscription.");
+      }
+      
+      stripeCustomerId = customers.data[0].id;
+      logStep("Found Stripe customer", { customerId: stripeCustomerId });
+      
+      // Find active subscription
+      const subscriptions = await stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: "active",
+        limit: 1,
+      });
+      
+      if (subscriptions.data.length === 0) {
+        throw new Error("No active subscription found in Stripe. Please ensure you have an active subscription.");
+      }
+      
+      stripeSubscriptionId = subscriptions.data[0].id;
+      logStep("Found active subscription in Stripe", { subscriptionId: stripeSubscriptionId });
+    }
+
+    // Get the subscription from Stripe to get the subscription item ID
+    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    
+    if (!stripeSubscription.items?.data?.[0]) {
+      throw new Error("Subscription has no line items to update");
+    }
+    
     const subscriptionItemId = stripeSubscription.items.data[0].id;
+    logStep("Got subscription item", { subscriptionItemId });
 
     // Update the subscription quantity
-    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+    await stripe.subscriptions.update(stripeSubscriptionId, {
       items: [{
         id: subscriptionItemId,
         quantity: newLicenseCount,
@@ -117,13 +153,52 @@ serve(async (req) => {
 
     logStep("Stripe subscription updated", { newLicenseCount });
 
-    // Update local database
-    await supabaseClient
-      .from("company_subscriptions")
-      .update({ license_count: newLicenseCount })
-      .eq("company_id", profileData.company_id);
+    // Upsert to company_subscriptions to ensure it's synced
+    const upsertData: Record<string, unknown> = {
+      company_id: companyId,
+      license_count: newLicenseCount,
+      stripe_subscription_id: stripeSubscriptionId,
+    };
+    
+    if (stripeCustomerId) {
+      upsertData.stripe_customer_id = stripeCustomerId;
+    }
+    
+    // Get additional subscription details to sync
+    if (stripeSubscription.status) {
+      upsertData.status = stripeSubscription.status;
+    }
+    if (stripeSubscription.metadata?.tier) {
+      upsertData.tier = stripeSubscription.metadata.tier;
+    } else if (!subscription?.tier) {
+      upsertData.tier = "basic"; // Default tier
+    }
+    
+    // Safely handle timestamps
+    if (stripeSubscription.current_period_start && typeof stripeSubscription.current_period_start === "number") {
+      try {
+        upsertData.current_period_start = new Date(stripeSubscription.current_period_start * 1000).toISOString();
+      } catch {
+        // Skip if invalid
+      }
+    }
+    if (stripeSubscription.current_period_end && typeof stripeSubscription.current_period_end === "number") {
+      try {
+        upsertData.current_period_end = new Date(stripeSubscription.current_period_end * 1000).toISOString();
+      } catch {
+        // Skip if invalid
+      }
+    }
 
-    logStep("Database updated");
+    const { error: upsertError } = await supabaseClient
+      .from("company_subscriptions")
+      .upsert(upsertData, { onConflict: "company_id" });
+
+    if (upsertError) {
+      logStep("Warning: Failed to sync subscription to DB", { error: upsertError.message });
+    } else {
+      logStep("Database updated/synced");
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 

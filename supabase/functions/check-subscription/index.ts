@@ -12,6 +12,49 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Safely convert a Stripe timestamp to ISO string
+const safeTimestampToISO = (timestamp: unknown): string | null => {
+  if (timestamp === null || timestamp === undefined) {
+    return null;
+  }
+  // Stripe timestamps are unix seconds (number)
+  if (typeof timestamp === "number" && !isNaN(timestamp) && timestamp > 0) {
+    try {
+      return new Date(timestamp * 1000).toISOString();
+    } catch {
+      return null;
+    }
+  }
+  // Sometimes could be a string
+  if (typeof timestamp === "string") {
+    const parsed = parseInt(timestamp, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      try {
+        return new Date(parsed * 1000).toISOString();
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+};
+
+// Safely extract product ID from subscription item
+const safeGetProductId = (subscriptionItem: unknown): string | null => {
+  if (!subscriptionItem || typeof subscriptionItem !== "object") return null;
+  const item = subscriptionItem as Record<string, unknown>;
+  const price = item.price;
+  if (!price || typeof price !== "object") return null;
+  const priceObj = price as Record<string, unknown>;
+  const product = priceObj.product;
+  // Product can be a string ID or an expanded object with an id property
+  if (typeof product === "string") return product;
+  if (product && typeof product === "object" && "id" in product) {
+    return (product as { id: string }).id;
+  }
+  return null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -100,17 +143,43 @@ serve(async (req) => {
     const hasActiveSub = subscriptions.data.length > 0;
     let productId: string | null = null;
     let subscriptionEnd: string | null = null;
+    let currentPeriodStart: string | null = null;
     let licenseCount = 0;
     let licensesUsed = 0;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       
-      productId = subscription.items.data[0].price.product as string;
-      licenseCount = subscription.items.data[0].quantity || 1;
-      logStep("Subscription details", { productId, licenseCount });
+      // Log raw values for debugging
+      logStep("Raw subscription data", {
+        current_period_end: subscription.current_period_end,
+        current_period_end_type: typeof subscription.current_period_end,
+        current_period_start: subscription.current_period_start,
+        current_period_start_type: typeof subscription.current_period_start,
+        items_count: subscription.items?.data?.length,
+      });
+
+      // Safely convert timestamps
+      subscriptionEnd = safeTimestampToISO(subscription.current_period_end);
+      currentPeriodStart = safeTimestampToISO(subscription.current_period_start);
+      
+      logStep("Active subscription found", { 
+        subscriptionId: subscription.id, 
+        endDate: subscriptionEnd,
+        startDate: currentPeriodStart,
+      });
+      
+      // Safely get product ID and quantity
+      const firstItem = subscription.items?.data?.[0];
+      if (!firstItem) {
+        logStep("Warning: Subscription has no items", { subscriptionId: subscription.id });
+        productId = null;
+        licenseCount = 1; // Default to 1 license if no items
+      } else {
+        productId = safeGetProductId(firstItem);
+        licenseCount = firstItem.quantity || 1;
+        logStep("Subscription details", { productId, licenseCount, itemId: firstItem.id });
+      }
 
       // Get licenses used from database
       if (companyId) {
@@ -123,19 +192,27 @@ serve(async (req) => {
         licensesUsed = count || 0;
         logStep("Licenses used count", { licensesUsed });
 
-        // Sync subscription data to database
+        // Sync subscription data to database (even with null dates)
+        const upsertData: Record<string, unknown> = {
+          company_id: companyId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          tier: subscription.metadata?.tier || "basic",
+          license_count: licenseCount,
+          status: subscription.status,
+        };
+        
+        // Only include dates if they're valid
+        if (currentPeriodStart) {
+          upsertData.current_period_start = currentPeriodStart;
+        }
+        if (subscriptionEnd) {
+          upsertData.current_period_end = subscriptionEnd;
+        }
+
         const { error: upsertError } = await supabaseClient
           .from("company_subscriptions")
-          .upsert({
-            company_id: companyId,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscription.id,
-            tier: subscription.metadata?.tier || "basic",
-            license_count: licenseCount,
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: subscriptionEnd,
-          }, {
+          .upsert(upsertData, {
             onConflict: "company_id",
           });
         

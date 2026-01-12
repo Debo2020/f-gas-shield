@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLicenses, License } from "@/hooks/useLicenses";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,9 +47,10 @@ import {
   UserCheck, 
   CreditCard,
   Loader2,
-  Settings,
   Mail,
   Shield,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -56,7 +58,7 @@ import { cn } from "@/lib/utils";
 export default function Licenses() {
   const { hasRole } = useAuth();
   const { licenses, stats, loading, refetch, assignLicense, toggleLicense, revokeLicense, updateLicenseCount } = useLicenses();
-  const { tier, openCustomerPortal, subscribed } = useSubscription();
+  const { tier, openCustomerPortal, subscribed, checkSubscription, loading: subscriptionLoading } = useSubscription();
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [addLicensesDialogOpen, setAddLicensesDialogOpen] = useState(false);
@@ -67,10 +69,18 @@ export default function Licenses() {
   const [newLicenseType, setNewLicenseType] = useState<"manager" | "engineer">("engineer");
   const [licensesToAdd, setLicensesToAdd] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
+
+  const handleRefreshSubscription = async () => {
+    setIsRefreshing(true);
+    await checkSubscription();
+    await refetch();
+    setIsRefreshing(false);
+  };
 
   const utilizationPercent = stats.total > 0 
     ? ((stats.active + stats.pending) / stats.total) * 100 
@@ -229,6 +239,32 @@ export default function Licenses() {
           </Card>
         </div>
 
+        {/* Subscription Status Warning */}
+        {!subscribed && !subscriptionLoading && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                No active subscription detected. License management requires an active subscription.
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshSubscription}
+                disabled={isRefreshing}
+                className="ml-4"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="ml-2">Refresh Status</span>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Utilization */}
         <Card>
           <CardHeader>
@@ -239,12 +275,33 @@ export default function Licenses() {
                   {stats.active + stats.pending} of {stats.total} licenses in use
                 </CardDescription>
               </div>
-              {isOwner && (
-                <Button variant="outline" size="sm" onClick={() => setAddLicensesDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Licenses
+              <div className="flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleRefreshSubscription}
+                  disabled={isRefreshing}
+                  title="Refresh subscription status"
+                >
+                  {isRefreshing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
                 </Button>
-              )}
+                {isOwner && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setAddLicensesDialogOpen(true)}
+                    disabled={!subscribed}
+                    title={!subscribed ? "Requires active subscription" : "Add more licenses"}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Licenses
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -255,7 +312,7 @@ export default function Licenses() {
                 utilizationPercent >= 90 && "bg-red-100 [&>div]:bg-red-500"
               )} 
             />
-            {utilizationPercent >= 80 && (
+            {utilizationPercent >= 80 && subscribed && (
               <p className="text-sm text-amber-600 mt-2">
                 ⚠️ You're approaching your license limit. Consider adding more licenses.
               </p>
