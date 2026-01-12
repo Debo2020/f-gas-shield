@@ -145,7 +145,7 @@ export default function Onboarding() {
             </div>
             <span className="font-semibold text-lg">F-Gas Comply</span>
           </div>
-          <Button variant="ghost" onClick={() => navigate("/")}>
+          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
             Exit
           </Button>
         </div>
