@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import {
   CheckCircle2, 
   Clock,
   Plus,
+  ScanLine,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -20,8 +22,18 @@ import { LicenseWidget } from "@/components/dashboard/LicenseWidget";
 import { LiveClock } from "@/components/ui/live-clock";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { StatusIndicator } from "@/components/ui/status-indicator";
+import { EquipmentQRScanner } from "@/components/equipment/EquipmentQRScanner";
+import { EquipmentQuickActions } from "@/components/equipment/EquipmentQuickActions";
+import { Tables } from "@/integrations/supabase/types";
+
+type ScannedEquipment = Tables<"equipment"> & {
+  sites?: { name: string } | null;
+};
 
 export default function Dashboard() {
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannedEquipment, setScannedEquipment] = useState<ScannedEquipment | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const { profile } = useAuth();
   const navigate = useNavigate();
   const today = startOfToday();
@@ -264,6 +276,46 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Floating Scan QR Button */}
+        <Button
+          onClick={() => setScannerOpen(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all z-50 animate-scale-in"
+          size="icon"
+        >
+          <ScanLine className="h-6 w-6" />
+          <span className="sr-only">Scan QR Code</span>
+        </Button>
+
+        {/* QR Scanner Dialog */}
+        <EquipmentQRScanner
+          open={scannerOpen}
+          onOpenChange={setScannerOpen}
+          onEquipmentFound={(equipment) => {
+            setScannedEquipment(equipment as ScannedEquipment);
+            setScannerOpen(false);
+            setQuickActionsOpen(true);
+          }}
+        />
+
+        {/* Quick Actions Sheet */}
+        <EquipmentQuickActions
+          open={quickActionsOpen}
+          onOpenChange={setQuickActionsOpen}
+          equipment={scannedEquipment}
+          onRecordInspection={() => {
+            setQuickActionsOpen(false);
+            navigate(`/inspections?equipmentId=${scannedEquipment?.id}`);
+          }}
+          onEdit={() => {
+            setQuickActionsOpen(false);
+            navigate(`/equipment/${scannedEquipment?.id}`);
+          }}
+          onGenerateLabel={() => {
+            setQuickActionsOpen(false);
+            navigate(`/equipment?action=label&id=${scannedEquipment?.id}`);
+          }}
+        />
       </div>
     </AppLayout>
   );

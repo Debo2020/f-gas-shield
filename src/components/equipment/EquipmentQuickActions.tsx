@@ -35,9 +35,9 @@ interface Equipment {
   next_inspection_due: string | null;
   asset_tag: string | null;
   serial_number: string | null;
-  sites: {
+  sites?: {
     name: string;
-  };
+  } | null;
 }
 
 interface EquipmentQuickActionsProps {
@@ -133,7 +133,7 @@ export function EquipmentQuickActions({
               <SheetTitle className="text-xl">{equipment.name}</SheetTitle>
               <SheetDescription className="flex items-center gap-1.5 mt-1">
                 <MapPin className="h-3.5 w-3.5" />
-                {equipment.sites.name}
+                {equipment.sites?.name || "Unknown site"}
               </SheetDescription>
             </div>
             <Badge variant={inspectionStatus.variant} className="flex items-center gap-1">
