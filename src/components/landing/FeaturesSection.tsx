@@ -1,0 +1,81 @@
+import { 
+  QrCode, 
+  ClipboardCheck, 
+  FileText, 
+  Users, 
+  Calendar,
+  BarChart3
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+const features = [
+  {
+    icon: QrCode,
+    title: "Equipment Tracking",
+    description: "QR code labels for instant equipment identification. Track refrigerant charges, service history, and compliance status.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Inspection Logging",
+    description: "Digital F-Gas inspection records with automatic scheduling. Never miss a mandatory inspection again.",
+  },
+  {
+    icon: FileText,
+    title: "Compliance Reports",
+    description: "Generate audit-ready F-Gas logbooks and compliance certificates. One-click exports for regulators.",
+  },
+  {
+    icon: Users,
+    title: "Team Management",
+    description: "Assign engineers to sites, track certifications, and manage F-Gas certificate expiry dates.",
+  },
+  {
+    icon: Calendar,
+    title: "Smart Scheduling",
+    description: "Automated inspection reminders based on CO₂e thresholds. Stay ahead of regulatory deadlines.",
+  },
+  {
+    icon: BarChart3,
+    title: "Carbon Reporting",
+    description: "Track refrigerant usage and CO₂ equivalent emissions. Ready for sustainability reporting requirements.",
+  },
+];
+
+export function FeaturesSection() {
+  return (
+    <section id="features" className="py-20 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">
+            Everything You Need for F-Gas Compliance
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Built specifically for UK HVAC and refrigeration businesses. 
+            Manage your entire compliance workflow in one platform.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <Card key={feature.title} className="card-interactive border-border/50">
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}

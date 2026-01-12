@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,12 +24,19 @@ const STEPS = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, refreshProfile } = useAuth();
   const { createCheckout, subscribed } = useSubscription();
 
+  // Get tier and billing preference from URL params
+  const tierParam = searchParams.get("tier") as SubscriptionTier | null;
+  const annualParam = searchParams.get("annual");
+
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null);
-  const [isAnnual, setIsAnnual] = useState(true);
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(
+    tierParam && tierParam in SUBSCRIPTION_TIERS ? tierParam : null
+  );
+  const [isAnnual, setIsAnnual] = useState(annualParam !== "false");
   const [licenseCount, setLicenseCount] = useState(3);
   const [isLoading, setIsLoading] = useState(false);
 
