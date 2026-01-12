@@ -49,42 +49,49 @@ const handler = async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
+        <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(10, 37, 64, 0.08);">
+          <!-- Header with Logo -->
           <tr>
-            <td style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">FTrack</h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">F-Gas Compliance Management</p>
+            <td style="background-color: #0a2540; padding: 40px 32px; text-align: center;">
+              <img 
+                src="https://ftrack.lovable.app/ftrack-logo.png" 
+                alt="FTrack" 
+                width="72" 
+                height="72" 
+                style="display: block; margin: 0 auto 16px auto; border-radius: 12px;"
+              />
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">FTrack</h1>
+              <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500;">F-Gas Compliance Management</p>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
             <td style="padding: 40px 32px;">
-              <h2 style="margin: 0 0 16px 0; color: #18181b; font-size: 24px; font-weight: 600;">
+              <h2 style="margin: 0 0 16px 0; color: #0a2540; font-size: 24px; font-weight: 600;">
                 You've Been Invited!
               </h2>
               
-              <p style="margin: 0 0 24px 0; color: #52525b; font-size: 16px; line-height: 1.6;">
-                ${invitedByText}<strong style="color: #18181b;">${companyName}</strong> has invited you to join their team on FTrack as a <strong style="color: #18181b;">${roleDisplay}</strong>.
+              <p style="margin: 0 0 24px 0; color: #475569; font-size: 16px; line-height: 1.6;">
+                ${invitedByText}<strong style="color: #0a2540;">${companyName}</strong> has invited you to join their team on FTrack as a <strong style="color: #0a2540;">${roleDisplay}</strong>.
               </p>
               
               <!-- Role Badge -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
                 <tr>
                   <td>
-                    <span style="display: inline-block; padding: 8px 16px; background-color: ${licenseType === "manager" ? "#dbeafe" : "#dcfce7"}; color: ${licenseType === "manager" ? "#1e40af" : "#166534"}; border-radius: 9999px; font-size: 14px; font-weight: 600;">
+                    <span style="display: inline-block; padding: 10px 20px; background-color: ${licenseType === "manager" ? "#e0f2fe" : "#dcfce7"}; color: ${licenseType === "manager" ? "#0369a1" : "#15803d"}; border-radius: 9999px; font-size: 14px; font-weight: 600;">
                       ${roleDisplay} License
                     </span>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 0 0 32px 0; color: #52525b; font-size: 16px; line-height: 1.6;">
+              <p style="margin: 0 0 32px 0; color: #475569; font-size: 16px; line-height: 1.6;">
                 FTrack helps refrigeration and HVAC companies manage F-Gas compliance, track equipment inspections, and maintain regulatory records.
               </p>
               
@@ -92,14 +99,14 @@ const handler = async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${signUpUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);">
+                    <a href="${signUpUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);">
                       Accept Invitation
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <p style="margin: 32px 0 0 0; color: #71717a; font-size: 14px; line-height: 1.6;">
+              <p style="margin: 32px 0 0 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
                 If the button doesn't work, copy and paste this link into your browser:<br>
                 <a href="${signUpUrl}" style="color: #0ea5e9; text-decoration: underline;">${signUpUrl}</a>
               </p>
@@ -108,11 +115,18 @@ const handler = async (req: Request): Promise<Response> => {
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #fafafa; border-top: 1px solid #e4e4e7;">
-              <p style="margin: 0; color: #a1a1aa; font-size: 12px; text-align: center;">
-                This invitation was sent by ${companyName} via FTrack.<br>
-                If you didn't expect this email, you can safely ignore it.
-              </p>
+            <td style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="28" height="28" style="opacity: 0.4; margin-bottom: 12px; border-radius: 4px;" />
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center; line-height: 1.5;">
+                      This invitation was sent by ${companyName} via FTrack.<br>
+                      If you didn't expect this email, you can safely ignore it.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
