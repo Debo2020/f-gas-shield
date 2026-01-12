@@ -4,7 +4,8 @@ import {
   FileText, 
   Users, 
   Calendar,
-  BarChart3
+  BarChart3,
+  Bot
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -39,6 +40,12 @@ const features = [
     title: "Carbon Reporting",
     description: "Track refrigerant usage and CO₂ equivalent emissions. Ready for sustainability reporting requirements.",
   },
+  {
+    icon: Bot,
+    title: "AI Compliance Assistant",
+    description: "Get instant answers to F-Gas regulation questions. Knows leak check frequencies, CO₂e thresholds, and GWP values.",
+    highlight: true,
+  },
 ];
 
 export function FeaturesSection() {
@@ -58,13 +65,22 @@ export function FeaturesSection() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
+            const isHighlight = 'highlight' in feature && feature.highlight;
             return (
-              <Card key={feature.title} className="card-interactive border-border/50">
+              <Card 
+                key={feature.title} 
+                className={`card-interactive border-border/50 ${isHighlight ? 'ring-2 ring-primary/20 bg-primary/5' : ''}`}
+              >
                 <CardHeader>
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <div className={`h-12 w-12 rounded-lg flex items-center justify-center mb-4 ${isHighlight ? 'bg-primary/20' : 'bg-primary/10'}`}>
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    {feature.title}
+                    {isHighlight && (
+                      <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">New</span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-base">

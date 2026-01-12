@@ -5,6 +5,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { AIFeatureSection } from "@/components/landing/AIFeatureSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { TrustSection } from "@/components/landing/TrustSection";
@@ -43,6 +44,7 @@ export default function Landing() {
         <HeroSection />
         <TrustSection />
         <FeaturesSection />
+        <AIFeatureSection />
         <HowItWorksSection />
         <PricingSection />
       </main>
