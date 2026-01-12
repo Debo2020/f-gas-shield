@@ -358,7 +358,6 @@ export default function Auth() {
                     disabled={isSubmitting || isOffline}
                   />
                 </div>
-                </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
