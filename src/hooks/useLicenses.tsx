@@ -165,6 +165,7 @@ export function useLicenses(): UseLicensesReturn {
         const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
           body: {
             licenseId: insertedLicense.id,
+            origin: window.location.origin,
           },
         });
 
@@ -252,6 +253,7 @@ export function useLicenses(): UseLicensesReturn {
       const { error: emailError } = await supabase.functions.invoke("send-license-invitation", {
         body: {
           licenseId: license.id,
+          origin: window.location.origin,
         },
       });
 
