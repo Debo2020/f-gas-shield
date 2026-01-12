@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,14 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react";
+import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 
-const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
+export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isLoading, signIn, signUp } = useAuth();
@@ -261,7 +261,7 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
   }
 
   return (
-    <div ref={ref} className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       {/* Logo & Branding */}
       <div className="flex items-center gap-3 mb-8">
         <img 
@@ -403,6 +403,4 @@ const Auth = forwardRef<HTMLDivElement>(function Auth(_props, ref) {
       </p>
     </div>
   );
-});
-
-export default Auth;
+}
