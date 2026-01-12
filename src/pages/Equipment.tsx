@@ -463,8 +463,9 @@ export default function Equipment() {
               <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Equipment</TableHead>
-                  <TableHead>Site</TableHead>
+              <TableHead>Equipment</TableHead>
+              <TableHead>Asset ID</TableHead>
+              <TableHead>Site</TableHead>
                   <TableHead>Refrigerant</TableHead>
                   <TableHead className="text-right">Charge (kg)</TableHead>
                   <TableHead className="text-right">CO₂e (t)</TableHead>
@@ -493,6 +494,18 @@ export default function Equipment() {
                             </p>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {eq.asset_tag ? (
+                          <div className="flex items-center gap-1.5">
+                            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="secondary" className="font-mono text-xs">
+                              {eq.asset_tag}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
