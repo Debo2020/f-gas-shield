@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generate-compliance-export]
 verify_jwt = false
+
+[functions.compliance-assistant]
+verify_jwt = false

@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LiveClock } from "@/components/ui/live-clock";
 import { StatusIndicator } from "@/components/ui/status-indicator";
+import { ComplianceAssistantButton } from "@/components/compliance/ComplianceAssistantButton";
 
 // GWP values for CO2e calculation
 const GWP_VALUES: Record<string, number> = {
@@ -340,6 +341,9 @@ export default function GasLog() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* AI Compliance Assistant */}
+        <ComplianceAssistantButton />
       </div>
     </AppLayout>
   );
