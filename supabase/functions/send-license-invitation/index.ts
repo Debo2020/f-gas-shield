@@ -43,50 +43,50 @@ const handler = async (req: Request): Promise<Response> => {
     const signUpUrl = appUrl || "https://ftrack.lovable.app/auth";
 
     const emailHtml = `
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if gte mso 9]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>FTrack Invitation</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f1f5f9;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f1f5f9; padding: 40px 20px;">
     <tr>
       <td align="center">
-        <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(10, 37, 64, 0.08);">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden;">
           <!-- Header with Logo -->
           <tr>
             <td style="background-color: #0a2540; padding: 40px 32px; text-align: center;">
-              <img 
-                src="https://ftrack.lovable.app/ftrack-logo.png" 
-                alt="FTrack" 
-                width="72" 
-                height="72" 
-                style="display: block; margin: 0 auto 16px auto; border-radius: 12px;"
-              />
+              <img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="72" height="72" style="display: block; margin: 0 auto 16px auto;" />
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">FTrack</h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500;">F-Gas Compliance Management</p>
+              <p style="margin: 8px 0 0 0; color: #b0bec5; font-size: 14px; font-weight: 500;">F-Gas Compliance Management</p>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
             <td style="padding: 40px 32px;">
-              <h2 style="margin: 0 0 16px 0; color: #0a2540; font-size: 24px; font-weight: 600;">
-                You've Been Invited!
-              </h2>
+              <h2 style="margin: 0 0 16px 0; color: #0a2540; font-size: 24px; font-weight: 600;">You've Been Invited!</h2>
               
               <p style="margin: 0 0 24px 0; color: #475569; font-size: 16px; line-height: 1.6;">
                 ${invitedByText}<strong style="color: #0a2540;">${companyName}</strong> has invited you to join their team on FTrack as a <strong style="color: #0a2540;">${roleDisplay}</strong>.
               </p>
               
               <!-- Role Badge -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px 0;">
                 <tr>
-                  <td>
-                    <span style="display: inline-block; padding: 10px 20px; background-color: ${licenseType === "manager" ? "#e0f2fe" : "#dcfce7"}; color: ${licenseType === "manager" ? "#0369a1" : "#15803d"}; border-radius: 9999px; font-size: 14px; font-weight: 600;">
-                      ${roleDisplay} License
-                    </span>
+                  <td style="padding: 10px 20px; background-color: ${licenseType === "manager" ? "#e0f2fe" : "#dcfce7"}; color: ${licenseType === "manager" ? "#0369a1" : "#15803d"}; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                    ${roleDisplay} License
                   </td>
                 </tr>
               </table>
@@ -96,18 +96,24 @@ const handler = async (req: Request): Promise<Response> => {
               </p>
               
               <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <a href="${signUpUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);">
-                      Accept Invitation
-                    </a>
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${signUpUrl}" style="height:52px;v-text-anchor:middle;width:220px;" arcsize="20%" strokecolor="#0284c7" fillcolor="#0ea5e9">
+                    <w:anchorlock/>
+                    <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Accept Invitation</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${signUpUrl}" style="display: inline-block; padding: 16px 40px; background-color: #0ea5e9; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 16px; font-weight: 600;">Accept Invitation</a>
+                    <!--<![endif]-->
                   </td>
                 </tr>
               </table>
               
               <p style="margin: 32px 0 0 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
-                If the button doesn't work, copy and paste this link into your browser:<br>
+                If the button doesn't work, copy and paste this link into your browser:<br />
                 <a href="${signUpUrl}" style="color: #0ea5e9; text-decoration: underline;">${signUpUrl}</a>
               </p>
             </td>
@@ -116,12 +122,12 @@ const handler = async (req: Request): Promise<Response> => {
           <!-- Footer -->
           <tr>
             <td style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="28" height="28" style="opacity: 0.4; margin-bottom: 12px; border-radius: 4px;" />
+                    <img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="28" height="28" style="display: block; margin: 0 auto 12px auto; opacity: 0.4;" />
                     <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center; line-height: 1.5;">
-                      This invitation was sent by ${companyName} via FTrack.<br>
+                      This invitation was sent by ${companyName} via FTrack.<br />
                       If you didn't expect this email, you can safely ignore it.
                     </p>
                   </td>
