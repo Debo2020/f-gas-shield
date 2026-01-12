@@ -907,6 +907,7 @@ export type Database = {
           id: string
           license_type: string
           status: string
+          token: string | null
           updated_at: string
           user_id: string | null
         }
@@ -920,6 +921,7 @@ export type Database = {
           id?: string
           license_type?: string
           status?: string
+          token?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -933,6 +935,7 @@ export type Database = {
           id?: string
           license_type?: string
           status?: string
+          token?: string | null
           updated_at?: string
           user_id?: string | null
         }
