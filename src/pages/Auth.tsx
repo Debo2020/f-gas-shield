@@ -39,9 +39,9 @@ export default function Auth() {
       // If there's a checkout redirect, go to checkout redirect page
       if (redirectToCheckout && tier) {
         navigate(`/checkout-redirect?tier=${tier}&annual=${annual || "true"}`);
-      } else {
-        navigate("/");
-      }
+    } else {
+      navigate("/dashboard");
+    }
     }
   }, [user, isLoading, navigate, redirectToCheckout, tier, annual]);
 
