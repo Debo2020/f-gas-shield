@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, AlertCircle, Loader2 } from "lucide-react";
+import { Shield, AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -25,6 +26,8 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   // Check for checkout redirect params
   const redirectToCheckout = searchParams.get("redirect") === "checkout";
@@ -110,10 +113,149 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      setError(emailResult.error.errors[0].message);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsSubmitting(false);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setResetEmailSent(true);
+    }
+  };
+
+  const handleBackToSignIn = () => {
+    setShowForgotPassword(false);
+    setResetEmailSent(false);
+    setError(null);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Forgot Password View
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        {/* Logo & Branding */}
+        <div className="flex items-center gap-3 mb-8">
+          <img 
+            src="/favicon.png" 
+            alt="FTrack Logo" 
+            className="w-12 h-12 rounded-xl"
+          />
+          <div>
+            <h1 className="text-2xl font-heading font-bold text-foreground">FTrack</h1>
+            <p className="text-sm text-muted-foreground">F-Gas Compliance Management</p>
+          </div>
+        </div>
+
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            {resetEmailSent ? (
+              <>
+                <div className="mx-auto mb-4 p-3 rounded-full bg-green-100 dark:bg-green-900/20 w-fit">
+                  <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle>Check Your Email</CardTitle>
+                <CardDescription>
+                  We've sent a password reset link to <strong>{email}</strong>
+                </CardDescription>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10 w-fit">
+                  <Mail className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle>Forgot Password?</CardTitle>
+                <CardDescription>
+                  Enter your email and we'll send you a link to reset your password.
+                </CardDescription>
+              </>
+            )}
+          </CardHeader>
+
+          <CardContent>
+            {resetEmailSent ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleBackToSignIn}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@company.co.uk"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={handleBackToSignIn}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="mt-8 text-xs text-muted-foreground">
+          UK F-Gas Regulation Compliance Platform
+        </p>
       </div>
     );
   }
@@ -164,7 +306,16 @@ export default function Auth() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <Input
                     id="signin-password"
                     type="password"

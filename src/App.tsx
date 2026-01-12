@@ -23,6 +23,7 @@ import Reports from "./pages/Reports";
 import Documents from "./pages/Documents";
 import AcceptInvite from "./pages/AcceptInvite";
 import SetPassword from "./pages/SetPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/set-password" element={<SetPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
             <Route
