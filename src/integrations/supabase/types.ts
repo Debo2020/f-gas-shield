@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action"]
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          org_id: string
+          target_id: string | null
+          target_table: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action"]
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          org_id: string
+          target_id?: string | null
+          target_table: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action"]
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          org_id?: string
+          target_id?: string | null
+          target_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -199,6 +243,9 @@ export type Database = {
           co2_equivalent_tonnes: number | null
           company_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          gwp: number | null
           id: string
           inspection_frequency_months: number | null
           installation_date: string | null
@@ -221,6 +268,9 @@ export type Database = {
           co2_equivalent_tonnes?: number | null
           company_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          gwp?: number | null
           id?: string
           inspection_frequency_months?: number | null
           installation_date?: string | null
@@ -243,6 +293,9 @@ export type Database = {
           co2_equivalent_tonnes?: number | null
           company_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          gwp?: number | null
           id?: string
           inspection_frequency_months?: number | null
           installation_date?: string | null
@@ -358,6 +411,126 @@ export type Database = {
           },
         ]
       }
+      leak_checks: {
+        Row: {
+          asset_id: string
+          checked_by: string | null
+          completed_date: string | null
+          created_at: string
+          due_date: string
+          id: string
+          leak_location: string | null
+          leak_rate_kg_per_year: number | null
+          next_check_due: string | null
+          notes: string | null
+          org_id: string
+          repair_completed: boolean | null
+          repair_date: string | null
+          repair_required: boolean | null
+          result: Database["public"]["Enums"]["leak_check_result"]
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          checked_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          leak_location?: string | null
+          leak_rate_kg_per_year?: number | null
+          next_check_due?: string | null
+          notes?: string | null
+          org_id: string
+          repair_completed?: boolean | null
+          repair_date?: string | null
+          repair_required?: boolean | null
+          result?: Database["public"]["Enums"]["leak_check_result"]
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          checked_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          leak_location?: string | null
+          leak_rate_kg_per_year?: number | null
+          next_check_due?: string | null
+          notes?: string | null
+          org_id?: string
+          repair_completed?: boolean | null
+          repair_date?: string | null
+          repair_required?: boolean | null
+          result?: Database["public"]["Enums"]["leak_check_result"]
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leak_checks_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leak_checks_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leak_checks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_memberships_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -405,6 +578,68 @@ export type Database = {
           {
             foreignKeyName: "profiles_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualifications: {
+        Row: {
+          certificate_number: string
+          created_at: string
+          document_url: string | null
+          expires_on: string | null
+          id: string
+          issued_on: string
+          issuing_body: string | null
+          notes: string | null
+          org_id: string
+          qualification_type: Database["public"]["Enums"]["qualification_type"]
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          certificate_number: string
+          created_at?: string
+          document_url?: string | null
+          expires_on?: string | null
+          id?: string
+          issued_on: string
+          issuing_body?: string | null
+          notes?: string | null
+          org_id: string
+          qualification_type: Database["public"]["Enums"]["qualification_type"]
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          certificate_number?: string
+          created_at?: string
+          document_url?: string | null
+          expires_on?: string | null
+          id?: string
+          issued_on?: string
+          issuing_body?: string | null
+          notes?: string | null
+          org_id?: string
+          qualification_type?: Database["public"]["Enums"]["qualification_type"]
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualifications_org_id_fkey"
+            columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -564,7 +799,10 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
+          is_deleted: boolean | null
           name: string
           notes: string | null
           postcode: string | null
@@ -578,7 +816,10 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
+          is_deleted?: boolean | null
           name: string
           notes?: string | null
           postcode?: string | null
@@ -592,7 +833,10 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
+          is_deleted?: boolean | null
           name?: string
           notes?: string | null
           postcode?: string | null
@@ -746,6 +990,10 @@ export type Database = {
         Args: { company_uuid: string }
         Returns: number
       }
+      get_org_role: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_required_inspection_frequency: {
         Args: { co2e_tonnes: number }
         Returns: number
@@ -762,6 +1010,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_org_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          _action: Database["public"]["Enums"]["audit_action"]
+          _metadata?: Json
+          _org_id: string
+          _target_id?: string
+          _target_table: string
+        }
+        Returns: string
+      }
       user_can_create_company: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -772,6 +1038,16 @@ export type Database = {
         | "admin"
         | "auditor"
         | "read_only"
+      audit_action:
+        | "membership_created"
+        | "membership_updated"
+        | "membership_deleted"
+        | "role_changed"
+        | "equipment_deleted"
+        | "site_deleted"
+        | "document_deleted"
+        | "export_generated"
+        | "settings_updated"
       cylinder_status: "in_stock" | "checked_out" | "empty" | "disposed"
       document_type:
         | "certificate"
@@ -782,7 +1058,22 @@ export type Database = {
         | "report"
         | "other"
       inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
+      leak_check_result:
+        | "pass"
+        | "fail_leak_found"
+        | "fail_inaccessible"
+        | "pending"
+        | "overdue"
       movement_type: "book_out" | "book_in" | "recovered"
+      qualification_type:
+        | "f_gas_category_1"
+        | "f_gas_category_2"
+        | "f_gas_category_3"
+        | "f_gas_category_4"
+        | "acs"
+        | "city_guilds"
+        | "nvq"
+        | "other"
       refrigerant_type:
         | "R-32"
         | "R-134a"
@@ -932,6 +1223,17 @@ export const Constants = {
         "auditor",
         "read_only",
       ],
+      audit_action: [
+        "membership_created",
+        "membership_updated",
+        "membership_deleted",
+        "role_changed",
+        "equipment_deleted",
+        "site_deleted",
+        "document_deleted",
+        "export_generated",
+        "settings_updated",
+      ],
       cylinder_status: ["in_stock", "checked_out", "empty", "disposed"],
       document_type: [
         "certificate",
@@ -943,7 +1245,24 @@ export const Constants = {
         "other",
       ],
       inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
+      leak_check_result: [
+        "pass",
+        "fail_leak_found",
+        "fail_inaccessible",
+        "pending",
+        "overdue",
+      ],
       movement_type: ["book_out", "book_in", "recovered"],
+      qualification_type: [
+        "f_gas_category_1",
+        "f_gas_category_2",
+        "f_gas_category_3",
+        "f_gas_category_4",
+        "acs",
+        "city_guilds",
+        "nvq",
+        "other",
+      ],
       refrigerant_type: [
         "R-32",
         "R-134a",
