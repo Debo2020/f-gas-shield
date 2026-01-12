@@ -716,6 +716,7 @@ export default function Equipment() {
             name: company.name,
             phone: company.phone,
             email: company.email,
+            logo_url: company.logo_url,
           }}
           siteName={labelEquipment.sites.name}
         />
