@@ -1,4 +1,5 @@
-import { MapPin, Phone, Mail, User, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MapPin, Phone, Mail, User, MoreVertical, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,38 +29,51 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCardProps) {
+  const navigate = useNavigate();
   const fullAddress = [site.address, site.city, site.postcode].filter(Boolean).join(", ");
 
+  const handleCardClick = () => {
+    navigate(`/sites/${site.id}`);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card 
+      className="hover:shadow-md transition-shadow cursor-pointer group"
+      onClick={handleCardClick}
+    >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold">{site.name}</CardTitle>
-        {(canEdit || canDelete) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {canEdit && (
-                <DropdownMenuItem onClick={onEdit}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit Site
-                </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={onDelete}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Site
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+          {site.name}
+        </CardTitle>
+        <div className="flex items-center gap-1">
+          {(canEdit || canDelete) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canEdit && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit Site
+                  </DropdownMenuItem>
+                )}
+                {canDelete && (
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Site
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-start gap-2 text-sm">
@@ -77,7 +91,11 @@ export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCar
         {site.contact_phone && (
           <div className="flex items-center gap-2 text-sm">
             <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-            <a href={`tel:${site.contact_phone}`} className="text-primary hover:underline">
+            <a 
+              href={`tel:${site.contact_phone}`} 
+              className="text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
               {site.contact_phone}
             </a>
           </div>
@@ -86,7 +104,11 @@ export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCar
         {site.contact_email && (
           <div className="flex items-center gap-2 text-sm">
             <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-            <a href={`mailto:${site.contact_email}`} className="text-primary hover:underline">
+            <a 
+              href={`mailto:${site.contact_email}`} 
+              className="text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
               {site.contact_email}
             </a>
           </div>

@@ -156,6 +156,11 @@ export function AppLayout({ children }: AppLayoutProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/settings/profile")}>
+                  <Users className="mr-2 h-4 w-4" />
+                  My Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
