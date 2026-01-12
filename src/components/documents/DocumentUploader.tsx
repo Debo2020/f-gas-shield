@@ -1,12 +1,17 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, File, Image, FileText, Loader2 } from "lucide-react";
+import { Upload, X, File, Image, FileText, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface DocumentUploaderProps {
   companyId: string;
@@ -18,7 +23,11 @@ interface DocumentUploaderProps {
   onUploadComplete?: (document: UploadedDocument) => void;
   maxFiles?: number;
   className?: string;
+  showExpiryDate?: boolean;
 }
+
+// Document types that can have expiry dates
+const EXPIRABLE_TYPES = ["certificate", "declaration", "report"];
 
 export interface UploadedDocument {
   id: string;
@@ -48,11 +57,15 @@ export function DocumentUploader({
   onUploadComplete,
   maxFiles = 5,
   className,
+  showExpiryDate,
 }: DocumentUploaderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [expiryDate, setExpiryDate] = useState<Date | undefined>();
+
+  const canSetExpiry = showExpiryDate || EXPIRABLE_TYPES.includes(documentType);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.slice(0, maxFiles - pendingFiles.length);
@@ -119,6 +132,7 @@ export function DocumentUploader({
             file_size: file.size,
             mime_type: file.type,
             uploaded_by: user.id,
+            expiry_date: expiryDate ? expiryDate.toISOString().split("T")[0] : null,
           })
           .select()
           .single();
@@ -135,6 +149,7 @@ export function DocumentUploader({
 
       toast.success(`${totalFiles} file(s) uploaded successfully`);
       setPendingFiles([]);
+      setExpiryDate(undefined);
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(`Upload failed: ${error.message}`);
@@ -215,6 +230,46 @@ export function DocumentUploader({
 
           {uploading && (
             <Progress value={uploadProgress} className="h-2" />
+          )}
+
+          {/* Expiry Date Picker */}
+          {canSetExpiry && (
+            <div className="space-y-2">
+              <Label className="text-sm">Expiry Date (optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !expiryDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {expiryDate ? format(expiryDate, "PPP") : "Set expiry date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={expiryDate}
+                    onSelect={setExpiryDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {expiryDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExpiryDate(undefined)}
+                  className="text-xs"
+                >
+                  Clear expiry date
+                </Button>
+              )}
+            </div>
           )}
 
           <Button

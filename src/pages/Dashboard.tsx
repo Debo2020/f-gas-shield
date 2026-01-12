@@ -24,6 +24,8 @@ import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { EquipmentQRScanner } from "@/components/equipment/EquipmentQRScanner";
 import { EquipmentQuickActions } from "@/components/equipment/EquipmentQuickActions";
+import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
+import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { Tables } from "@/integrations/supabase/types";
 
 type ScannedEquipment = Tables<"equipment"> & {
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { alerts, hasCriticalAlerts } = useExpiryAlerts();
   const today = startOfToday();
   const in30Days = addDays(today, 30);
 
@@ -136,6 +139,13 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Expiry Alerts */}
+        {alerts.length > 0 && (
+          <div className="animate-slide-up">
+            <ExpiryAlertBanner alerts={alerts} variant="compact" />
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

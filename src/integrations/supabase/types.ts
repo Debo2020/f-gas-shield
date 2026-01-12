@@ -107,6 +107,7 @@ export type Database = {
           description: string | null
           document_type: Database["public"]["Enums"]["document_type"]
           equipment_id: string | null
+          expiry_date: string | null
           file_size: number | null
           file_url: string
           id: string
@@ -124,6 +125,7 @@ export type Database = {
           description?: string | null
           document_type?: Database["public"]["Enums"]["document_type"]
           equipment_id?: string | null
+          expiry_date?: string | null
           file_size?: number | null
           file_url: string
           id?: string
@@ -141,6 +143,7 @@ export type Database = {
           description?: string | null
           document_type?: Database["public"]["Enums"]["document_type"]
           equipment_id?: string | null
+          expiry_date?: string | null
           file_size?: number | null
           file_url?: string
           id?: string
