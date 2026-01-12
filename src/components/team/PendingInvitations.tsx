@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Mail, Trash2, UserCog, Wrench } from "lucide-react";
+import { Clock, Mail, RefreshCw, Trash2, UserCog, Wrench } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 interface PendingInvitation {
   id: string;
@@ -15,13 +16,17 @@ interface PendingInvitationsProps {
   invitations: PendingInvitation[];
   isOwner: boolean;
   onDelete?: (id: string) => void;
+  onResend?: (invitation: { id: string; email: string; role: string }) => Promise<void>;
 }
 
 export function PendingInvitations({
   invitations,
   isOwner,
   onDelete,
+  onResend,
 }: PendingInvitationsProps) {
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "manager":
@@ -48,6 +53,16 @@ export function PendingInvitations({
     return new Date(expiresAt) < new Date();
   };
 
+  const handleResend = async (invitation: PendingInvitation) => {
+    if (!onResend) return;
+    setResendingId(invitation.id);
+    try {
+      await onResend({ id: invitation.id, email: invitation.email, role: invitation.role });
+    } finally {
+      setResendingId(null);
+    }
+  };
+
   if (invitations.length === 0) {
     return null;
   }
@@ -56,6 +71,7 @@ export function PendingInvitations({
     <div className="space-y-2">
       {invitations.map((invitation) => {
         const expired = isExpired(invitation.expires_at);
+        const isResending = resendingId === invitation.id;
         
         return (
           <div
@@ -91,6 +107,19 @@ export function PendingInvitations({
                 {getRoleIcon(invitation.role)}
                 {invitation.role}
               </Badge>
+
+              {isOwner && onResend && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-muted-foreground hover:text-primary"
+                  onClick={() => handleResend(invitation)}
+                  disabled={isResending}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-1 ${isResending ? "animate-spin" : ""}`} />
+                  {isResending ? "Sending..." : "Resend"}
+                </Button>
+              )}
 
               {isOwner && onDelete && (
                 <Button

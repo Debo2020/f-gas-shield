@@ -133,6 +133,30 @@ export default function Team() {
     fetchTeamData();
   };
 
+  const handleResendInvitation = async (invitation: { id: string; email: string; role: string }) => {
+    if (!profile?.company_id) return;
+
+    // Delete old invitation first
+    await supabase.from("team_invitations").delete().eq("id", invitation.id);
+
+    // Send new invitation via edge function
+    const { data, error } = await supabase.functions.invoke("invite-member", {
+      body: {
+        org_id: profile.company_id,
+        email: invitation.email.toLowerCase(),
+        role: invitation.role,
+      },
+    });
+
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to resend invitation");
+      return;
+    }
+
+    toast.success(`Invitation resent to ${invitation.email}`);
+    fetchTeamData();
+  };
+
   const handleRemoveMember = async (userId: string) => {
     // Remove user's roles first
     const { error: rolesError } = await supabase
@@ -260,6 +284,7 @@ export default function Team() {
                     invitations={invitations}
                     isOwner={isOwner}
                     onDelete={handleDeleteInvitation}
+                    onResend={handleResendInvitation}
                   />
                 )}
               </CardContent>
