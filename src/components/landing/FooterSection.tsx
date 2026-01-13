@@ -25,19 +25,40 @@ export function FooterSection() {
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a 
+                  href="#features"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
                   Features
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a 
+                  href="#pricing"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
                   Pricing
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a 
+                  href="#how-it-works"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
                   How It Works
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
