@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export function LandingHeader() {
@@ -17,24 +18,36 @@ export function LandingHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link 
-            to="/#features" 
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          <a 
+            href="#features"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             Features
-          </Link>
-          <Link 
-            to="/#pricing" 
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          </a>
+          <a 
+            href="#pricing"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             Pricing
-          </Link>
-          <Link 
-            to="/#how-it-works" 
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          </a>
+          <a 
+            href="#how-it-works"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             How It Works
-          </Link>
+          </a>
         </nav>
 
         <div className="flex items-center gap-3">

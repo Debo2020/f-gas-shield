@@ -131,6 +131,11 @@
 }
 
 @layer base {
+  html {
+    scroll-padding-top: 5rem;
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border transition-colors duration-300;
   }
