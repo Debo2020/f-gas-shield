@@ -29,6 +29,7 @@ import Install from "./pages/Install";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import Onboarding from "./pages/Onboarding";
 import Licenses from "./pages/settings/Licenses";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/install" element={<Install />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
             <Route
