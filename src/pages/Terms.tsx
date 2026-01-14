@@ -27,8 +27,9 @@ export default function Terms() {
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 These Terms constitute a legally binding agreement between you (whether personally or on behalf 
-                of an entity) and FTrack Ltd ("FTrack", "we", "us", or "our"). By using the Service, you represent 
-                that you have the legal capacity to enter into these Terms and agree to comply with them.
+                of an entity) and Build IQ Tech Ltd, trading as FTrack ("FTrack", "we", "us", or "our"), 
+                Company Number 15883295. By using the Service, you represent that you have the legal capacity 
+                to enter into these Terms and agree to comply with them.
               </p>
             </section>
 
@@ -269,9 +270,11 @@ export default function Terms() {
                 If you have any questions about these Terms of Service, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-6 space-y-2">
-                <p className="font-medium">FTrack Ltd</p>
-                <p className="text-muted-foreground">Email: legal@ftrack.uk</p>
-                <p className="text-muted-foreground">Support: support@ftrack.uk</p>
+                <p className="font-medium">Build IQ Tech Ltd</p>
+                <p className="text-muted-foreground">Trading as: FTrack</p>
+                <p className="text-muted-foreground">Company Number: 15883295</p>
+                <p className="text-muted-foreground">Registered Address: 19 Upper King Street, Norwich, NR3 1RB, United Kingdom</p>
+                <p className="text-muted-foreground">Email: hello@build-iq.co.uk</p>
               </div>
             </section>
 
