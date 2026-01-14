@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -31,6 +32,7 @@ import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Help from "./pages/Help";
 import Onboarding from "./pages/Onboarding";
 import Licenses from "./pages/settings/Licenses";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
@@ -47,6 +49,7 @@ const App = () => (
           <Sonner />
         <BrowserRouter>
           <CookieConsentBanner />
+          <AnalyticsProvider />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
@@ -54,9 +57,10 @@ const App = () => (
             <Route path="/accept-license" element={<AcceptLicense />} />
             <Route path="/set-password" element={<SetPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/install" element={<Install />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
+            <Route path="/install" element={<Install />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/help" element={<Help />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
             <Route
