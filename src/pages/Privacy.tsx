@@ -24,10 +24,10 @@ const Privacy = () => {
                 1. Introduction
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Welcome to FTrack ("we," "our," or "us"). We are committed to protecting your personal 
-                information and your right to privacy. This Privacy Policy explains how we collect, use, 
-                disclose, and safeguard your information when you use our F-Gas compliance management 
-                platform and related services.
+                Welcome to FTrack, a product of Build IQ Tech Ltd ("we," "our," or "us"). We are committed 
+                to protecting your personal information and your right to privacy. This Privacy Policy explains 
+                how we collect, use, disclose, and safeguard your information when you use our F-Gas compliance 
+                management platform and related services.
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 By using FTrack, you agree to the collection and use of information in accordance with 
@@ -163,7 +163,7 @@ const Privacy = () => {
                 <li><strong className="text-foreground">Rights Related to Automated Decision-Making:</strong> Right not to be subject to solely automated decisions</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed">
-                To exercise any of these rights, please contact us at privacy@ftrack.uk.
+                To exercise any of these rights, please contact us at hello@build-iq.co.uk.
               </p>
             </section>
 
@@ -254,9 +254,11 @@ const Privacy = () => {
                 If you have any questions about this Privacy Policy or our data practices, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-6 space-y-2">
-                <p className="text-foreground font-medium">FTrack - F-Gas Compliance Manager</p>
-                <p className="text-muted-foreground">Email: privacy@ftrack.uk</p>
-                <p className="text-muted-foreground">Support: support@ftrack.uk</p>
+                <p className="text-foreground font-medium">Build IQ Tech Ltd</p>
+                <p className="text-muted-foreground">Trading as: FTrack</p>
+                <p className="text-muted-foreground">Company Number: 15883295</p>
+                <p className="text-muted-foreground">19 Upper King Street, Norwich, NR3 1RB, United Kingdom</p>
+                <p className="text-muted-foreground">Email: hello@build-iq.co.uk</p>
               </div>
               <p className="text-muted-foreground leading-relaxed">
                 You also have the right to lodge a complaint with the Information Commissioner's Office (ICO) 

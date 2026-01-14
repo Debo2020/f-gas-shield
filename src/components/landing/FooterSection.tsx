@@ -73,12 +73,12 @@ export function FooterSection() {
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@ftrack.uk" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="mailto:hello@build-iq.co.uk" className="text-muted-foreground hover:text-foreground transition-colors">
                   Contact Support
                 </a>
               </li>
               <li>
-                <a href="mailto:sales@ftrack.uk" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="mailto:hello@build-iq.co.uk" className="text-muted-foreground hover:text-foreground transition-colors">
                   Sales Enquiries
                 </a>
               </li>
@@ -104,8 +104,9 @@ export function FooterSection() {
         </div>
 
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} FTrack. All rights reserved.</p>
-          <p className="mt-1">Built for UK F-Gas Regulation Compliance</p>
+          <p>© {new Date().getFullYear()} Build IQ Tech Ltd. All rights reserved.</p>
+          <p className="mt-1">Company No. 15883295 | Registered in England and Wales</p>
+          <p className="mt-1">19 Upper King Street, Norwich, NR3 1RB, United Kingdom</p>
         </div>
       </div>
     </footer>
