@@ -23,7 +23,7 @@ export const SUBSCRIPTION_TIERS = {
       ai_credits_monthly: 50,
     },
     // AI credit overage billing
-    overage_price_id: null as string | null, // Will be set after Stripe meter creation
+    overage_price_id: "price_1SpoFQF9KjzL48NkD2Sd2SCv",
     ai_credit_overage_rate: 10, // pence per credit
   },
   premium: {
@@ -52,7 +52,7 @@ export const SUBSCRIPTION_TIERS = {
     },
     popular: true,
     // AI credit overage billing
-    overage_price_id: null as string | null, // Will be set after Stripe meter creation
+    overage_price_id: "price_1SpoHNF9KjzL48Nk0IHKeD8O",
     ai_credit_overage_rate: 8, // pence per credit
   },
   enterprise: {
