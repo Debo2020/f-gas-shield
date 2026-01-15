@@ -65,17 +65,18 @@ export async function getDocumentUrl(
   expiresIn = 3600
 ): Promise<string | null> {
   try {
-    // If it's already a full URL, extract the file path
     const path = extractFilePath(filePath, bucketId);
+    console.log("[Storage] Creating signed URL:", { originalPath: filePath, extractedPath: path, bucket: bucketId });
     
     const { data, error } = await supabase.storage
       .from(bucketId)
       .createSignedUrl(path, expiresIn);
 
     if (error) {
-      console.error("Error creating signed URL:", error);
-      // If the file doesn't exist in the specified bucket, try the legacy bucket
+      console.error("[Storage] Signed URL error:", error);
+      // Fallback to legacy bucket if we're not already trying it
       if (bucketId !== "compliance-documents") {
+        console.log("[Storage] Trying legacy bucket fallback...");
         return getDocumentUrl(filePath, "compliance-documents", expiresIn);
       }
       return null;
@@ -83,40 +84,59 @@ export async function getDocumentUrl(
 
     return data.signedUrl;
   } catch (error) {
-    console.error("Error in getDocumentUrl:", error);
+    console.error("[Storage] Exception in getDocumentUrl:", error);
     return null;
   }
 }
 
-/**
- * Extract the file path from a URL or return the path if already a path.
- * Handles both full Supabase storage URLs and plain paths.
- */
 export function extractFilePath(fileUrlOrPath: string, bucketId: string = "compliance-documents"): string {
-  // If it's not a URL, return as-is
+  // If it's not a URL, return as-is (it's already a path)
   if (!fileUrlOrPath.includes("://")) {
     return fileUrlOrPath;
   }
 
   try {
     const url = new URL(fileUrlOrPath);
-    // Path format: /storage/v1/object/public/{bucketId}/{companyId}/{filename}
-    // We need to extract: {companyId}/{filename} or {companyId}/{year}/{month}/{filename}
-    const bucketPattern = new RegExp(`${bucketId}/(.+)$`);
-    const pathMatch = url.pathname.match(bucketPattern);
-    if (pathMatch) {
-      return pathMatch[1];
+    
+    // Handle various URL patterns:
+    // 1. /storage/v1/object/public/{bucket}/{path}
+    // 2. /storage/v1/object/sign/{bucket}/{path}
+    // 3. /storage/v1/object/{bucket}/{path}
+    
+    const patterns = [
+      new RegExp(`/storage/v1/object/(?:public|sign)/${bucketId}/(.+?)(?:\\?|$)`),
+      new RegExp(`/storage/v1/object/${bucketId}/(.+?)(?:\\?|$)`),
+      new RegExp(`${bucketId}/(.+?)(?:\\?|$)`),
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.pathname.match(pattern);
+      if (match) {
+        return decodeURIComponent(match[1]);
+      }
     }
-    // Also try compliance-documents for legacy URLs
-    const legacyMatch = url.pathname.match(/compliance-documents\/(.+)$/);
-    if (legacyMatch) {
-      return legacyMatch[1];
+    
+    // Try legacy compliance-documents bucket
+    const legacyPatterns = [
+      /\/storage\/v1\/object\/(?:public|sign)\/compliance-documents\/(.+?)(?:\?|$)/,
+      /compliance-documents\/(.+?)(?:\?|$)/,
+    ];
+    
+    for (const pattern of legacyPatterns) {
+      const match = url.pathname.match(pattern);
+      if (match) {
+        return decodeURIComponent(match[1]);
+      }
     }
-    // Fallback: get path segments after the bucket
-    const pathParts = url.pathname.split("/");
-    return pathParts.slice(-2).join("/");
+    
+    // Last resort: get the last path segments (company/file pattern)
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    if (pathParts.length >= 2) {
+      return pathParts.slice(-2).join("/");
+    }
+    
+    return pathParts[pathParts.length - 1] || fileUrlOrPath;
   } catch {
-    // If URL parsing fails, return original
     return fileUrlOrPath;
   }
 }
