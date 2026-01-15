@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getBucketForDocument, generateFilePath } from "@/lib/storage";
 
 interface BulkPhotoUploaderProps {
   companyId: string;
@@ -87,6 +88,13 @@ export function BulkPhotoUploader({
     let successCount = 0;
     let errorCount = 0;
 
+    // Determine the target bucket based on context
+    const targetBucket = getBucketForDocument({
+      documentType: "photo",
+      siteId,
+      equipmentId,
+    });
+
     try {
       for (let i = 0; i < pendingPhotos.length; i++) {
         const photo = pendingPhotos[i];
@@ -99,19 +107,19 @@ export function BulkPhotoUploader({
         });
 
         try {
-          const fileExt = photo.file.name.split(".").pop()?.toLowerCase() || "jpg";
-          const filePath = `${companyId}/${crypto.randomUUID()}.${fileExt}`;
+          // Generate structured file path
+          const filePath = generateFilePath(companyId, photo.file.name);
 
-          // Upload to storage
+          // Upload to the appropriate storage bucket
           const { error: uploadError } = await supabase.storage
-            .from("compliance-documents")
+            .from(targetBucket)
             .upload(filePath, photo.file, {
               contentType: photo.file.type,
             });
 
           if (uploadError) throw uploadError;
 
-          // Create document record (store file path, not public URL)
+          // Create document record with bucket_id
           const { error: docError } = await supabase
             .from("documents")
             .insert({
@@ -125,6 +133,7 @@ export function BulkPhotoUploader({
               file_size: photo.file.size,
               mime_type: photo.file.type,
               uploaded_by: user.id,
+              bucket_id: targetBucket,
             });
 
           if (docError) throw docError;

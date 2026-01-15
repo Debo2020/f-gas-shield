@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { getBucketForDocument, generateFilePath } from "@/lib/storage";
 
 interface CameraCaptureProps {
   open: boolean;
@@ -131,6 +132,13 @@ export function CameraCapture({
 
     setIsUploading(true);
 
+    // Determine the target bucket based on context
+    const targetBucket = getBucketForDocument({
+      documentType: "photo",
+      siteId,
+      equipmentId,
+    });
+
     try {
       // Convert base64 to blob
       const response = await fetch(capturedImage);
@@ -138,19 +146,20 @@ export function CameraCapture({
       
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const fileName = `photo_${timestamp}.jpg`;
-      const filePath = `${companyId}/${crypto.randomUUID()}.jpg`;
+      
+      // Generate structured file path
+      const filePath = generateFilePath(companyId, fileName);
 
-      // Upload to storage
+      // Upload to the appropriate storage bucket
       const { error: uploadError } = await supabase.storage
-        .from("compliance-documents")
+        .from(targetBucket)
         .upload(filePath, blob, {
           contentType: "image/jpeg",
         });
 
       if (uploadError) throw uploadError;
 
-      // Store the file path (not public URL) for private bucket access
-      // Create document record
+      // Store the file path and bucket_id for proper retrieval
       const { data: docData, error: docError } = await supabase
         .from("documents")
         .insert({
@@ -164,6 +173,7 @@ export function CameraCapture({
           file_size: blob.size,
           mime_type: "image/jpeg",
           uploaded_by: user.id,
+          bucket_id: targetBucket,
         })
         .select()
         .single();

@@ -190,6 +190,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          bucket_id: string | null
           company_id: string
           created_at: string
           description: string | null
@@ -208,6 +209,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          bucket_id?: string | null
           company_id: string
           created_at?: string
           description?: string | null
@@ -226,6 +228,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          bucket_id?: string | null
           company_id?: string
           created_at?: string
           description?: string | null

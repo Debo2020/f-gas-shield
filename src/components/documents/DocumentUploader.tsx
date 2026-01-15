@@ -3,7 +3,6 @@ import { useDropzone } from "react-dropzone";
 import { Upload, X, File, Image, FileText, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -12,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getBucketForDocument, generateFilePath, type DocumentType } from "@/lib/storage";
 
 interface DocumentUploaderProps {
   companyId: string;
@@ -100,20 +100,27 @@ export function DocumentUploader({
     const totalFiles = pendingFiles.length;
     let completedFiles = 0;
 
+    // Determine the target bucket based on document type and context
+    const targetBucket = getBucketForDocument({
+      documentType: documentType as DocumentType,
+      siteId,
+      equipmentId,
+      profileId,
+    });
+
     try {
       for (const file of pendingFiles) {
-        const fileExt = file.name.split(".").pop();
-        const filePath = `${companyId}/${crypto.randomUUID()}.${fileExt}`;
+        // Generate structured file path: companyId/year/month/uuid.ext
+        const filePath = generateFilePath(companyId, file.name);
 
-        // Upload to storage
+        // Upload to the appropriate storage bucket
         const { error: uploadError } = await supabase.storage
-          .from("compliance-documents")
+          .from(targetBucket)
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        // Store the file path (not public URL) for private bucket access
-        // Create document record
+        // Store the file path and bucket_id for proper retrieval
         const { data: docData, error: docError } = await supabase
           .from("documents")
           .insert({
@@ -129,6 +136,7 @@ export function DocumentUploader({
             mime_type: file.type,
             uploaded_by: user.id,
             expiry_date: expiryDate ? expiryDate.toISOString().split("T")[0] : null,
+            bucket_id: targetBucket,
           })
           .select()
           .single();
