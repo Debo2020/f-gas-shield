@@ -10,6 +10,12 @@ interface AICreditsState {
   isUnlimited: boolean;
   loading: boolean;
   error: string | null;
+  // Overage billing fields
+  overageCredits: number;
+  overageRate: number; // in pence
+  estimatedOverageCost: number; // in pence
+  isInOverage: boolean;
+  tier: SubscriptionTier;
 }
 
 export function useAICredits() {
@@ -21,6 +27,11 @@ export function useAICredits() {
     isUnlimited: false,
     loading: true,
     error: null,
+    overageCredits: 0,
+    overageRate: 10,
+    estimatedOverageCost: 0,
+    isInOverage: false,
+    tier: "basic",
   });
 
   const fetchCredits = useCallback(async () => {
@@ -57,6 +68,7 @@ export function useAICredits() {
       const tierConfig = SUBSCRIPTION_TIERS[tier];
       const limit = tierConfig?.limits?.ai_credits_monthly ?? 50;
       const isUnlimited = limit === -1;
+      const overageRate = tierConfig?.ai_credit_overage_rate ?? 10;
 
       // Get this month's usage
       const startOfMonth = new Date();
@@ -76,6 +88,11 @@ export function useAICredits() {
       const used = count || 0;
       const remaining = isUnlimited ? Infinity : Math.max(0, limit - used);
       const percentUsed = isUnlimited ? 0 : Math.min(100, (used / limit) * 100);
+      
+      // Calculate overage
+      const overageCredits = isUnlimited ? 0 : Math.max(0, used - limit);
+      const isInOverage = overageCredits > 0;
+      const estimatedOverageCost = overageCredits * overageRate;
 
       setState({
         used,
@@ -85,6 +102,11 @@ export function useAICredits() {
         isUnlimited,
         loading: false,
         error: null,
+        overageCredits,
+        overageRate,
+        estimatedOverageCost,
+        isInOverage,
+        tier,
       });
     } catch (error) {
       console.error("Failed to fetch AI credits:", error);

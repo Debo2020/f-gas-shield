@@ -20,7 +20,9 @@ export type Database = {
           created_at: string
           credits_used: number
           id: string
+          reported_to_stripe: boolean | null
           request_type: string
+          stripe_meter_event_id: string | null
           user_id: string
         }
         Insert: {
@@ -28,7 +30,9 @@ export type Database = {
           created_at?: string
           credits_used?: number
           id?: string
+          reported_to_stripe?: boolean | null
           request_type?: string
+          stripe_meter_event_id?: string | null
           user_id: string
         }
         Update: {
@@ -36,7 +40,9 @@ export type Database = {
           created_at?: string
           credits_used?: number
           id?: string
+          reported_to_stripe?: boolean | null
           request_type?: string
+          stripe_meter_event_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -137,6 +143,7 @@ export type Database = {
           current_period_start: string | null
           id: string
           license_count: number
+          metered_subscription_item_id: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -150,6 +157,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           license_count?: number
+          metered_subscription_item_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -163,6 +171,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           license_count?: number
+          metered_subscription_item_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null

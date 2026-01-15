@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,13 @@ const TIER_CREDIT_LIMITS: Record<string, number> = {
   basic: 50,
   premium: 200,
   enterprise: -1, // Unlimited
+};
+
+// Overage rates per tier (in pence per credit)
+const TIER_OVERAGE_RATES: Record<string, number> = {
+  basic: 10,
+  premium: 8,
+  enterprise: 0,
 };
 
 const FGAS_SYSTEM_PROMPT = `You are an expert F-Gas compliance assistant for UK refrigeration and air conditioning engineers. You provide accurate, practical guidance on F-Gas regulations.
@@ -131,10 +139,10 @@ serve(async (req) => {
 
     const companyId = profile.company_id;
 
-    // Get company subscription tier
+    // Get company subscription tier and Stripe customer ID
     const { data: subscription, error: subError } = await supabaseClient
       .from("company_subscriptions")
-      .select("tier, status")
+      .select("tier, status, stripe_customer_id")
       .eq("company_id", companyId)
       .maybeSingle();
 
@@ -144,40 +152,30 @@ serve(async (req) => {
 
     const tier = subscription?.tier || "basic";
     const creditLimit = TIER_CREDIT_LIMITS[tier] ?? 50;
+    const overageRate = TIER_OVERAGE_RATES[tier] ?? 10;
+    const stripeCustomerId = subscription?.stripe_customer_id;
 
-    // Check credit usage for this month (skip for unlimited tiers)
-    if (creditLimit !== -1) {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+    // Get current month's usage for display purposes
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-      const { count, error: countError } = await serviceClient
-        .from("ai_credit_usage")
-        .select("*", { count: "exact", head: true })
-        .eq("company_id", companyId)
-        .gte("created_at", startOfMonth.toISOString());
+    const { count: creditsUsed, error: countError } = await serviceClient
+      .from("ai_credit_usage")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .gte("created_at", startOfMonth.toISOString());
 
-      if (countError) {
-        console.error("Failed to count credit usage:", countError.message);
-      }
-
-      const creditsUsed = count || 0;
-      console.log(`Credit usage: ${creditsUsed}/${creditLimit} for tier ${tier}`);
-
-      if (creditsUsed >= creditLimit) {
-        console.log("Credit limit exceeded for company:", companyId);
-        return new Response(
-          JSON.stringify({
-            error: "Monthly AI credit limit reached",
-            credits_used: creditsUsed,
-            credits_limit: creditLimit,
-            upgrade_available: tier !== "enterprise"
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    if (countError) {
+      console.error("Failed to count credit usage:", countError.message);
     }
 
+    const currentUsage = creditsUsed || 0;
+    const isOverage = creditLimit !== -1 && currentUsage >= creditLimit;
+    
+    console.log(`Credit usage: ${currentUsage}/${creditLimit} for tier ${tier}, isOverage: ${isOverage}`);
+
+    // Parse request body
     const { messages } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
@@ -239,24 +237,68 @@ serve(async (req) => {
     }
 
     // Log credit usage after successful AI response
-    const { error: insertError } = await serviceClient
+    const { data: usageRecord, error: insertError } = await serviceClient
       .from("ai_credit_usage")
       .insert({
         company_id: companyId,
         user_id: userId,
         credits_used: 1,
         request_type: "compliance_chat",
-      });
+        reported_to_stripe: false,
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       console.error("Failed to log credit usage:", insertError.message);
-      // Don't fail the request, just log the error
     }
 
-    console.log("Streaming response from AI gateway, credit logged");
+    // Report usage to Stripe meter if customer has Stripe ID and not enterprise
+    if (stripeCustomerId && tier !== "enterprise") {
+      try {
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        if (stripeKey) {
+          const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+          
+          // Report meter event to Stripe
+          const meterEvent = await stripe.billing.meterEvents.create({
+            event_name: "ai_credits",
+            payload: {
+              value: "1",
+              stripe_customer_id: stripeCustomerId,
+            },
+          });
+
+          console.log("Reported meter event to Stripe:", meterEvent.identifier);
+
+          // Update the usage record with Stripe meter event ID
+          if (usageRecord?.id) {
+            await serviceClient
+              .from("ai_credit_usage")
+              .update({
+                stripe_meter_event_id: meterEvent.identifier,
+                reported_to_stripe: true,
+              })
+              .eq("id", usageRecord.id);
+          }
+        }
+      } catch (stripeError) {
+        // Log but don't fail the request - usage is still tracked locally
+        console.error("Failed to report to Stripe meter:", stripeError);
+      }
+    }
+
+    console.log("Streaming response from AI gateway, credit logged, isOverage:", isOverage);
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "text/event-stream",
+        "X-Credits-Used": String(currentUsage + 1),
+        "X-Credits-Limit": String(creditLimit),
+        "X-Is-Overage": String(isOverage),
+        "X-Overage-Rate": String(overageRate),
+      },
     });
   } catch (error) {
     console.error("Compliance assistant error:", error);
