@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, Trash2, Loader2, AlertCircle, Sparkles, Zap } from "lucide-react";
+import { Bot, Send, Trash2, Loader2, AlertCircle, Sparkles, Zap, TrendingUp } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -36,7 +36,19 @@ export function ComplianceAssistantSheet({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { messages, isLoading, error, sendMessage, clearMessages } = useComplianceChat();
-  const { used, limit, remaining, percentUsed, isUnlimited, loading: creditsLoading, refetch: refetchCredits } = useAICredits();
+  const { 
+    used, 
+    limit, 
+    remaining, 
+    percentUsed, 
+    isUnlimited, 
+    loading: creditsLoading, 
+    refetch: refetchCredits,
+    overageCredits,
+    overageRate,
+    estimatedOverageCost,
+    isInOverage,
+  } = useAICredits();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -54,7 +66,7 @@ export function ComplianceAssistantSheet({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !isLoading && (isUnlimited || remaining > 0)) {
+    if (input.trim() && !isLoading) {
       await sendMessage(input);
       setInput("");
       // Refetch credits after sending a message
@@ -63,14 +75,18 @@ export function ComplianceAssistantSheet({
   };
 
   const handleQuickPrompt = async (prompt: string) => {
-    if (!isLoading && (isUnlimited || remaining > 0)) {
+    if (!isLoading) {
       await sendMessage(prompt);
       refetchCredits();
     }
   };
 
-  const isCreditsExhausted = !isUnlimited && remaining <= 0;
-  const isLowCredits = !isUnlimited && percentUsed >= 80;
+  const isLowCredits = !isUnlimited && !isInOverage && percentUsed >= 80;
+  
+  // Format cost in pounds
+  const formatCost = (pence: number) => {
+    return `£${(pence / 100).toFixed(2)}`;
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -108,24 +124,36 @@ export function ComplianceAssistantSheet({
                   <Zap className="h-3.5 w-3.5" />
                   <span>AI Credits</span>
                 </div>
-                <span className={isCreditsExhausted ? "text-destructive font-medium" : isLowCredits ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"}>
+                <span className={isInOverage ? "text-amber-600 dark:text-amber-500 font-medium" : isLowCredits ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"}>
                   {isUnlimited ? "Unlimited" : `${used} / ${limit}`}
                 </span>
               </div>
               {!isUnlimited && (
                 <Progress 
-                  value={percentUsed} 
-                  className={`h-1.5 ${isCreditsExhausted ? "[&>div]:bg-destructive" : isLowCredits ? "[&>div]:bg-amber-500" : ""}`}
+                  value={Math.min(100, percentUsed)} 
+                  className={`h-1.5 ${isInOverage ? "[&>div]:bg-amber-500" : isLowCredits ? "[&>div]:bg-amber-500" : ""}`}
                 />
               )}
-              {isCreditsExhausted && (
-                <p className="text-xs text-destructive">
-                  Monthly limit reached. Upgrade your plan for more credits.
-                </p>
+              
+              {/* Overage warning */}
+              {isInOverage && (
+                <div className="flex items-center gap-2 p-2 bg-amber-500/10 rounded-md border border-amber-500/20">
+                  <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-500 shrink-0" />
+                  <div className="text-xs">
+                    <p className="text-amber-600 dark:text-amber-500 font-medium">
+                      Using overage credits ({overageCredits} extra)
+                    </p>
+                    <p className="text-muted-foreground">
+                      {formatCost(overageRate)}/credit • Est. cost: {formatCost(estimatedOverageCost)}
+                    </p>
+                  </div>
+                </div>
               )}
-              {isLowCredits && !isCreditsExhausted && (
+              
+              {/* Low credits warning (not in overage yet) */}
+              {isLowCredits && !isInOverage && (
                 <p className="text-xs text-amber-600 dark:text-amber-500">
-                  Running low on credits ({remaining} remaining)
+                  Running low on credits ({remaining} remaining). Overage rate: {formatCost(overageRate)}/credit
                 </p>
               )}
             </div>
@@ -191,13 +219,13 @@ export function ComplianceAssistantSheet({
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isCreditsExhausted ? "Credit limit reached" : "Ask about F-Gas regulations..."}
-              disabled={isLoading || isCreditsExhausted}
+              placeholder="Ask about F-Gas regulations..."
+              disabled={isLoading}
               className="flex-1"
             />
             <Button 
               type="submit" 
-              disabled={!input.trim() || isLoading || isCreditsExhausted} 
+              disabled={!input.trim() || isLoading} 
               size="icon"
             >
               {isLoading ? (

@@ -8,11 +8,7 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
-export interface CreditLimitError {
-  credits_used: number;
-  credits_limit: number;
-  upgrade_available: boolean;
-}
+// Note: Credit limit errors are no longer blocking - users can continue with overage billing
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compliance-assistant`;
 
@@ -82,15 +78,6 @@ export function useComplianceChat() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        
-        // Handle credit limit exceeded
-        if (response.status === 402 && errorData.credits_limit) {
-          throw new Error(
-            `You've used all ${errorData.credits_limit} AI credits this month. ` +
-            (errorData.upgrade_available ? "Upgrade your plan for more credits." : "")
-          );
-        }
-        
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 
