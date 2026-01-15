@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { File, FileText, Image, Download, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { File, FileText, Image, Download, Trash2, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,7 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { getDocumentUrl, extractFilePath, downloadDocument } from "@/lib/storage";
+import { getDocumentUrl, extractFilePath, downloadDocument, isViewableInline } from "@/lib/storage";
+import { DocumentViewer } from "./DocumentViewer";
 
 interface Document {
   id: string;
@@ -29,6 +30,7 @@ interface Document {
   equipment_id: string | null;
   inspection_id: string | null;
   site_id: string | null;
+  bucket_id: string | null;
 }
 
 interface DocumentListProps {
@@ -67,6 +69,7 @@ export function DocumentList({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [viewerDocument, setViewerDocument] = useState<Document | null>(null);
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -100,7 +103,10 @@ export function DocumentList({
         const urls: Record<string, string> = {};
         await Promise.all(
           data.map(async (doc) => {
-            const signedUrl = await getDocumentUrl(doc.file_url);
+            const signedUrl = await getDocumentUrl(
+              doc.file_url, 
+              doc.bucket_id || "compliance-documents"
+            );
             if (signedUrl) {
               urls[doc.id] = signedUrl;
             }
@@ -131,11 +137,12 @@ export function DocumentList({
       if (!doc) return;
 
       // Extract file path for deletion
-      const filePath = extractFilePath(doc.file_url);
+      const bucketId = doc.bucket_id || "compliance-documents";
+      const filePath = extractFilePath(doc.file_url, bucketId);
 
-      // Delete from storage
+      // Delete from storage (use the bucket from the document record)
       const { error: storageError } = await supabase.storage
-        .from("compliance-documents")
+        .from(bucketId)
         .remove([filePath]);
 
       if (storageError) {
@@ -166,23 +173,30 @@ export function DocumentList({
     }
   };
 
-  const handleViewDocument = async (doc: Document) => {
-    const url = signedUrls[doc.id];
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
+  const handleViewDocument = (doc: Document) => {
+    // For viewable documents, open in the viewer modal
+    if (isViewableInline(doc.mime_type)) {
+      setViewerDocument(doc);
     } else {
-      const signedUrl = await getDocumentUrl(doc.file_url);
-      if (signedUrl) {
-        window.open(signedUrl, "_blank", "noopener,noreferrer");
+      // For non-viewable documents, open in new tab
+      const url = signedUrls[doc.id];
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
       } else {
-        toast.error("Failed to open document");
+        getDocumentUrl(doc.file_url, doc.bucket_id || "compliance-documents").then((signedUrl) => {
+          if (signedUrl) {
+            window.open(signedUrl, "_blank", "noopener,noreferrer");
+          } else {
+            toast.error("Failed to open document");
+          }
+        });
       }
     }
   };
 
   const handleDownloadDocument = async (doc: Document) => {
     try {
-      await downloadDocument(doc.file_url, doc.name);
+      await downloadDocument(doc.file_url, doc.name, doc.bucket_id || "compliance-documents");
     } catch {
       toast.error("Failed to download document");
     }
@@ -248,14 +262,16 @@ export function DocumentList({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => handleViewDocument(doc)}
+                title={isViewableInline(doc.mime_type) ? "View document" : "Open in new tab"}
               >
-                <ExternalLink className="h-4 w-4" />
+                <Eye className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => handleDownloadDocument(doc)}
+                title="Download"
               >
                 <Download className="h-4 w-4" />
               </Button>
@@ -265,6 +281,7 @@ export function DocumentList({
                   size="icon"
                   className="h-8 w-8 text-destructive hover:text-destructive"
                   onClick={() => setDeleteId(doc.id)}
+                  title="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -273,6 +290,13 @@ export function DocumentList({
           </div>
         );
       })}
+
+      {/* Document Viewer Modal */}
+      <DocumentViewer
+        open={!!viewerDocument}
+        onOpenChange={(open) => !open && setViewerDocument(null)}
+        document={viewerDocument}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
