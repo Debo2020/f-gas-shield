@@ -135,6 +135,63 @@ export type Database = {
         }
         Relationships: []
       }
+      company_certificates: {
+        Row: {
+          certificate_number: string
+          certificate_type: Database["public"]["Enums"]["company_certificate_type"]
+          company_id: string
+          created_at: string
+          document_id: string | null
+          expiry_date: string | null
+          id: string
+          is_active: boolean | null
+          issued_date: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          certificate_number: string
+          certificate_type: Database["public"]["Enums"]["company_certificate_type"]
+          company_id: string
+          created_at?: string
+          document_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          issued_date: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          certificate_number?: string
+          certificate_type?: Database["public"]["Enums"]["company_certificate_type"]
+          company_id?: string
+          created_at?: string
+          document_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          issued_date?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_certificates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_certificates_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_subscriptions: {
         Row: {
           company_id: string
@@ -699,14 +756,20 @@ export type Database = {
           checked_out_at: string | null
           checked_out_to: string | null
           company_id: string
+          consignment_note_id: string | null
           created_at: string
           current_weight_kg: number
           cylinder_code: string
+          disposal_date: string | null
+          disposal_method: Database["public"]["Enums"]["disposal_method"] | null
+          disposal_reference: string | null
           expiry_date: string | null
           id: string
           initial_weight_kg: number
+          is_recovery_cylinder: boolean | null
           notes: string | null
           purchase_date: string | null
+          purchase_invoice_id: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           status: Database["public"]["Enums"]["cylinder_status"]
           supplier: string | null
@@ -718,14 +781,22 @@ export type Database = {
           checked_out_at?: string | null
           checked_out_to?: string | null
           company_id: string
+          consignment_note_id?: string | null
           created_at?: string
           current_weight_kg: number
           cylinder_code: string
+          disposal_date?: string | null
+          disposal_method?:
+            | Database["public"]["Enums"]["disposal_method"]
+            | null
+          disposal_reference?: string | null
           expiry_date?: string | null
           id?: string
           initial_weight_kg: number
+          is_recovery_cylinder?: boolean | null
           notes?: string | null
           purchase_date?: string | null
+          purchase_invoice_id?: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
@@ -737,14 +808,22 @@ export type Database = {
           checked_out_at?: string | null
           checked_out_to?: string | null
           company_id?: string
+          consignment_note_id?: string | null
           created_at?: string
           current_weight_kg?: number
           cylinder_code?: string
+          disposal_date?: string | null
+          disposal_method?:
+            | Database["public"]["Enums"]["disposal_method"]
+            | null
+          disposal_reference?: string | null
           expiry_date?: string | null
           id?: string
           initial_weight_kg?: number
+          is_recovery_cylinder?: boolean | null
           notes?: string | null
           purchase_date?: string | null
+          purchase_invoice_id?: string | null
           refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
@@ -759,6 +838,20 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "refrigerant_cylinders_consignment_note_id_fkey"
+            columns: ["consignment_note_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refrigerant_cylinders_purchase_invoice_id_fkey"
+            columns: ["purchase_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
         ]
       }
       refrigerant_movements: {
@@ -771,12 +864,15 @@ export type Database = {
           engineer_name: string
           equipment_id: string | null
           id: string
+          job_reference: string | null
           movement_date: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes: string | null
+          reason: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           source: string | null
           updated_at: string
+          waste_transfer_note_id: string | null
           weight_kg: number
         }
         Insert: {
@@ -788,12 +884,15 @@ export type Database = {
           engineer_name: string
           equipment_id?: string | null
           id?: string
+          job_reference?: string | null
           movement_date?: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
+          reason?: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           source?: string | null
           updated_at?: string
+          waste_transfer_note_id?: string | null
           weight_kg: number
         }
         Update: {
@@ -805,12 +904,15 @@ export type Database = {
           engineer_name?: string
           equipment_id?: string | null
           id?: string
+          job_reference?: string | null
           movement_date?: string
           movement_type?: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
+          reason?: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
           source?: string | null
           updated_at?: string
+          waste_transfer_note_id?: string | null
           weight_kg?: number
         }
         Relationships: [
@@ -833,6 +935,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refrigerant_movements_waste_transfer_note_id_fkey"
+            columns: ["waste_transfer_note_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
         ]
@@ -1098,7 +1207,12 @@ export type Database = {
         | "document_deleted"
         | "export_generated"
         | "settings_updated"
+      company_certificate_type: "refcom" | "quidos" | "fgas_company" | "other"
       cylinder_status: "in_stock" | "checked_out" | "empty" | "disposed"
+      disposal_method:
+        | "returned_to_supplier"
+        | "sent_for_destruction"
+        | "reclaimed"
       document_type:
         | "certificate"
         | "invoice"
@@ -1107,6 +1221,9 @@ export type Database = {
         | "label"
         | "report"
         | "other"
+        | "waste_transfer_note"
+        | "consignment_note"
+        | "purchase_invoice"
       inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
       leak_check_result:
         | "pass"
@@ -1114,6 +1231,13 @@ export type Database = {
         | "fail_inaccessible"
         | "pending"
         | "overdue"
+      movement_reason:
+        | "commissioning"
+        | "leak_repair"
+        | "top_up"
+        | "recovery"
+        | "disposal"
+        | "transfer"
       movement_type: "book_out" | "book_in" | "recovered"
       qualification_type:
         | "f_gas_category_1"
@@ -1284,7 +1408,13 @@ export const Constants = {
         "export_generated",
         "settings_updated",
       ],
+      company_certificate_type: ["refcom", "quidos", "fgas_company", "other"],
       cylinder_status: ["in_stock", "checked_out", "empty", "disposed"],
+      disposal_method: [
+        "returned_to_supplier",
+        "sent_for_destruction",
+        "reclaimed",
+      ],
       document_type: [
         "certificate",
         "invoice",
@@ -1293,6 +1423,9 @@ export const Constants = {
         "label",
         "report",
         "other",
+        "waste_transfer_note",
+        "consignment_note",
+        "purchase_invoice",
       ],
       inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
       leak_check_result: [
@@ -1301,6 +1434,14 @@ export const Constants = {
         "fail_inaccessible",
         "pending",
         "overdue",
+      ],
+      movement_reason: [
+        "commissioning",
+        "leak_repair",
+        "top_up",
+        "recovery",
+        "disposal",
+        "transfer",
       ],
       movement_type: ["book_out", "book_in", "recovered"],
       qualification_type: [
