@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -18,6 +19,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -29,8 +31,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Constants } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
+import { AlertTriangle, Recycle } from "lucide-react";
 
 const REFRIGERANT_TYPES = Constants.public.Enums.refrigerant_type;
 type RefrigerantType = Database["public"]["Enums"]["refrigerant_type"];
@@ -46,6 +51,7 @@ const cylinderSchema = z.object({
   purchase_date: z.string().optional(),
   expiry_date: z.string().optional(),
   notes: z.string().optional(),
+  is_recovery_cylinder: z.boolean().default(false),
 });
 
 type CylinderFormValues = z.infer<typeof cylinderSchema>;
@@ -55,6 +61,7 @@ interface CylinderDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   cylinder?: any;
+  defaultIsRecovery?: boolean;
 }
 
 export function CylinderDialog({
@@ -62,6 +69,7 @@ export function CylinderDialog({
   onOpenChange,
   onSuccess,
   cylinder,
+  defaultIsRecovery = false,
 }: CylinderDialogProps) {
   const { profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,8 +88,11 @@ export function CylinderDialog({
       purchase_date: "",
       expiry_date: "",
       notes: "",
+      is_recovery_cylinder: defaultIsRecovery,
     },
   });
+
+  const isRecoveryCylinder = form.watch("is_recovery_cylinder");
 
   useEffect(() => {
     if (open) {
@@ -97,12 +108,14 @@ export function CylinderDialog({
           purchase_date: cylinder.purchase_date || "",
           expiry_date: cylinder.expiry_date || "",
           notes: cylinder.notes || "",
+          is_recovery_cylinder: cylinder.is_recovery_cylinder || false,
         });
       } else {
+        const prefix = defaultIsRecovery ? "REC" : "CYL";
         form.reset({
-          cylinder_code: `CYL-${Date.now().toString(36).toUpperCase()}`,
+          cylinder_code: `${prefix}-${Date.now().toString(36).toUpperCase()}`,
           refrigerant_type: "R-410A",
-          initial_weight_kg: 0,
+          initial_weight_kg: defaultIsRecovery ? 0 : 0,
           current_weight_kg: 0,
           tare_weight_kg: 0,
           supplier: "",
@@ -110,10 +123,11 @@ export function CylinderDialog({
           purchase_date: "",
           expiry_date: "",
           notes: "",
+          is_recovery_cylinder: defaultIsRecovery,
         });
       }
     }
-  }, [open, cylinder, form]);
+  }, [open, cylinder, defaultIsRecovery, form]);
 
   const onSubmit = async (values: CylinderFormValues) => {
     if (!profile?.company_id) {
@@ -135,6 +149,9 @@ export function CylinderDialog({
         purchase_date: values.purchase_date || null,
         expiry_date: values.expiry_date || null,
         notes: values.notes || null,
+        is_recovery_cylinder: values.is_recovery_cylinder,
+        // Recovery cylinders start empty
+        status: values.is_recovery_cylinder ? "empty" as const : "in_stock" as const,
       };
 
       if (isEditing) {
@@ -149,7 +166,10 @@ export function CylinderDialog({
           .from("refrigerant_cylinders")
           .insert(data);
         if (error) throw error;
-        toast.success("Cylinder added to inventory");
+        toast.success(values.is_recovery_cylinder 
+          ? "Recovery cylinder added to inventory" 
+          : "Cylinder added to inventory"
+        );
       }
 
       onOpenChange(false);
@@ -167,12 +187,56 @@ export function CylinderDialog({
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Cylinder" : "Add New Cylinder"}
+            {isEditing ? "Edit Cylinder" : isRecoveryCylinder ? "Add Recovery Cylinder" : "Add New Cylinder"}
           </DialogTitle>
+          {isRecoveryCylinder && !isEditing && (
+            <DialogDescription className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-4 w-4" />
+              Recovery cylinders are for collecting contaminated refrigerant
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Recovery Cylinder Toggle */}
+            {!isEditing && (
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <Recycle className={`h-5 w-5 ${isRecoveryCylinder ? "text-amber-500" : "text-muted-foreground"}`} />
+                  <div>
+                    <Label htmlFor="recovery-toggle" className="font-medium">
+                      Recovery Cylinder
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      For collecting recovered/dirty gas
+                    </p>
+                  </div>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="is_recovery_cylinder"
+                  render={({ field }) => (
+                    <Switch
+                      id="recovery-toggle"
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        // Update cylinder code prefix
+                        const prefix = checked ? "REC" : "CYL";
+                        form.setValue("cylinder_code", `${prefix}-${Date.now().toString(36).toUpperCase()}`);
+                        // Recovery cylinders start with 0 weight
+                        if (checked) {
+                          form.setValue("initial_weight_kg", 0);
+                          form.setValue("current_weight_kg", 0);
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -182,7 +246,7 @@ export function CylinderDialog({
                     <FormLabel>Cylinder Code *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="CYL-XXX"
+                        placeholder={isRecoveryCylinder ? "REC-XXX" : "CYL-XXX"}
                         {...field}
                         disabled={isEditing}
                       />
@@ -224,7 +288,9 @@ export function CylinderDialog({
                 name="initial_weight_kg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initial Weight (kg) *</FormLabel>
+                    <FormLabel>
+                      {isRecoveryCylinder ? "Capacity (kg)" : "Initial Weight (kg)"} *
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -252,6 +318,9 @@ export function CylinderDialog({
                         {...field}
                       />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      {isRecoveryCylinder ? "Contents weight" : "Remaining"}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -271,41 +340,47 @@ export function CylinderDialog({
                         {...field}
                       />
                     </FormControl>
+                    <FormDescription className="text-xs">Empty cylinder</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="supplier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Supplier name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {!isRecoveryCylinder && (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="supplier"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supplier</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Supplier name" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        For purchase record tracking
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="batch_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Batch Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Batch #" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="batch_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Batch Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Batch #" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -313,7 +388,7 @@ export function CylinderDialog({
                 name="purchase_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Purchase Date</FormLabel>
+                    <FormLabel>{isRecoveryCylinder ? "Added Date" : "Purchase Date"}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -345,7 +420,10 @@ export function CylinderDialog({
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Optional notes..."
+                      placeholder={isRecoveryCylinder 
+                        ? "Recovery cylinder details..." 
+                        : "Optional notes..."
+                      }
                       className="resize-none"
                       {...field}
                     />
