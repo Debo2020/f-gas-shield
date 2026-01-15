@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, Trash2, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Bot, Send, Trash2, Loader2, AlertCircle, Sparkles, Zap } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { ChatMessage } from "./ChatMessage";
 import { useComplianceChat } from "@/hooks/useComplianceChat";
+import { useAICredits } from "@/hooks/useAICredits";
 
 interface ComplianceAssistantSheetProps {
   open: boolean;
@@ -34,6 +36,7 @@ export function ComplianceAssistantSheet({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { messages, isLoading, error, sendMessage, clearMessages } = useComplianceChat();
+  const { used, limit, remaining, percentUsed, isUnlimited, loading: creditsLoading, refetch: refetchCredits } = useAICredits();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -49,24 +52,30 @@ export function ComplianceAssistantSheet({
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && !isLoading) {
-      sendMessage(input);
+    if (input.trim() && !isLoading && (isUnlimited || remaining > 0)) {
+      await sendMessage(input);
       setInput("");
+      // Refetch credits after sending a message
+      refetchCredits();
     }
   };
 
-  const handleQuickPrompt = (prompt: string) => {
-    if (!isLoading) {
-      sendMessage(prompt);
+  const handleQuickPrompt = async (prompt: string) => {
+    if (!isLoading && (isUnlimited || remaining > 0)) {
+      await sendMessage(prompt);
+      refetchCredits();
     }
   };
+
+  const isCreditsExhausted = !isUnlimited && remaining <= 0;
+  const isLowCredits = !isUnlimited && percentUsed >= 80;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
-        <SheetHeader className="px-4 py-3 border-b">
+        <SheetHeader className="px-4 py-3 border-b space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -90,6 +99,37 @@ export function ComplianceAssistantSheet({
               </Button>
             )}
           </div>
+          
+          {/* Credit usage display */}
+          {!creditsLoading && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Zap className="h-3.5 w-3.5" />
+                  <span>AI Credits</span>
+                </div>
+                <span className={isCreditsExhausted ? "text-destructive font-medium" : isLowCredits ? "text-amber-600 dark:text-amber-500" : "text-muted-foreground"}>
+                  {isUnlimited ? "Unlimited" : `${used} / ${limit}`}
+                </span>
+              </div>
+              {!isUnlimited && (
+                <Progress 
+                  value={percentUsed} 
+                  className={`h-1.5 ${isCreditsExhausted ? "[&>div]:bg-destructive" : isLowCredits ? "[&>div]:bg-amber-500" : ""}`}
+                />
+              )}
+              {isCreditsExhausted && (
+                <p className="text-xs text-destructive">
+                  Monthly limit reached. Upgrade your plan for more credits.
+                </p>
+              )}
+              {isLowCredits && !isCreditsExhausted && (
+                <p className="text-xs text-amber-600 dark:text-amber-500">
+                  Running low on credits ({remaining} remaining)
+                </p>
+              )}
+            </div>
+          )}
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-4" ref={scrollRef}>
@@ -151,11 +191,15 @@ export function ComplianceAssistantSheet({
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about F-Gas regulations..."
-              disabled={isLoading}
+              placeholder={isCreditsExhausted ? "Credit limit reached" : "Ask about F-Gas regulations..."}
+              disabled={isLoading || isCreditsExhausted}
               className="flex-1"
             />
-            <Button type="submit" disabled={!input.trim() || isLoading} size="icon">
+            <Button 
+              type="submit" 
+              disabled={!input.trim() || isLoading || isCreditsExhausted} 
+              size="icon"
+            >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

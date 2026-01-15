@@ -13,12 +13,14 @@ export const SUBSCRIPTION_TIERS = {
       "Equipment tracking",
       "Inspection logging",
       "Standard compliance reports",
+      "50 AI assistant credits/month",
       "Email support",
     ],
     limits: {
       sites: 5,
       equipment: 50,
       users: 5,
+      ai_credits_monthly: 50,
     },
   },
   premium: {
@@ -35,6 +37,7 @@ export const SUBSCRIPTION_TIERS = {
       "Full audit trails",
       "Carbon reporting & CO₂e tracking",
       "Multi-site visibility",
+      "200 AI assistant credits/month",
       "API access",
       "Priority support",
     ],
@@ -42,6 +45,7 @@ export const SUBSCRIPTION_TIERS = {
       sites: 25,
       equipment: 250,
       users: 25,
+      ai_credits_monthly: 200,
     },
     popular: true,
   },
@@ -56,6 +60,7 @@ export const SUBSCRIPTION_TIERS = {
       "Platform licence for HQ control",
       "Custom branding",
       "Governance & compliance dashboard",
+      "Unlimited AI assistant credits",
       "Volume user discounts",
       "Optional per-site fees",
       "Dedicated account manager",
@@ -66,6 +71,7 @@ export const SUBSCRIPTION_TIERS = {
       sites: -1, // Unlimited
       equipment: -1,
       users: -1,
+      ai_credits_monthly: -1, // Unlimited
     },
   },
 } as const;

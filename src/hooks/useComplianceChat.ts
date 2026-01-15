@@ -1,10 +1,17 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+}
+
+export interface CreditLimitError {
+  credits_used: number;
+  credits_limit: number;
+  upgrade_available: boolean;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compliance-assistant`;
@@ -53,6 +60,12 @@ export function useComplianceChat() {
     };
 
     try {
+      // Get the user's session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Please sign in to use the AI assistant");
+      }
+
       const messagesToSend = [...messages, userMessage].map((m) => ({
         role: m.role,
         content: m.content,
@@ -62,13 +75,22 @@ export function useComplianceChat() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ messages: messagesToSend }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle credit limit exceeded
+        if (response.status === 402 && errorData.credits_limit) {
+          throw new Error(
+            `You've used all ${errorData.credits_limit} AI credits this month. ` +
+            (errorData.upgrade_available ? "Upgrade your plan for more credits." : "")
+          );
+        }
+        
         throw new Error(errorData.error || `Request failed with status ${response.status}`);
       }
 

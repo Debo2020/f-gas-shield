@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_credit_usage: {
+        Row: {
+          company_id: string
+          created_at: string
+          credits_used: number
+          id: string
+          request_type: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          credits_used?: number
+          id?: string
+          request_type?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          credits_used?: number
+          id?: string
+          request_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
