@@ -34,12 +34,23 @@ export function DocumentViewer({ open, onOpenChange, document }: DocumentViewerP
       setLoading(true);
       setZoom(100);
       setRotation(0);
+      setSignedUrl(null);
       
       const fetchUrl = async () => {
+        console.log("[DocumentViewer] Fetching URL for:", {
+          id: document.id,
+          name: document.name,
+          fileUrl: document.file_url,
+          bucketId: document.bucket_id,
+        });
+        
         const url = await getDocumentUrl(
           document.file_url, 
           document.bucket_id || "compliance-documents"
         );
+        
+        console.log("[DocumentViewer] Generated signed URL:", url ? "Success" : "Failed");
+        
         setSignedUrl(url);
         setLoading(false);
       };
