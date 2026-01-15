@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, Loader2, Sparkles, Building2, Users } from "lucide-react";
+import { Check, Loader2, Sparkles, Building2, Users, Bot } from "lucide-react";
+import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -237,6 +238,9 @@ export default function Pricing() {
                         </div>
                       </div>
                     )}
+
+                    {/* AI Credits Section */}
+                    <AICreditInfo tier={tier} className="mt-4" />
                   </CardContent>
                   
                   <CardFooter>
