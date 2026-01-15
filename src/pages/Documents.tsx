@@ -1,16 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { FileText, Search, Filter, Upload, File, Image, Loader2, Building2, Thermometer, Grid3X3, List, AlertTriangle, ImagePlus } from "lucide-react";
+import { FileText, Search, Upload, File, Image, Loader2, Building2, Thermometer, Shield, Camera, AlertTriangle, ImagePlus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -27,20 +20,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
 import { BulkPhotoUploader } from "@/components/documents/BulkPhotoUploader";
+import { DocumentCategorySection } from "@/components/documents/DocumentCategorySection";
 import { ExpiryAlertBanner } from "@/components/alerts/ExpiryAlertBanner";
 import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { getDocumentUrl } from "@/lib/storage";
 
 interface Document {
@@ -55,6 +42,7 @@ interface Document {
   inspection_id: string | null;
   site_id: string | null;
   profile_id: string | null;
+  bucket_id: string | null;
   equipment?: { name: string } | null;
   site?: { name: string } | null;
 }
@@ -70,29 +58,8 @@ interface Equipment {
   site_id: string;
 }
 
-const DOCUMENT_TYPES = [
-  { value: "all", label: "All Types" },
-  { value: "certificate", label: "Certificates" },
-  { value: "invoice", label: "Invoices" },
-  { value: "photo", label: "Photos" },
-  { value: "declaration", label: "Declarations" },
-  { value: "label", label: "Labels" },
-  { value: "report", label: "Reports" },
-  { value: "other", label: "Other" },
-];
-
-const DOCUMENT_TYPE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
-  certificate: { label: "Certificate", variant: "default" },
-  invoice: { label: "Invoice", variant: "secondary" },
-  photo: { label: "Photo", variant: "outline" },
-  declaration: { label: "Declaration", variant: "default" },
-  label: { label: "Label", variant: "secondary" },
-  report: { label: "Report", variant: "default" },
-  other: { label: "Other", variant: "outline" },
-};
-
 export default function Documents() {
-  const { profile } = useAuth();
+  const { profile, hasRole } = useAuth();
   const navigate = useNavigate();
   const companyId = profile?.company_id;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -103,12 +70,13 @@ export default function Documents() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [bulkPhotoDialogOpen, setBulkPhotoDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("site");
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  // Check if user can delete documents (owner or manager role)
+  const canDelete = hasRole("owner") || hasRole("manager");
 
   const fetchData = async () => {
     if (!companyId) return;
@@ -129,11 +97,13 @@ export default function Documents() {
           .from("sites")
           .select("id, name")
           .eq("company_id", companyId)
+          .eq("is_deleted", false)
           .order("name"),
         supabase
           .from("equipment")
           .select("id, name, site_id")
           .eq("company_id", companyId)
+          .is("deleted_at", null)
           .order("name"),
       ]);
 
@@ -141,6 +111,23 @@ export default function Documents() {
       setDocuments(docsRes.data || []);
       setSites(sitesRes.data || []);
       setEquipment(equipmentRes.data || []);
+
+      // Generate signed URLs for image documents
+      if (docsRes.data && docsRes.data.length > 0) {
+        const imagesDocs = docsRes.data.filter(
+          (doc) => doc.mime_type?.startsWith("image/") || doc.document_type === "photo"
+        );
+        const urls: Record<string, string> = {};
+        await Promise.all(
+          imagesDocs.map(async (doc) => {
+            const signedUrl = await getDocumentUrl(doc.file_url, doc.bucket_id || "compliance-documents");
+            if (signedUrl) {
+              urls[doc.id] = signedUrl;
+            }
+          })
+        );
+        setSignedUrls(urls);
+      }
     } catch (error: any) {
       console.error("Error fetching documents:", error);
       toast.error("Failed to load documents");
@@ -161,76 +148,18 @@ export default function Documents() {
     }
   }, [searchParams, companyId, loading]);
 
-  const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || doc.document_type === typeFilter;
-    return matchesSearch && matchesType;
-  });
-
-  // Group documents by site
-  const documentsBySite = useMemo(() => {
-    const grouped: Record<string, Document[]> = {};
-    sites.forEach((site) => {
-      grouped[site.id] = documents.filter((doc) => doc.site_id === site.id);
-    });
-    grouped["unassigned"] = documents.filter((doc) => !doc.site_id && !doc.equipment_id);
-    return grouped;
-  }, [documents, sites]);
-
-  // Group documents by equipment
-  const documentsByEquipment = useMemo(() => {
-    const grouped: Record<string, Document[]> = {};
-    equipment.forEach((eq) => {
-      grouped[eq.id] = documents.filter((doc) => doc.equipment_id === eq.id);
-    });
-    return grouped;
-  }, [documents, equipment]);
-
-  // Filter only photos for media gallery
-  const mediaDocuments = useMemo(() => {
-    return documents.filter((doc) => doc.document_type === "photo" || doc.mime_type?.startsWith("image/"));
-  }, [documents]);
-
-  // Generate signed URLs for media documents
-  useEffect(() => {
-    const generateSignedUrls = async () => {
-      if (mediaDocuments.length === 0) return;
-      
-      const urls: Record<string, string> = {};
-      await Promise.all(
-        mediaDocuments.map(async (doc) => {
-          const signedUrl = await getDocumentUrl(doc.file_url);
-          if (signedUrl) {
-            urls[doc.id] = signedUrl;
-          }
-        })
-      );
-      setSignedUrls(urls);
-    };
-
-    generateSignedUrls();
-  }, [mediaDocuments]);
-
-  // Filter compliance documents
-  const complianceDocuments = useMemo(() => {
-    return documents.filter((doc) => 
-      ["certificate", "declaration", "report"].includes(doc.document_type)
+  // Filter documents by search query
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) return documents;
+    const query = searchQuery.toLowerCase();
+    return documents.filter(
+      (doc) =>
+        doc.name.toLowerCase().includes(query) ||
+        doc.document_type.toLowerCase().includes(query) ||
+        doc.equipment?.name?.toLowerCase().includes(query) ||
+        doc.site?.name?.toLowerCase().includes(query)
     );
-  }, [documents]);
-
-  const getFileIcon = (mimeType: string | null) => {
-    if (!mimeType) return File;
-    if (mimeType.startsWith("image/")) return Image;
-    if (mimeType === "application/pdf") return FileText;
-    return File;
-  };
-
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "Unknown";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  }, [documents, searchQuery]);
 
   const handleUploadComplete = () => {
     fetchData();
@@ -238,84 +167,34 @@ export default function Documents() {
     setBulkPhotoDialogOpen(false);
   };
 
+  const handleDocumentDeleted = (doc: Document) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    setSignedUrls((prev) => {
+      const updated = { ...prev };
+      delete updated[doc.id];
+      return updated;
+    });
+  };
+
   // Calculate stats
-  const stats = {
+  const stats = useMemo(() => ({
     total: documents.length,
     certificates: documents.filter((d) => d.document_type === "certificate").length,
-    photos: documents.filter((d) => d.document_type === "photo").length,
-    reports: documents.filter((d) => d.document_type === "report").length,
+    photos: documents.filter((d) => d.document_type === "photo" || d.mime_type?.startsWith("image/")).length,
+    compliance: documents.filter((d) => ["certificate", "declaration", "report"].includes(d.document_type)).length,
     expiring: alerts.length,
-  };
+  }), [documents, alerts]);
 
-  const renderDocumentRow = (doc: Document) => {
-    const FileIcon = getFileIcon(doc.mime_type);
-    const typeConfig = DOCUMENT_TYPE_LABELS[doc.document_type] || DOCUMENT_TYPE_LABELS.other;
-
-    return (
-      <tr key={doc.id} className="border-b last:border-0 hover:bg-muted/50">
-        <td className="p-4">
-          <div className="flex items-center gap-3">
-            <FileIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
-            <span className="font-medium truncate max-w-[200px]">{doc.name}</span>
-          </div>
-        </td>
-        <td className="p-4 hidden md:table-cell">
-          <Badge variant={typeConfig.variant}>{typeConfig.label}</Badge>
-        </td>
-        <td className="p-4 hidden lg:table-cell text-muted-foreground">
-          {doc.equipment?.name || doc.site?.name || "—"}
-        </td>
-        <td className="p-4 hidden sm:table-cell text-muted-foreground">
-          {formatFileSize(doc.file_size)}
-        </td>
-        <td className="p-4 text-muted-foreground">
-          {format(new Date(doc.created_at), "dd MMM yyyy")}
-        </td>
-        <td className="p-4 text-right">
-          <Button variant="ghost" size="sm" asChild>
-            <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-              View
-            </a>
-          </Button>
-        </td>
-      </tr>
-    );
-  };
-
-  const renderDocumentCard = (doc: Document) => {
-    const FileIcon = getFileIcon(doc.mime_type);
-    const typeConfig = DOCUMENT_TYPE_LABELS[doc.document_type] || DOCUMENT_TYPE_LABELS.other;
-    const isImage = doc.mime_type?.startsWith("image/");
-
-    return (
-      <Card key={doc.id} className="overflow-hidden hover:shadow-md transition-shadow">
-        {isImage ? (
-          <div className="aspect-video bg-muted overflow-hidden">
-            <img
-              src={doc.file_url}
-              alt={doc.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="aspect-video bg-muted flex items-center justify-center">
-            <FileIcon className="h-16 w-16 text-muted-foreground" />
-          </div>
-        )}
-        <CardContent className="p-4">
-          <p className="font-medium truncate mb-1">{doc.name}</p>
-          <div className="flex items-center justify-between">
-            <Badge variant={typeConfig.variant} className="text-xs">
-              {typeConfig.label}
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              {format(new Date(doc.created_at), "dd MMM")}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  // Category-specific counts
+  const categoryCounts = useMemo(() => ({
+    site: documents.filter(
+      (d) => (d.site_id !== null && d.equipment_id === null) || 
+             (d.site_id === null && d.equipment_id === null && ["declaration", "invoice", "report", "other"].includes(d.document_type))
+    ).length,
+    compliance: documents.filter((d) => ["certificate", "declaration", "report"].includes(d.document_type)).length,
+    equipment: documents.filter((d) => d.equipment_id !== null || d.document_type === "label").length,
+    media: documents.filter((d) => d.document_type === "photo" || d.document_type === "label" || d.mime_type?.startsWith("image/")).length,
+  }), [documents]);
 
   return (
     <AppLayout>
@@ -386,8 +265,8 @@ export default function Documents() {
             <p className="text-2xl font-bold">{stats.photos}</p>
           </div>
           <div className="bg-card rounded-lg border p-4">
-            <p className="text-sm text-muted-foreground">Reports</p>
-            <p className="text-2xl font-bold">{stats.reports}</p>
+            <p className="text-sm text-muted-foreground">Compliance</p>
+            <p className="text-2xl font-bold">{stats.compliance}</p>
           </div>
           <div className={`bg-card rounded-lg border p-4 ${stats.expiring > 0 ? "border-amber-500/50" : ""}`}>
             <p className="text-sm text-muted-foreground">Expiring Soon</p>
@@ -397,347 +276,177 @@ export default function Documents() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="all" className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList>
-              <TabsTrigger value="all">All Documents</TabsTrigger>
-              <TabsTrigger value="by-site">By Site</TabsTrigger>
-              <TabsTrigger value="by-equipment">By Equipment</TabsTrigger>
-              <TabsTrigger value="compliance">Compliance</TabsTrigger>
-              <TabsTrigger value="media">Media Gallery</TabsTrigger>
-            </TabsList>
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search all documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "list" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
+        {/* Category Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="site" className="gap-2">
+              <Building2 className="h-4 w-4 hidden sm:block" />
+              Site
+              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+                {categoryCounts.site}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="compliance" className="gap-2">
+              <Shield className="h-4 w-4 hidden sm:block" />
+              Compliance
+              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+                {categoryCounts.compliance}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="equipment" className="gap-2">
+              <Thermometer className="h-4 w-4 hidden sm:block" />
+              Equipment
+              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+                {categoryCounts.equipment}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="media" className="gap-2">
+              <Camera className="h-4 w-4 hidden sm:block" />
+              Media
+              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+                {categoryCounts.media}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Site Documents */}
+              <TabsContent value="site">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Site Documents
+                    </CardTitle>
+                    <CardDescription>
+                      Documents related to your site locations including declarations, invoices, and reports
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {companyId && (
+                      <DocumentCategorySection
+                        category="site"
+                        documents={filteredDocuments}
+                        sites={sites}
+                        equipment={equipment}
+                        companyId={companyId}
+                        canDelete={canDelete}
+                        signedUrls={signedUrls}
+                        onDocumentDeleted={handleDocumentDeleted}
+                        onUploadComplete={handleUploadComplete}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Compliance Documents */}
+              <TabsContent value="compliance">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Compliance Documents
+                    </CardTitle>
+                    <CardDescription>
+                      Certificates, declarations, and regulatory compliance reports
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {companyId && (
+                      <DocumentCategorySection
+                        category="compliance"
+                        documents={filteredDocuments}
+                        sites={sites}
+                        equipment={equipment}
+                        companyId={companyId}
+                        canDelete={canDelete}
+                        signedUrls={signedUrls}
+                        onDocumentDeleted={handleDocumentDeleted}
+                        onUploadComplete={handleUploadComplete}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* All Documents Tab */}
-          <TabsContent value="all">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredDocuments.length === 0 ? (
-              <div className="text-center py-12 bg-card rounded-lg border">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-medium mb-1">No documents found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchQuery || typeFilter !== "all"
-                    ? "Try adjusting your filters"
-                    : "Upload your first document to get started"}
-                </p>
-                {!searchQuery && typeFilter === "all" && (
-                  <Button onClick={() => setUploadDialogOpen(true)}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Document
-                  </Button>
-                )}
-              </div>
-            ) : viewMode === "grid" ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredDocuments.map(renderDocumentCard)}
-              </div>
-            ) : (
-              <div className="bg-card rounded-lg border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left p-4 font-medium">Document</th>
-                        <th className="text-left p-4 font-medium hidden md:table-cell">Type</th>
-                        <th className="text-left p-4 font-medium hidden lg:table-cell">Related To</th>
-                        <th className="text-left p-4 font-medium hidden sm:table-cell">Size</th>
-                        <th className="text-left p-4 font-medium">Date</th>
-                        <th className="text-right p-4 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDocuments.map(renderDocumentRow)}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </TabsContent>
+              {/* Equipment Documents */}
+              <TabsContent value="equipment">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Thermometer className="h-5 w-5" />
+                      Equipment Documents
+                    </CardTitle>
+                    <CardDescription>
+                      Labels, photos, and documentation for your equipment assets
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {companyId && (
+                      <DocumentCategorySection
+                        category="equipment"
+                        documents={filteredDocuments}
+                        sites={sites}
+                        equipment={equipment}
+                        companyId={companyId}
+                        canDelete={canDelete}
+                        signedUrls={signedUrls}
+                        onDocumentDeleted={handleDocumentDeleted}
+                        onUploadComplete={handleUploadComplete}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          {/* By Site Tab */}
-          <TabsContent value="by-site">
-            <Card>
-              <CardHeader>
-                <CardTitle>Documents by Site</CardTitle>
-                <CardDescription>View documents organized by site location</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="w-full">
-                  {sites.map((site) => {
-                    const siteDocs = documentsBySite[site.id] || [];
-                    return (
-                      <AccordionItem key={site.id} value={site.id}>
-                        <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-3">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <span>{site.name}</span>
-                            <Badge variant="secondary" className="ml-2">
-                              {siteDocs.length}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          {siteDocs.length === 0 ? (
-                            <p className="text-muted-foreground text-sm py-4">
-                              No documents attached to this site
-                            </p>
-                          ) : (
-                            <div className="space-y-2 pt-2">
-                              {siteDocs.map((doc) => {
-                                const FileIcon = getFileIcon(doc.mime_type);
-                                const typeConfig = DOCUMENT_TYPE_LABELS[doc.document_type] || DOCUMENT_TYPE_LABELS.other;
-                                return (
-                                  <div
-                                    key={doc.id}
-                                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50"
-                                  >
-                                    <FileIcon className="h-5 w-5 text-muted-foreground" />
-                                    <span className="flex-1 truncate text-sm">{doc.name}</span>
-                                    <Badge variant={typeConfig.variant} className="text-xs">
-                                      {typeConfig.label}
-                                    </Badge>
-                                    <Button variant="ghost" size="sm" asChild>
-                                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                                        View
-                                      </a>
-                                    </Button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-4"
-                            onClick={() => navigate(`/sites/${site.id}`)}
-                          >
-                            Go to Site
-                          </Button>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* By Equipment Tab */}
-          <TabsContent value="by-equipment">
-            <Card>
-              <CardHeader>
-                <CardTitle>Documents by Equipment</CardTitle>
-                <CardDescription>View documents organized by equipment</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="multiple" className="w-full">
-                  {equipment.map((eq) => {
-                    const eqDocs = documentsByEquipment[eq.id] || [];
-                    return (
-                      <AccordionItem key={eq.id} value={eq.id}>
-                        <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-3">
-                            <Thermometer className="h-4 w-4 text-muted-foreground" />
-                            <span>{eq.name}</span>
-                            <Badge variant="secondary" className="ml-2">
-                              {eqDocs.length}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          {eqDocs.length === 0 ? (
-                            <p className="text-muted-foreground text-sm py-4">
-                              No documents attached to this equipment
-                            </p>
-                          ) : (
-                            <div className="space-y-2 pt-2">
-                              {eqDocs.map((doc) => {
-                                const FileIcon = getFileIcon(doc.mime_type);
-                                const typeConfig = DOCUMENT_TYPE_LABELS[doc.document_type] || DOCUMENT_TYPE_LABELS.other;
-                                return (
-                                  <div
-                                    key={doc.id}
-                                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50"
-                                  >
-                                    <FileIcon className="h-5 w-5 text-muted-foreground" />
-                                    <span className="flex-1 truncate text-sm">{doc.name}</span>
-                                    <Badge variant={typeConfig.variant} className="text-xs">
-                                      {typeConfig.label}
-                                    </Badge>
-                                    <Button variant="ghost" size="sm" asChild>
-                                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                                        View
-                                      </a>
-                                    </Button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-4"
-                            onClick={() => navigate(`/equipment/${eq.id}`)}
-                          >
-                            Go to Equipment
-                          </Button>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Compliance Tab */}
-          <TabsContent value="compliance">
-            <Card>
-              <CardHeader>
-                <CardTitle>Compliance Documents</CardTitle>
-                <CardDescription>Certificates, declarations, and reports</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {complianceDocuments.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No compliance documents found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {complianceDocuments.map((doc) => {
-                      const FileIcon = getFileIcon(doc.mime_type);
-                      const typeConfig = DOCUMENT_TYPE_LABELS[doc.document_type] || DOCUMENT_TYPE_LABELS.other;
-                      return (
-                        <div
-                          key={doc.id}
-                          className="flex items-center gap-3 p-3 rounded-md border hover:bg-muted/50"
-                        >
-                          <FileIcon className="h-6 w-6 text-muted-foreground" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{doc.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.equipment?.name || doc.site?.name || "General"} • {format(new Date(doc.created_at), "dd MMM yyyy")}
-                            </p>
-                          </div>
-                          <Badge variant={typeConfig.variant}>{typeConfig.label}</Badge>
-                          <Button variant="ghost" size="sm" asChild>
-                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                              View
-                            </a>
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Media Gallery Tab */}
-          <TabsContent value="media">
-            <Card>
-              <CardHeader>
-                <CardTitle>Media Gallery</CardTitle>
-                <CardDescription>Photos and images from all sites and equipment</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {mediaDocuments.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Image className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No photos found</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {mediaDocuments.map((doc) => {
-                      const imageUrl = signedUrls[doc.id];
-                      
-                      return (
-                        <button
-                          key={doc.id}
-                          onClick={async () => {
-                            const url = imageUrl || await getDocumentUrl(doc.file_url);
-                            if (url) window.open(url, "_blank", "noopener,noreferrer");
-                          }}
-                          className="group relative aspect-square rounded-lg overflow-hidden bg-muted text-left"
-                        >
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={doc.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end">
-                            <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                              <p className="text-white text-xs truncate">{doc.name}</p>
-                              <p className="text-white/70 text-xs">
-                                {doc.equipment?.name || doc.site?.name || ""}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              {/* Media Gallery */}
+              <TabsContent value="media">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Camera className="h-5 w-5" />
+                      Media Gallery
+                    </CardTitle>
+                    <CardDescription>
+                      Photos, images, and visual documentation from all sources
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {companyId && (
+                      <DocumentCategorySection
+                        category="media"
+                        documents={filteredDocuments}
+                        sites={sites}
+                        equipment={equipment}
+                        companyId={companyId}
+                        canDelete={canDelete}
+                        signedUrls={signedUrls}
+                        onDocumentDeleted={handleDocumentDeleted}
+                        onUploadComplete={handleUploadComplete}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
 
