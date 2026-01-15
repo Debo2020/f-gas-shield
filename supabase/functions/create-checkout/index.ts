@@ -55,6 +55,12 @@ serve(async (req) => {
     if (!priceId) throw new Error("Price ID is required");
     logStep("Request received", { priceId, quantity, companyName, tier });
 
+    // Overage price IDs for metered AI credits billing
+    const OVERAGE_PRICES: Record<string, string> = {
+      basic: "price_1SpoFQF9KjzL48NkD2Sd2SCv",
+      premium: "price_1SpoHNF9KjzL48Nk0IHKeD8O",
+    };
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     let customerId: string | undefined;
@@ -63,16 +69,29 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
+    // Build line items - base subscription + metered overage price (if applicable)
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price: priceId,
+        quantity: quantity,
+      },
+    ];
+
+    // Add metered overage price for basic and premium tiers
+    const tierLower = tier?.toLowerCase();
+    if (tierLower && OVERAGE_PRICES[tierLower]) {
+      lineItems.push({
+        price: OVERAGE_PRICES[tierLower],
+        // No quantity for metered prices - Stripe handles this via meter events
+      });
+      logStep("Added metered overage price", { tier: tierLower, overagePrice: OVERAGE_PRICES[tierLower] });
+    }
+
     const origin = req.headers.get("origin") || "http://localhost:3000";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
-      line_items: [
-        {
-          price: priceId,
-          quantity: quantity,
-        },
-      ],
+      line_items: lineItems,
       mode: "subscription",
       success_url: `${origin}/dashboard?subscription=success`,
       cancel_url: `${origin}/pricing?subscription=cancelled`,
