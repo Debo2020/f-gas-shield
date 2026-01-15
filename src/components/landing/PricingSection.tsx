@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Check, Briefcase, Zap, Building, Loader2 } from "lucide-react";
+import { Check, Briefcase, Zap, Building, Loader2, Bot } from "lucide-react";
+import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { SUBSCRIPTION_TIERS, SubscriptionTier, formatPrice, getAnnualSavingsPercent } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -170,6 +171,9 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                       <p>Up to {(config.limits.sites as number) === -1 ? "Unlimited" : config.limits.sites} sites</p>
                       <p>Up to {(config.limits.equipment as number) === -1 ? "Unlimited" : config.limits.equipment} equipment</p>
                     </div>
+
+                    {/* AI Credits Section */}
+                    <AICreditInfo tier={tier} className="mt-4" />
                   </CardContent>
 
                   <CardFooter>
