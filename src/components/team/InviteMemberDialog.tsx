@@ -84,10 +84,10 @@ export function InviteMemberDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
-            Invite Team Member
+            Add Team Member
           </DialogTitle>
           <DialogDescription>
-            Send an invitation to join your team. They'll receive an email with instructions.
+            Add a new member to your team. They'll receive an email invitation to join.
           </DialogDescription>
         </DialogHeader>
 
