@@ -26,13 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, UserPlus, User, Phone } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Mail, UserPlus, User, Phone, Send, UserX } from "lucide-react";
 
 const inviteSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
   role: z.enum(["admin", "manager", "stores_manager", "engineer", "read_only"]),
+  activationOption: z.enum(["send_invite", "keep_inactive"]),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -42,6 +45,7 @@ export type InviteMemberData = {
   email: string;
   phone?: string;
   role: "admin" | "manager" | "stores_manager" | "engineer" | "read_only";
+  sendInvite: boolean;
 };
 
 interface InviteMemberDialogProps {
@@ -66,8 +70,11 @@ export function InviteMemberDialog({
       email: "",
       phone: "",
       role: "engineer",
+      activationOption: "send_invite",
     },
   });
+
+  const activationOption = form.watch("activationOption");
 
   const handleSubmit = async (values: InviteFormValues) => {
     if (existingEmails.includes(values.email.toLowerCase())) {
@@ -84,6 +91,7 @@ export function InviteMemberDialog({
         email: values.email,
         phone: values.phone || undefined,
         role: values.role,
+        sendInvite: values.activationOption === "send_invite",
       });
       form.reset();
       onOpenChange(false);
@@ -103,7 +111,7 @@ export function InviteMemberDialog({
             Add Team Member
           </DialogTitle>
           <DialogDescription>
-            Add a new member to your team. They'll receive an email invitation to join.
+            Add a new member to your team. Choose whether to send them a login link now or later.
           </DialogDescription>
         </DialogHeader>
 
@@ -220,6 +228,49 @@ export function InviteMemberDialog({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="activationOption"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Account Activation</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-2"
+                    >
+                      <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                        <RadioGroupItem value="send_invite" id="send_invite" className="mt-0.5" />
+                        <div className="flex-1">
+                          <Label htmlFor="send_invite" className="font-medium cursor-pointer flex items-center gap-2">
+                            <Send className="h-4 w-4 text-primary" />
+                            Send secure login link
+                          </Label>
+                          <span className="text-xs text-muted-foreground block mt-1">
+                            They'll receive an email with a link to set their password and activate their account
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                        <RadioGroupItem value="keep_inactive" id="keep_inactive" className="mt-0.5" />
+                        <div className="flex-1">
+                          <Label htmlFor="keep_inactive" className="font-medium cursor-pointer flex items-center gap-2">
+                            <UserX className="h-4 w-4 text-muted-foreground" />
+                            Keep inactive
+                          </Label>
+                          <span className="text-xs text-muted-foreground block mt-1">
+                            Add to team roster without sending an invitation. You can send the login link later.
+                          </span>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex justify-end gap-3 pt-4">
               <Button
                 type="button"
@@ -230,7 +281,12 @@ export function InviteMemberDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Invitation"}
+                {isSubmitting 
+                  ? "Adding..." 
+                  : activationOption === "send_invite" 
+                    ? "Add & Send Invitation" 
+                    : "Add Team Member"
+                }
               </Button>
             </div>
           </form>

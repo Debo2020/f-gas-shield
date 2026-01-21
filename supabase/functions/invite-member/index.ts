@@ -69,7 +69,7 @@ serve(async (req) => {
     const userId = claimsData.claims.sub as string;
     logStep("User authenticated", { userId });
 
-    const { org_id, email, role, full_name, phone } = await req.json();
+    const { org_id, email, role, full_name, phone, send_invite = true } = await req.json();
 
     if (!org_id || !email || !role) {
       logStep("ERROR: Missing required fields", { org_id, email, role });
@@ -78,6 +78,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    logStep("Request params", { email, role, send_invite });
 
     // Use service role for privileged operations
     const adminClient = createClient(
@@ -246,18 +248,23 @@ serve(async (req) => {
 
     const emailHtml = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>You've Been Invited!</title><!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--></head><body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f5;"><tr><td align="center" style="padding: 40px 20px;"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"><tr><td style="background-color: #18181b; padding: 32px 40px; text-align: center;"><img src="https://ftrack.lovable.app/ftrack-logo.png" alt="FTrack" width="160" height="40" style="display: block; margin: 0 auto; max-width: 160px; height: auto;" /></td></tr><tr><td style="padding: 40px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="text-align: center; padding-bottom: 24px;"><h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #18181b;">Hi ${inviteeName}, You've Been Invited!</h1></td></tr><tr><td style="padding-bottom: 24px;"><p style="margin: 0; font-size: 16px; line-height: 24px; color: #3f3f46;"><strong>${inviterName}</strong> has invited you to join <strong>${companyName}</strong> on FTrack, the F-Gas compliance management platform.</p></td></tr><tr><td align="center" style="padding-bottom: 24px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color: ${roleBadgeColor}; color: #ffffff; font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">${formattedRole}</td></tr></table></td></tr><tr><td style="padding-bottom: 32px;"><p style="margin: 0; font-size: 16px; line-height: 24px; color: #3f3f46;">Click the button below to accept your invitation and set up your account. This link will expire in 7 days.</p></td></tr><tr><td align="center" style="padding-bottom: 32px;"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${actionUrl}" style="height:48px;v-text-anchor:middle;width:200px;" arcsize="10%" stroke="f" fillcolor="#18181b"><w:anchorlock/><center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Accept Invitation</center></v:roundrect><![endif]--><!--[if !mso]><!--><a href="${actionUrl}" target="_blank" style="display: inline-block; background-color: #18181b; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">Accept Invitation</a><!--<![endif]--></td></tr><tr><td style="border-top: 1px solid #e4e4e7; padding-top: 24px;"><p style="margin: 0; font-size: 14px; line-height: 20px; color: #71717a;">If you didn't expect this invitation, you can safely ignore this email.</p></td></tr></table></td></tr><tr><td style="background-color: #fafafa; padding: 24px 40px; text-align: center; border-top: 1px solid #e4e4e7;"><p style="margin: 0; font-size: 12px; color: #a1a1aa;">FTrack - F-Gas Compliance Made Simple</p><p style="margin: 8px 0 0 0; font-size: 12px; color: #a1a1aa;">&copy; ${new Date().getFullYear()} ${companyName}. All rights reserved.</p></td></tr></table></td></tr></table></body></html>`;
 
-    try {
-      const emailResponse = await resend.emails.send({
-        from: "FTrack <onboarding@resend.dev>",
-        to: [email.toLowerCase()],
-        subject: `You've been invited to join ${companyName} on FTrack`,
-        html: emailHtml,
-      });
+    // Only send email if send_invite is true
+    if (send_invite) {
+      try {
+        const emailResponse = await resend.emails.send({
+          from: "FTrack <onboarding@resend.dev>",
+          to: [email.toLowerCase()],
+          subject: `You've been invited to join ${companyName} on FTrack`,
+          html: emailHtml,
+        });
 
-      logStep("Invitation email sent via Resend", { emailId: emailResponse?.data?.id });
-    } catch (emailError) {
-      logStep("ERROR: Failed to send invitation email", { error: String(emailError) });
-      // Don't fail the entire request - the invitation is created, just email failed
+        logStep("Invitation email sent via Resend", { emailId: emailResponse?.data?.id });
+      } catch (emailError) {
+        logStep("ERROR: Failed to send invitation email", { error: String(emailError) });
+        // Don't fail the entire request - the invitation is created, just email failed
+      }
+    } else {
+      logStep("Skipping email - member added as inactive", { email });
     }
 
     // Log audit event
@@ -282,6 +289,7 @@ serve(async (req) => {
         role: invitation.role,
         expires_at: invitation.expires_at,
         token: invitation.token,
+        email_sent: send_invite,
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
