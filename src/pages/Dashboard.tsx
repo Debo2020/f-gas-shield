@@ -13,6 +13,7 @@ import {
   Plus,
   ScanLine,
   PartyPopper,
+  RefreshCw,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -42,10 +43,15 @@ export default function Dashboard() {
   const [setupDismissed, setSetupDismissed] = useState(() => {
     return localStorage.getItem('ftrack_setup_dismissed') === 'true';
   });
-  const { profile } = useAuth();
+  const { profile, hasRole } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { alerts, hasCriticalAlerts } = useExpiryAlerts();
+  const { alerts } = useExpiryAlerts();
+
+  // Role checks for manager features
+  const isOwner = hasRole("owner");
+  const isManager = hasRole("manager");
+  const canAccessIntegrations = isOwner || isManager;
   const today = startOfToday();
   const in30Days = addDays(today, 30);
 
@@ -164,10 +170,34 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            <Button onClick={() => navigate("/sites?action=new")} className="animate-scale-in">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Site
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {canAccessIntegrations && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => toast.info("BMS integration coming soon", { description: "This feature will allow syncing data to your Building Management System." })}
+                    className="animate-scale-in"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync to BMS
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => toast.info("ERP integration coming soon", { description: "This feature will allow syncing data to your Enterprise Resource Planning system." })}
+                    className="animate-scale-in"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync to ERP
+                  </Button>
+                </>
+              )}
+              <Button onClick={() => navigate("/sites?action=new")} className="animate-scale-in">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Site
+              </Button>
+            </div>
           </div>
         </div>
 
