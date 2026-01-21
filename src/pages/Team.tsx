@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Mail } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { TeamMemberList } from "@/components/team/TeamMemberList";
-import { PendingInvitations } from "@/components/team/PendingInvitations";
+import { TeamMemberList, UnifiedTeamMember } from "@/components/team/TeamMemberList";
 import { InviteMemberDialog, InviteMemberData } from "@/components/team/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +16,7 @@ interface TeamMember {
   email: string;
   avatar_url: string | null;
   roles: string[];
+  licenseStatus: "active" | "disabled" | "pending" | null;
 }
 
 interface PendingInvitation {
@@ -38,6 +37,7 @@ export default function Team() {
   const isOwner = hasRole("owner");
   const canInvite = isOwner || hasRole("manager");
   const canInviteWithLicense = canInvite && (isOwner || hasActiveLicense);
+  const canManage = isOwner || hasRole("manager");
 
   const fetchTeamData = async () => {
     if (!profile?.company_id) return;
@@ -60,15 +60,22 @@ export default function Team() {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with roles
-      const membersWithRoles = profilesData?.map((p) => ({
+      // Fetch license status for each member
+      const { data: licensesData, error: licensesError } = await supabase
+        .from("user_licenses")
+        .select("user_id, status")
+        .eq("company_id", profile.company_id);
+
+      if (licensesError) throw licensesError;
+
+      // Combine profiles with roles and license status
+      const membersWithRolesAndLicenses = profilesData?.map((p) => ({
         ...p,
-        roles: rolesData
-          ?.filter((r) => r.user_id === p.user_id)
-          .map((r) => r.role) || [],
+        roles: rolesData?.filter((r) => r.user_id === p.user_id).map((r) => r.role) || [],
+        licenseStatus: (licensesData?.find((l) => l.user_id === p.user_id)?.status as "active" | "disabled" | "pending") || null,
       })) || [];
 
-      setMembers(membersWithRoles);
+      setMembers(membersWithRolesAndLicenses);
 
       // Fetch pending invitations
       const { data: invitationsData, error: invitationsError } = await supabase
@@ -96,11 +103,6 @@ export default function Team() {
   const handleInvite = async (inviteData: InviteMemberData) => {
     if (!profile?.company_id || !user) return;
 
-    // Call the invite-member edge function which handles:
-    // 1. Creating the invitation record
-    // 2. Creating the user in auth system
-    // 3. Generating a magic link (if send_invite is true)
-    // 4. Sending the invitation email via Resend (if send_invite is true)
     const { data, error } = await supabase.functions.invoke("invite-member", {
       body: {
         org_id: profile.company_id,
@@ -164,32 +166,94 @@ export default function Team() {
     fetchTeamData();
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    // Remove user's roles first
-    const { error: rolesError } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", userId);
+  const handleToggleAccess = async (userId: string, enable: boolean) => {
+    if (!profile?.company_id) return;
 
-    if (rolesError) {
-      toast.error("Failed to remove team member");
+    const { error } = await supabase
+      .from("user_licenses")
+      .update({
+        status: enable ? "active" : "disabled",
+        disabled_at: enable ? null : new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("company_id", profile.company_id);
+
+    if (error) {
+      toast.error("Failed to update access");
       return;
     }
 
-    // Remove company association from profile
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ company_id: null })
-      .eq("user_id", userId);
-
-    if (profileError) {
-      toast.error("Failed to remove team member");
-      return;
-    }
-
-    toast.success("Team member removed");
+    toast.success(enable ? "Access enabled" : "Access disabled");
     fetchTeamData();
   };
+
+  const handleDeleteMember = async (userId: string) => {
+    if (!profile?.company_id) return;
+
+    try {
+      // Remove user's roles first
+      const { error: rolesError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (rolesError) throw rolesError;
+
+      // Delete user license
+      const { error: licenseError } = await supabase
+        .from("user_licenses")
+        .delete()
+        .eq("user_id", userId)
+        .eq("company_id", profile.company_id);
+
+      if (licenseError) throw licenseError;
+
+      // Remove company association from profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ company_id: null })
+        .eq("user_id", userId);
+
+      if (profileError) throw profileError;
+
+      toast.success("Team member removed");
+      fetchTeamData();
+    } catch (error: any) {
+      console.error("Error removing team member:", error);
+      toast.error("Failed to remove team member");
+    }
+  };
+
+  // Create unified list of members and pending invitations
+  const unifiedMembers: UnifiedTeamMember[] = [
+    // Active team members
+    ...members.map((m) => ({
+      id: m.id,
+      type: "member" as const,
+      name: m.full_name,
+      email: m.email,
+      avatar_url: m.avatar_url,
+      roles: m.roles,
+      status: m.licenseStatus,
+      user_id: m.user_id,
+    })),
+    // Pending invitations
+    ...invitations.map((inv) => ({
+      id: inv.id,
+      type: "pending" as const,
+      name: inv.email.split("@")[0],
+      email: inv.email,
+      avatar_url: null,
+      roles: [inv.role],
+      status: (new Date(inv.expires_at) < new Date() ? "expired" : "invited") as "expired" | "invited",
+      invitation: {
+        id: inv.id,
+        email: inv.email,
+        role: inv.role,
+        expires_at: inv.expires_at,
+      },
+    })),
+  ];
 
   // Get all existing emails (members + pending invitations)
   const existingEmails = [
@@ -197,9 +261,8 @@ export default function Team() {
     ...invitations.map((i) => i.email.toLowerCase()),
   ];
 
-  const pendingCount = invitations.filter(
-    (i) => new Date(i.expires_at) > new Date()
-  ).length;
+  const activeCount = members.filter(m => m.licenseStatus === "active" || m.roles.includes("owner")).length;
+  const pendingCount = invitations.length;
 
   return (
     <AppLayout>
@@ -227,77 +290,32 @@ export default function Team() {
           )}
         </div>
 
-        <Tabs defaultValue="members" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="members" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Members ({members.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Pending Invitations
-              {pendingCount > 0 && (
-                <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                  {pendingCount}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members">
-            <Card>
-              <CardHeader>
-                <CardTitle>Team Members</CardTitle>
-                <CardDescription>
-                  People who have access to your company's FTrack account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Loading team members...
-                  </div>
-                ) : (
-                  <TeamMemberList
-                    members={members}
-                    currentUserId={user?.id || ""}
-                    isOwner={isOwner}
-                    onRemoveMember={handleRemoveMember}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="pending">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Invitations</CardTitle>
-                <CardDescription>
-                  People who have been invited but haven't joined yet
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Loading invitations...
-                  </div>
-                ) : invitations.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No pending invitations
-                  </div>
-                ) : (
-                  <PendingInvitations
-                    invitations={invitations}
-                    isOwner={isOwner}
-                    onDelete={handleDeleteInvitation}
-                    onResend={handleResendInvitation}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Members</CardTitle>
+            <CardDescription>
+              {activeCount} active{pendingCount > 0 && ` · ${pendingCount} pending`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading team members...
+              </div>
+            ) : (
+              <TeamMemberList
+                members={unifiedMembers}
+                currentUserId={user?.id || ""}
+                isOwner={isOwner}
+                canManage={canManage}
+                onToggleAccess={handleToggleAccess}
+                onDeleteMember={handleDeleteMember}
+                onResendInvitation={handleResendInvitation}
+                onDeleteInvitation={handleDeleteInvitation}
+              />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <InviteMemberDialog

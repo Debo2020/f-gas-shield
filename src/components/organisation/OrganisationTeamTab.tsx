@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Mail, Loader2 } from "lucide-react";
+import { Users, UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TeamMemberList } from "@/components/team/TeamMemberList";
-import { PendingInvitations } from "@/components/team/PendingInvitations";
+import { TeamMemberList, UnifiedTeamMember } from "@/components/team/TeamMemberList";
 import { InviteMemberDialog, InviteMemberData } from "@/components/team/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,12 +212,44 @@ export function OrganisationTeamTab() {
     }
   };
 
+  // Create unified list of members and pending invitations
+  const unifiedMembers: UnifiedTeamMember[] = [
+    // Active team members
+    ...members.map((m) => ({
+      id: m.id,
+      type: "member" as const,
+      name: m.full_name,
+      email: m.email,
+      avatar_url: m.avatar_url,
+      roles: m.roles,
+      status: m.licenseStatus,
+      user_id: m.user_id,
+    })),
+    // Pending invitations
+    ...invitations.map((inv) => ({
+      id: inv.id,
+      type: "pending" as const,
+      name: inv.email.split("@")[0],
+      email: inv.email,
+      avatar_url: null,
+      roles: [inv.role],
+      status: (new Date(inv.expires_at) < new Date() ? "expired" : "invited") as "expired" | "invited",
+      invitation: {
+        id: inv.id,
+        email: inv.email,
+        role: inv.role,
+        expires_at: inv.expires_at,
+      },
+    })),
+  ];
+
   const existingEmails = [
     ...members.map((m) => m.email.toLowerCase()),
     ...invitations.map((i) => i.email.toLowerCase()),
   ];
 
-  const pendingCount = invitations.filter((i) => new Date(i.expires_at) > new Date()).length;
+  const activeCount = members.filter(m => m.licenseStatus === "active" || m.roles.includes("owner")).length;
+  const pendingCount = invitations.length;
 
   if (isLoading) {
     return (
@@ -253,69 +283,26 @@ export function OrganisationTeamTab() {
         )}
       </div>
 
-      <Tabs defaultValue="members" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="members" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Members ({members.length})
-          </TabsTrigger>
-          <TabsTrigger value="pending" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Pending
-            {pendingCount > 0 && (
-              <span className="ml-1 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                {pendingCount}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="members">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Members</CardTitle>
-              <CardDescription>
-                People who have access to your company's FTrack account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TeamMemberList
-                members={members}
-                currentUserId={user?.id || ""}
-                isOwner={isOwner}
-                canManage={canManage}
-                onToggleAccess={handleToggleAccess}
-                onDeleteMember={handleDeleteMember}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>
-                People who have been invited but haven't joined yet
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {invitations.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No pending invitations
-                </div>
-              ) : (
-                <PendingInvitations
-                  invitations={invitations}
-                  isOwner={isOwner}
-                  onDelete={handleDeleteInvitation}
-                  onResend={handleResendInvitation}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Members</CardTitle>
+          <CardDescription>
+            {activeCount} active{pendingCount > 0 && ` · ${pendingCount} pending`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TeamMemberList
+            members={unifiedMembers}
+            currentUserId={user?.id || ""}
+            isOwner={isOwner}
+            canManage={canManage}
+            onToggleAccess={handleToggleAccess}
+            onDeleteMember={handleDeleteMember}
+            onResendInvitation={handleResendInvitation}
+            onDeleteInvitation={handleDeleteInvitation}
+          />
+        </CardContent>
+      </Card>
 
       <InviteMemberDialog
         open={isInviteOpen}
