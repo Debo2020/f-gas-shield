@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.send-license-invitation]
 verify_jwt = false
+
+[functions.enterprise-contact]
+verify_jwt = false
