@@ -15,6 +15,7 @@ import {
   Plus,
   FolderOpen,
   Camera,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,8 +72,10 @@ export default function SiteDetail() {
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
+  const isEngineer = hasRole("engineer");
   const canEdit = isOwner || isManager;
   const canPerformActions = canEdit && (isOwner || hasActiveLicense);
+  const canSyncBMS = isOwner || isManager || isEngineer;
 
   const fetchData = async () => {
     if (!profile?.company_id || !id) return;
@@ -212,6 +215,18 @@ export default function SiteDetail() {
                 <Camera className="h-4 w-4 mr-2" />
                 Take Photo
               </Button>
+              {canSyncBMS && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toast.info("BMS integration coming soon", { 
+                    description: `This feature will allow syncing data for ${site.name} to your Building Management System.` 
+                  })}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sync to BMS
+                </Button>
+              )}
               {canPerformActions && (
                 <Button size="sm" onClick={() => setIsEditOpen(true)}>
                   <Pencil className="h-4 w-4 mr-2" />
