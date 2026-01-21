@@ -12,21 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Shield,
   Building2,
+  Building,
   Gauge,
-  ClipboardCheck,
   Snowflake,
-  FileText,
-  FolderOpen,
   Users,
-  Settings,
   LogOut,
   Menu,
   X,
-  Key,
   Download,
-  Truck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
@@ -42,24 +36,15 @@ interface AppLayoutProps {
 const fullNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Gauge },
   { name: "Sites", href: "/sites", icon: Building2 },
-  { name: "Equipment", href: "/equipment", icon: Shield },
-  { name: "Inspections", href: "/inspections", icon: ClipboardCheck },
   { name: "F-Gas", href: "/gas-log", icon: Snowflake },
-  { name: "Documents", href: "/documents", icon: FolderOpen },
-  { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Organisation", href: "/organisation", icon: Building },
 ];
 
 // Limited navigation for stores_manager role
 const storesManagerNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Gauge },
   { name: "F-Gas", href: "/gas-log", icon: Snowflake },
-];
-
-const managementNav = [
-  { name: "Team", href: "/team", icon: Users, roles: ["owner", "manager"] as const },
-  { name: "Licenses", href: "/settings/licenses", icon: Key, roles: ["owner", "manager"] as const },
-  { name: "Suppliers", href: "/settings/suppliers", icon: Truck, roles: ["owner", "manager", "stores_manager"] as const },
-  { name: "Settings", href: "/settings/company", icon: Settings, roles: ["owner"] as const },
+  { name: "Organisation", href: "/organisation", icon: Building },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -129,30 +114,6 @@ export function AppLayout({ children }: AppLayoutProps) {
             
             {/* Theme toggle */}
             <ThemeToggle />
-            
-            {/* Management dropdown for owners/managers/stores_managers */}
-            {(hasRole("owner") || hasRole("manager") || hasRole("stores_manager")) && (
-              <div className="hidden md:flex items-center gap-1">
-                {managementNav.map((item) => {
-                  if (!item.roles.some((role) => hasRole(role))) return null;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                        isActive(item.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
 
             {/* User menu */}
             <DropdownMenu>
@@ -221,30 +182,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                 {item.name}
               </Link>
             ))}
-            {(hasRole("owner") || hasRole("manager") || hasRole("stores_manager")) && (
-              <>
-                <div className="my-2 border-t" />
-                {managementNav.map((item) => {
-                  if (!item.roles.some((role) => hasRole(role))) return null;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                        isActive(item.href)
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </>
-            )}
           </nav>
         )}
       </header>

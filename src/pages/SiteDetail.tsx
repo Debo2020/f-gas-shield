@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Camera,
   RefreshCw,
+  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SiteDialog } from "@/components/sites/SiteDialog";
 import { DocumentList } from "@/components/documents/DocumentList";
+import { SiteInspectionsTable } from "@/components/sites/SiteInspectionsTable";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
 import { CameraCapture } from "@/components/documents/CameraCapture";
 import { useAuth } from "@/hooks/useAuth";
@@ -306,6 +308,7 @@ export default function SiteDetail() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="equipment">Equipment ({equipment.length})</TabsTrigger>
+            <TabsTrigger value="inspections">Inspections</TabsTrigger>
             <TabsTrigger value="documents">Documents ({documentCount})</TabsTrigger>
           </TabsList>
 
@@ -443,6 +446,11 @@ export default function SiteDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Inspections Tab */}
+          <TabsContent value="inspections">
+            <SiteInspectionsTable siteId={site.id} siteName={site.name} />
           </TabsContent>
 
           {/* Documents Tab */}

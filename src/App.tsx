@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ThemeProvider } from "next-themes";
@@ -22,6 +22,7 @@ import EquipmentDetail from "./pages/EquipmentDetail";
 import Inspections from "./pages/Inspections";
 import GasLog from "./pages/GasLog";
 import Reports from "./pages/Reports";
+import Organisation from "./pages/Organisation";
 import Documents from "./pages/Documents";
 import AcceptInvite from "./pages/AcceptInvite";
 import AcceptLicense from "./pages/AcceptLicense";
@@ -99,13 +100,20 @@ const App = () => (
               }
             />
             <Route
-              path="/team"
+              path="/organisation"
               element={
                 <ProtectedRoute>
-                  <Team />
+                  <Organisation />
                 </ProtectedRoute>
               }
             />
+            {/* Legacy redirects to Organisation hub */}
+            <Route path="/team" element={<Navigate to="/organisation?tab=team" replace />} />
+            <Route path="/reports" element={<Navigate to="/organisation?tab=reports" replace />} />
+            <Route path="/documents" element={<Navigate to="/organisation?tab=documents" replace />} />
+            <Route path="/settings/licenses" element={<Navigate to="/organisation?tab=licenses" replace />} />
+            <Route path="/settings/suppliers" element={<Navigate to="/organisation?tab=suppliers" replace />} />
+            <Route path="/settings/company" element={<Navigate to="/organisation?tab=settings" replace />} />
             <Route
               path="/sites"
               element={
