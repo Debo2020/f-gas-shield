@@ -154,7 +154,7 @@ export function GasMovementDialog({
 
   // Update refrigerant type when cylinder is selected
   useEffect(() => {
-    if (cylinderId) {
+    if (cylinderId && cylinderId !== "manual") {
       const cyl = cylinders.find(c => c.id === cylinderId);
       if (cyl) {
         setSelectedCylinder(cyl);
@@ -222,7 +222,7 @@ export function GasMovementDialog({
     }
 
     // Validate weight against cylinder available weight for book_out
-    if (values.movement_type === "book_out" && selectedCylinder) {
+    if (values.movement_type === "book_out" && selectedCylinder && values.cylinder_id !== "manual") {
       if (values.weight_kg > Number(selectedCylinder.current_weight_kg)) {
         toast.error(`Cannot book out more than available weight (${selectedCylinder.current_weight_kg} kg)`);
         return;
@@ -239,7 +239,7 @@ export function GasMovementDialog({
         movement_type: values.movement_type as MovementType,
         refrigerant_type: values.refrigerant_type as RefrigerantType,
         weight_kg: values.weight_kg,
-        cylinder_id: values.cylinder_id || null,
+        cylinder_id: values.cylinder_id && values.cylinder_id !== "manual" ? values.cylinder_id : null,
         cylinder_reference: values.cylinder_reference || null,
         equipment_id: values.equipment_id || null,
         reason: values.reason as any || null,
@@ -252,7 +252,7 @@ export function GasMovementDialog({
       if (error) throw error;
 
       // Update cylinder weight if cylinder was selected
-      if (values.cylinder_id && selectedCylinder) {
+      if (values.cylinder_id && values.cylinder_id !== "manual" && selectedCylinder) {
         let newWeight = Number(selectedCylinder.current_weight_kg);
         
         if (values.movement_type === "book_out") {
@@ -362,7 +362,7 @@ export function GasMovementDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Manual Entry</SelectItem>
+                      <SelectItem value="manual">Manual Entry</SelectItem>
                       {availableCylinders.map((cyl) => (
                         <SelectItem key={cyl.id} value={cyl.id}>
                           {cyl.cylinder_code} - {cyl.refrigerant_type} ({Number(cyl.current_weight_kg).toFixed(1)} kg)
