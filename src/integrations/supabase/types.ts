@@ -635,6 +635,69 @@ export type Database = {
           },
         ]
       }
+      profile_type_config: {
+        Row: {
+          avatar_required: boolean | null
+          can_invite_members: boolean | null
+          can_log_gas_movements: boolean | null
+          can_manage_equipment: boolean | null
+          can_manage_sites: boolean | null
+          can_manage_stock: boolean | null
+          can_perform_inspections: boolean | null
+          can_view_reports: boolean | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          f_gas_certificate_required: boolean | null
+          id: string
+          onboarding_steps: Json | null
+          phone_required: boolean | null
+          requires_qualification_verification: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_required?: boolean | null
+          can_invite_members?: boolean | null
+          can_log_gas_movements?: boolean | null
+          can_manage_equipment?: boolean | null
+          can_manage_sites?: boolean | null
+          can_manage_stock?: boolean | null
+          can_perform_inspections?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          f_gas_certificate_required?: boolean | null
+          id?: string
+          onboarding_steps?: Json | null
+          phone_required?: boolean | null
+          requires_qualification_verification?: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_required?: boolean | null
+          can_invite_members?: boolean | null
+          can_log_gas_movements?: boolean | null
+          can_manage_equipment?: boolean | null
+          can_manage_sites?: boolean | null
+          can_manage_stock?: boolean | null
+          can_perform_inspections?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          f_gas_certificate_required?: boolean | null
+          id?: string
+          onboarding_steps?: Json | null
+          phone_required?: boolean | null
+          requires_qualification_verification?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1238,11 +1301,41 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_profile_config_for_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: {
+          avatar_required: boolean | null
+          can_invite_members: boolean | null
+          can_log_gas_movements: boolean | null
+          can_manage_equipment: boolean | null
+          can_manage_sites: boolean | null
+          can_manage_stock: boolean | null
+          can_perform_inspections: boolean | null
+          can_view_reports: boolean | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          f_gas_certificate_required: boolean | null
+          id: string
+          onboarding_steps: Json | null
+          phone_required: boolean | null
+          requires_qualification_verification: boolean | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profile_type_config"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_required_inspection_frequency: {
         Args: { co2e_tonnes: number }
         Returns: number
       }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
+      get_user_profile_status: { Args: { _user_id: string }; Returns: Json }
       has_available_license: {
         Args: { company_uuid: string }
         Returns: boolean
@@ -1273,6 +1366,13 @@ export type Database = {
         Returns: string
       }
       user_can_create_company: { Args: { _user_id: string }; Returns: boolean }
+      validate_profile_for_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
