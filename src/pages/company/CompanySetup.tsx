@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Building2, Users, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +19,19 @@ const steps = [
 
 export default function CompanySetup() {
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>("company");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [invites, setInvites] = useState<TeamInvite[]>([]);
+
+  // Redirect if company already exists
+  useEffect(() => {
+    if (profile?.company_id) {
+      toast.info("Company already set up");
+      navigate("/settings/company", { replace: true });
+    }
+  }, [profile?.company_id, navigate]);
 
   const handleCompanySubmit = async (values: CompanyFormValues) => {
     if (!user) {

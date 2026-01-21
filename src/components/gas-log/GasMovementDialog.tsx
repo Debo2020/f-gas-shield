@@ -265,7 +265,7 @@ export function GasMovementDialog({
           .from("refrigerant_cylinders")
           .update({ 
             current_weight_kg: Math.max(0, newWeight),
-            status: newWeight <= 0 ? "empty" as const : selectedCylinder.status,
+            status: (newWeight <= 0 ? "empty" : selectedCylinder.status) as "in_stock" | "checked_out" | "empty" | "disposed",
           })
           .eq("id", values.cylinder_id);
       }
