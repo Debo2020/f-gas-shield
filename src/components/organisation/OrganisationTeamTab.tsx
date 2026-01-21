@@ -238,10 +238,10 @@ export function OrganisationTeamTab() {
           <Button
             onClick={() => setIsInviteOpen(true)}
             disabled={!canInviteWithLicense}
-            title={!canInviteWithLicense ? "License required to invite members" : undefined}
+            title={!canInviteWithLicense ? "License required to add members" : undefined}
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Invite Member
+            Add Team Member
           </Button>
         )}
       </div>
