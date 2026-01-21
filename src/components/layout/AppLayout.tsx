@@ -26,6 +26,7 @@ import {
   X,
   Key,
   Download,
+  Truck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
@@ -50,6 +51,7 @@ const navigation = [
 const managementNav = [
   { name: "Team", href: "/team", icon: Users, roles: ["owner", "manager"] as const },
   { name: "Licenses", href: "/settings/licenses", icon: Key, roles: ["owner", "manager"] as const },
+  { name: "Suppliers", href: "/settings/suppliers", icon: Truck, roles: ["owner", "manager", "stores_manager"] as const },
   { name: "Settings", href: "/settings/company", icon: Settings, roles: ["owner"] as const },
 ];
 
@@ -117,8 +119,8 @@ export function AppLayout({ children }: AppLayoutProps) {
             {/* Theme toggle */}
             <ThemeToggle />
             
-            {/* Management dropdown for owners/managers */}
-            {(hasRole("owner") || hasRole("manager")) && (
+            {/* Management dropdown for owners/managers/stores_managers */}
+            {(hasRole("owner") || hasRole("manager") || hasRole("stores_manager")) && (
               <div className="hidden md:flex items-center gap-1">
                 {managementNav.map((item) => {
                   if (!item.roles.some((role) => hasRole(role))) return null;
@@ -208,7 +210,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 {item.name}
               </Link>
             ))}
-            {(hasRole("owner") || hasRole("manager")) && (
+            {(hasRole("owner") || hasRole("manager") || hasRole("stores_manager")) && (
               <>
                 <div className="my-2 border-t" />
                 {managementNav.map((item) => {

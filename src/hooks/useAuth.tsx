@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { offlineDb, hashCredentials, CachedProfile } from "@/lib/offline-db";
 import { cacheCompanyData } from "@/lib/sync-service";
 
-type AppRole = "owner" | "manager" | "engineer";
+type AppRole = "owner" | "manager" | "engineer" | "stores_manager" | "admin" | "auditor" | "read_only";
 type LicenseStatus = "active" | "disabled" | "pending" | null;
 
 interface Profile {
