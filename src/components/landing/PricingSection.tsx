@@ -31,25 +31,7 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
   const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
 
   const handleEnterpriseCallback = () => {
-    const subject = encodeURIComponent("Enterprise Call-back Request - F-Gas Comply");
-    const body = encodeURIComponent(`I would like to discuss an enterprise solution for my organisation.
-
-Company Name:
-Number of Sites:
-Number of Engineers:
-Phone Number:
-Preferred Call-back Time:
-
-I'm interested in:
-☐ BMS Integration (Trend, Honeywell, Siemens)
-☐ ERP Connectivity (SAP, Oracle, Sage)
-☐ Custom Branding / White-label
-☐ Volume Licensing
-☐ Other: `);
-    window.location.href = `mailto:sales@ftrack.uk?subject=${subject}&body=${body}`;
-    toast.success("Opening email client", {
-      description: "Our team will contact you within 24 hours of receiving your request."
-    });
+    navigate("/enterprise-contact");
   };
 
   const handleSelectTier = async (tier: SubscriptionTier) => {

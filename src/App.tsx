@@ -38,6 +38,7 @@ import Licenses from "./pages/settings/Licenses";
 import Suppliers from "./pages/settings/Suppliers";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
 import SetupCompany from "./pages/SetupCompany";
+import EnterpriseContact from "./pages/EnterpriseContact";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/help" element={<Help />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/enterprise-contact" element={<EnterpriseContact />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
             <Route
               path="/setup-company"
