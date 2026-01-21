@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Check, Briefcase, Zap, Building, Loader2, Bot } from "lucide-react";
+import { Check, Briefcase, Zap, Building, Loader2, Phone } from "lucide-react";
 import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { SUBSCRIPTION_TIERS, SubscriptionTier, formatPrice, getAnnualSavingsPercent } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
@@ -30,10 +30,32 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
   const [isAnnual, setIsAnnual] = useState(true);
   const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
 
+  const handleEnterpriseCallback = () => {
+    const subject = encodeURIComponent("Enterprise Call-back Request - F-Gas Comply");
+    const body = encodeURIComponent(`I would like to discuss an enterprise solution for my organisation.
+
+Company Name:
+Number of Sites:
+Number of Engineers:
+Phone Number:
+Preferred Call-back Time:
+
+I'm interested in:
+☐ BMS Integration (Trend, Honeywell, Siemens)
+☐ ERP Connectivity (SAP, Oracle, Sage)
+☐ Custom Branding / White-label
+☐ Volume Licensing
+☐ Other: `);
+    window.location.href = `mailto:sales@ftrack.uk?subject=${subject}&body=${body}`;
+    toast.success("Opening email client", {
+      description: "Our team will contact you within 24 hours of receiving your request."
+    });
+  };
+
   const handleSelectTier = async (tier: SubscriptionTier) => {
-    // Enterprise tier always goes to contact sales
+    // Enterprise tier uses callback flow
     if (tier === "enterprise") {
-      window.location.href = "mailto:sales@fgascomply.com?subject=Enterprise%20Inquiry";
+      handleEnterpriseCallback();
       return;
     }
 
@@ -105,9 +127,10 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
             ([tier, config]) => {
               const Icon = tierIcons[tier];
               const isPopular = "popular" in config && config.popular;
-              const price = isAnnual && "annual_price" in config 
-                ? config.annual_price 
-                : config.price;
+              const isCustomPricing = "customPricing" in config && config.customPricing;
+              const price = isCustomPricing 
+                ? null 
+                : (isAnnual && "annual_price" in config ? config.annual_price : config.price);
               const savingsPercent = getAnnualSavingsPercent(tier);
 
               return (
@@ -134,27 +157,33 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                     <CardDescription>
                       {tier === "basic" && "Perfect for small teams"}
                       {tier === "premium" && "For growing businesses"}
-                      {tier === "enterprise" && "For large operations"}
+                      {tier === "enterprise" && "BMS & ERP integrations for national operators"}
                     </CardDescription>
                   </CardHeader>
 
                   <CardContent className="flex-1">
                     <div className="text-center mb-6">
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-bold">
-                          {formatPrice(price, config.currency)}
-                        </span>
-                        <span className="text-muted-foreground">/user/month</span>
-                      </div>
-                      {isAnnual && savingsPercent > 0 && (
-                        <p className="text-sm text-accent mt-1">
-                          Save {savingsPercent}% with annual billing
-                        </p>
-                      )}
-                      {tier === "enterprise" && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Platform license
-                        </p>
+                      {isCustomPricing ? (
+                        <>
+                          <span className="text-2xl font-bold text-primary">Custom Pricing</span>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Tailored to your organisation's needs
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-bold">
+                              {formatPrice(price as number, config.currency)}
+                            </span>
+                            <span className="text-muted-foreground">/user/month</span>
+                          </div>
+                          {isAnnual && savingsPercent > 0 && (
+                            <p className="text-sm text-accent mt-1">
+                              Save {savingsPercent}% with annual billing
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
 
@@ -179,7 +208,7 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                   <CardFooter>
                     <Button 
                       className="w-full" 
-                      variant={isPopular ? "default" : "outline"}
+                      variant={tier === "enterprise" ? "default" : (isPopular ? "default" : "outline")}
                       onClick={() => handleSelectTier(tier)}
                       disabled={loadingTier === tier}
                     >
@@ -189,7 +218,10 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                           Processing...
                         </>
                       ) : tier === "enterprise" ? (
-                        "Contact Sales"
+                        <>
+                          <Phone className="mr-2 h-4 w-4" />
+                          Request a Call-back
+                        </>
                       ) : (
                         "Get Started"
                       )}
