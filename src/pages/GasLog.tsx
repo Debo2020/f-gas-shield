@@ -66,8 +66,10 @@ export default function GasLog() {
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const isStoresManager = hasRole("stores_manager");
+  const isEngineer = hasRole("engineer");
   const canViewCompanyLog = isOwner || isManager;
-  const canManageStock = isOwner || isManager || isStoresManager;
+  const canReceiveStock = isOwner || isManager || isStoresManager || isEngineer;
+  const canIssueStock = isOwner || isManager || isStoresManager;
   const canRecord = isOwner || hasActiveLicense;
   const navigate = useNavigate();
   const [movements, setMovements] = useState<GasMovement[]>([]);
@@ -237,19 +239,21 @@ export default function GasLog() {
               </Select>
             </div>
             
-            {/* Stores Manager Actions */}
-            {canManageStock && (
-              <div className="flex gap-2">
+            {/* Stock Management Actions */}
+            <div className="flex gap-2">
+              {canReceiveStock && (
                 <Button variant="outline" onClick={() => setReceiptDialogOpen(true)}>
                   <Package className="h-4 w-4 mr-2" />
                   Receive Stock
                 </Button>
+              )}
+              {canIssueStock && (
                 <Button variant="outline" onClick={() => setIssuanceDialogOpen(true)}>
                   <Truck className="h-4 w-4 mr-2" />
                   Issue to Engineer
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

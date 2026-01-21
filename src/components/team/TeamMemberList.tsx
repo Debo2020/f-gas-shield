@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Shield, UserCog, Wrench, Trash2 } from "lucide-react";
+import { MoreVertical, Shield, UserCog, Wrench, Trash2, Package } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -46,6 +46,8 @@ export function TeamMemberList({
         return <Shield className="h-3 w-3" />;
       case "manager":
         return <UserCog className="h-3 w-3" />;
+      case "stores_manager":
+        return <Package className="h-3 w-3" />;
       case "engineer":
         return <Wrench className="h-3 w-3" />;
       default:
@@ -59,6 +61,8 @@ export function TeamMemberList({
         return "default";
       case "manager":
         return "secondary";
+      case "stores_manager":
+        return "default";
       case "engineer":
         return "outline";
       default:

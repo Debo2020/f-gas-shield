@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Mail, RefreshCw, Trash2, UserCog, Wrench } from "lucide-react";
+import { Clock, Mail, RefreshCw, Trash2, UserCog, Wrench, Package } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
@@ -31,6 +31,8 @@ export function PendingInvitations({
     switch (role) {
       case "manager":
         return <UserCog className="h-3 w-3" />;
+      case "stores_manager":
+        return <Package className="h-3 w-3" />;
       case "engineer":
         return <Wrench className="h-3 w-3" />;
       default:
@@ -42,6 +44,8 @@ export function PendingInvitations({
     switch (role) {
       case "manager":
         return "secondary";
+      case "stores_manager":
+        return "default";
       case "engineer":
         return "outline";
       default:

@@ -93,7 +93,7 @@ export default function Team() {
     fetchTeamData();
   }, [profile?.company_id]);
 
-  const handleInvite = async (email: string, role: "manager" | "engineer") => {
+  const handleInvite = async (email: string, role: "manager" | "stores_manager" | "engineer") => {
     if (!profile?.company_id || !user) return;
 
     // Call the invite-member edge function which handles:
