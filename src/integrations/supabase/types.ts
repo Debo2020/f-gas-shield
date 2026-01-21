@@ -1197,6 +1197,7 @@ export type Database = {
         | "admin"
         | "auditor"
         | "read_only"
+        | "stores_manager"
       audit_action:
         | "membership_created"
         | "membership_updated"
@@ -1396,6 +1397,7 @@ export const Constants = {
         "admin",
         "auditor",
         "read_only",
+        "stores_manager",
       ],
       audit_action: [
         "membership_created",
