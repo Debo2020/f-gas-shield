@@ -108,15 +108,20 @@ export function OrganisationTeamTab() {
         role: data.role,
         full_name: data.fullName,
         phone: data.phone,
+        send_invite: data.sendInvite,
       },
     });
 
     if (error || result?.error) {
-      toast.error(result?.error || error?.message || "Failed to send invitation");
+      toast.error(result?.error || error?.message || "Failed to add team member");
       throw error || new Error(result?.error);
     }
 
-    toast.success(`Invitation sent to ${data.email}`);
+    toast.success(
+      data.sendInvite 
+        ? `Invitation sent to ${data.email}` 
+        : `${data.fullName} added as inactive. You can send them a login link later.`
+    );
     fetchTeamData();
   };
 

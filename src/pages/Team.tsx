@@ -99,8 +99,8 @@ export default function Team() {
     // Call the invite-member edge function which handles:
     // 1. Creating the invitation record
     // 2. Creating the user in auth system
-    // 3. Generating a magic link
-    // 4. Sending the invitation email via Resend
+    // 3. Generating a magic link (if send_invite is true)
+    // 4. Sending the invitation email via Resend (if send_invite is true)
     const { data, error } = await supabase.functions.invoke("invite-member", {
       body: {
         org_id: profile.company_id,
@@ -108,15 +108,20 @@ export default function Team() {
         role: inviteData.role,
         full_name: inviteData.fullName,
         phone: inviteData.phone,
+        send_invite: inviteData.sendInvite,
       },
     });
 
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Failed to send invitation");
+      toast.error(data?.error || error?.message || "Failed to add team member");
       throw error || new Error(data?.error);
     }
 
-    toast.success(`Invitation sent to ${inviteData.email}`);
+    toast.success(
+      inviteData.sendInvite 
+        ? `Invitation sent to ${inviteData.email}` 
+        : `${inviteData.fullName} added as inactive. You can send them a login link later.`
+    );
     fetchTeamData();
   };
 
