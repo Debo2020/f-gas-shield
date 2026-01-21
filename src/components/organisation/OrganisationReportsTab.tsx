@@ -457,8 +457,8 @@ export function OrganisationReportsTab() {
             title={report.title}
             description={report.description}
             icon={report.icon}
-            onDownloadPDF={() => report.onGenerate("pdf")}
-            onDownloadCSV={() => report.onGenerate("csv")}
+            onGeneratePDF={() => report.onGenerate("pdf")}
+            onGenerateCSV={() => report.onGenerate("csv")}
             isLoading={loadingReport === report.id}
             loadingType={loadingReport === report.id ? loadingType : null}
           />

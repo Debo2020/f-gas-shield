@@ -327,7 +327,6 @@ export function SiteInspectionsTable({ siteId, siteName }: SiteInspectionsTableP
         onSubmit={handleAddInspection}
         companyId={profile?.company_id || ""}
         currentUserName={profile?.full_name || ""}
-        defaultSiteId={siteId}
       />
     </>
   );

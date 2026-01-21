@@ -57,7 +57,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useLicenses, type License } from "@/hooks/useLicenses";
-import { useSubscription, SUBSCRIPTION_TIERS, type SubscriptionTier } from "@/hooks/useSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SUBSCRIPTION_TIERS, type SubscriptionTier } from "@/lib/subscription";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -77,10 +78,10 @@ export function OrganisationLicensesTab() {
   } = useLicenses();
   const {
     subscribed,
-    isLoading: subscriptionLoading,
+    loading: subscriptionLoading,
     checkSubscription,
     createCheckout,
-    openBillingPortal,
+    openCustomerPortal,
   } = useSubscription();
 
   const isOwner = hasRole("owner");
@@ -229,7 +230,7 @@ export function OrganisationLicensesTab() {
             <span className="ml-2 hidden sm:inline">Refresh</span>
           </Button>
           {subscribed && isOwner && (
-            <Button variant="outline" size="sm" onClick={() => openBillingPortal()}>
+            <Button variant="outline" size="sm" onClick={() => openCustomerPortal()}>
               <CreditCard className="h-4 w-4 mr-2" />
               Billing
             </Button>
