@@ -376,18 +376,63 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
-                    <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
+                {(equipmentData?.count || 0) === 0 ? (
+                  // Empty state - no equipment
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
+                      <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium">No equipment registered yet</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      Add your first site and equipment to start tracking F-Gas compliance
+                    </p>
+                    <Button onClick={() => navigate("/sites?action=new")} className="mt-4" variant="outline">
+                      Get Started
+                    </Button>
                   </div>
-                  <h3 className="font-medium">No equipment registered yet</h3>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                    Add your first site and equipment to start tracking F-Gas compliance
-                  </p>
-                  <Button onClick={() => navigate("/sites?action=new")} className="mt-4" variant="outline">
-                    Get Started
-                  </Button>
-                </div>
+                ) : (equipmentData?.overdue || 0) > 0 ? (
+                  // Critical state - has overdue inspections
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                      <AlertTriangle className="h-8 w-8 text-destructive animate-pulse" />
+                    </div>
+                    <h3 className="font-medium text-destructive">Attention Required</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      {equipmentData?.overdue} of {equipmentData?.count} equipment {equipmentData?.overdue === 1 ? 'has' : 'have'} overdue inspections
+                    </p>
+                    <Button onClick={() => navigate("/inspections?status=overdue")} className="mt-4" variant="destructive">
+                      View Overdue
+                    </Button>
+                  </div>
+                ) : (equipmentData?.dueSoon || 0) > 0 ? (
+                  // Warning state - has inspections due soon
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mb-4">
+                      <Clock className="h-8 w-8 text-warning" />
+                    </div>
+                    <h3 className="font-medium text-warning">Inspections Due Soon</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      All current, but {equipmentData?.dueSoon} equipment due in the next 30 days
+                    </p>
+                    <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
+                      View Upcoming
+                    </Button>
+                  </div>
+                ) : (
+                  // Success state - fully compliant
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
+                      <CheckCircle2 className="h-8 w-8 text-success" />
+                    </div>
+                    <h3 className="font-medium text-success">Fully Compliant</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      All {equipmentData?.count} equipment {equipmentData?.count === 1 ? 'is' : 'are'} up to date with inspections
+                    </p>
+                    <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
+                      Record Inspection
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
