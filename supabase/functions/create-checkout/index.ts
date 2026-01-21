@@ -77,14 +77,23 @@ serve(async (req) => {
       },
     ];
 
-    // Add metered overage price for basic and premium tiers
+    // Add metered overage price for basic and premium tiers (monthly billing only)
+    // Annual subscriptions can't mix with monthly metered prices - Stripe limitation
     const tierLower = tier?.toLowerCase();
-    if (tierLower && OVERAGE_PRICES[tierLower]) {
+    const ANNUAL_PRICE_IDS = [
+      "price_1SnLZ9F9KjzL48Nkwq1dmZOH", // basic annual
+      "price_1SnLZZF9KjzL48Nk6IJW7XR9", // premium annual
+    ];
+    const isAnnualBilling = ANNUAL_PRICE_IDS.includes(priceId);
+    
+    if (tierLower && OVERAGE_PRICES[tierLower] && !isAnnualBilling) {
       lineItems.push({
         price: OVERAGE_PRICES[tierLower],
         // No quantity for metered prices - Stripe handles this via meter events
       });
       logStep("Added metered overage price", { tier: tierLower, overagePrice: OVERAGE_PRICES[tierLower] });
+    } else if (isAnnualBilling) {
+      logStep("Skipping overage price for annual billing", { tier: tierLower, priceId });
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
