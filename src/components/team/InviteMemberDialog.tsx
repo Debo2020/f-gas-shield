@@ -30,7 +30,7 @@ import { Mail, UserPlus } from "lucide-react";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email"),
-  role: z.enum(["manager", "engineer"]),
+  role: z.enum(["manager", "stores_manager", "engineer"]),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -38,7 +38,7 @@ type InviteFormValues = z.infer<typeof inviteSchema>;
 interface InviteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvite: (email: string, role: "manager" | "engineer") => Promise<void>;
+  onInvite: (email: string, role: "manager" | "stores_manager" | "engineer") => Promise<void>;
   existingEmails: string[];
 }
 
@@ -128,6 +128,14 @@ export function InviteMemberDialog({
                           <span>Manager</span>
                           <span className="text-xs text-muted-foreground">
                             Can manage sites, equipment, and inspections
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="stores_manager">
+                        <div className="flex flex-col">
+                          <span>Gas Stores Manager</span>
+                          <span className="text-xs text-muted-foreground">
+                            Can receive stock from suppliers and issue to engineers
                           </span>
                         </div>
                       </SelectItem>

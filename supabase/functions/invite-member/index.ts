@@ -19,6 +19,7 @@ const getRoleBadgeColor = (role: string): string => {
     case "owner": return "#9333ea";
     case "admin": return "#2563eb";
     case "manager": return "#0891b2";
+    case "stores_manager": return "#f97316";
     case "engineer": return "#059669";
     case "auditor": return "#d97706";
     case "read_only": return "#6b7280";
@@ -126,7 +127,7 @@ serve(async (req) => {
     logStep("Authorization verified", { role: membership?.role });
 
     // Validate role is a valid app_role
-    const validRoles = ["owner", "manager", "engineer", "admin", "auditor", "read_only"];
+    const validRoles = ["owner", "manager", "stores_manager", "engineer", "admin", "auditor", "read_only"];
     if (!validRoles.includes(role)) {
       logStep("ERROR: Invalid role", { role });
       return new Response(JSON.stringify({ error: `Invalid role. Must be one of: ${validRoles.join(", ")}` }), {

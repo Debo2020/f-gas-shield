@@ -38,7 +38,8 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
-const navigation = [
+// Full navigation for most roles
+const fullNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: Gauge },
   { name: "Sites", href: "/sites", icon: Building2 },
   { name: "Equipment", href: "/equipment", icon: Shield },
@@ -46,6 +47,12 @@ const navigation = [
   { name: "F-Gas", href: "/gas-log", icon: Snowflake },
   { name: "Documents", href: "/documents", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileText },
+];
+
+// Limited navigation for stores_manager role
+const storesManagerNavigation = [
+  { name: "Dashboard", href: "/dashboard", icon: Gauge },
+  { name: "F-Gas", href: "/gas-log", icon: Snowflake },
 ];
 
 const managementNav = [
@@ -60,6 +67,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Stores managers get limited navigation
+  const isStoresManagerOnly = hasRole("stores_manager") && !hasRole("owner") && !hasRole("manager") && !hasRole("engineer");
+  const navigation = isStoresManagerOnly ? storesManagerNavigation : fullNavigation;
 
   const handleSignOut = async () => {
     await signOut();
