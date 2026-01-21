@@ -258,9 +258,23 @@ serve(async (req) => {
           html: emailHtml,
         });
 
-        logStep("Invitation email sent via Resend", { emailId: emailResponse?.data?.id });
+        if (emailResponse.error) {
+          logStep("ERROR: Resend returned error", { 
+            error: emailResponse.error,
+            message: emailResponse.error.message,
+            name: emailResponse.error.name,
+          });
+        } else {
+          logStep("Invitation email sent via Resend", { 
+            emailId: emailResponse.data?.id,
+            to: email.toLowerCase(),
+          });
+        }
       } catch (emailError) {
-        logStep("ERROR: Failed to send invitation email", { error: String(emailError) });
+        logStep("ERROR: Failed to send invitation email", { 
+          error: String(emailError),
+          message: emailError instanceof Error ? emailError.message : "Unknown error",
+        });
         // Don't fail the entire request - the invitation is created, just email failed
       }
     } else {
