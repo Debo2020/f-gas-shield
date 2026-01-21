@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Loader2, Sparkles, Building2, Users, Bot } from "lucide-react";
+import { Check, Loader2, Sparkles, Building2, Users, Phone } from "lucide-react";
 import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,10 +26,32 @@ export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(true);
   const navigate = useNavigate();
 
+  const handleEnterpriseCallback = () => {
+    const subject = encodeURIComponent("Enterprise Call-back Request - F-Gas Comply");
+    const body = encodeURIComponent(`I would like to discuss an enterprise solution for my organisation.
+
+Company Name:
+Number of Sites:
+Number of Engineers:
+Phone Number:
+Preferred Call-back Time:
+
+I'm interested in:
+☐ BMS Integration (Trend, Honeywell, Siemens)
+☐ ERP Connectivity (SAP, Oracle, Sage)
+☐ Custom Branding / White-label
+☐ Volume Licensing
+☐ Other: `);
+    window.location.href = `mailto:sales@ftrack.uk?subject=${subject}&body=${body}`;
+    toast.success("Opening email client", {
+      description: "Our team will contact you within 24 hours of receiving your request."
+    });
+  };
+
   const handleSubscribe = async (tier: SubscriptionTier) => {
-    // Enterprise tier always goes to contact sales
+    // Enterprise tier uses callback flow
     if (tier === "enterprise") {
-      window.location.href = "mailto:sales@fgascomply.com?subject=Enterprise%20Inquiry";
+      handleEnterpriseCallback();
       return;
     }
 
@@ -66,10 +88,18 @@ export default function Pricing() {
 
   const getDisplayPrice = (tier: SubscriptionTier) => {
     const config = SUBSCRIPTION_TIERS[tier];
+    if ("customPricing" in config && config.customPricing) {
+      return null;
+    }
     if (isAnnual && "annual_price" in config) {
       return config.annual_price;
     }
     return config.price;
+  };
+
+  const isCustomPricing = (tier: SubscriptionTier) => {
+    const config = SUBSCRIPTION_TIERS[tier];
+    return "customPricing" in config && config.customPricing;
   };
 
   return (
@@ -185,7 +215,7 @@ export default function Pricing() {
                     <CardTitle className="text-2xl">{config.name}</CardTitle>
                     <CardDescription>
                       {tier === "enterprise" 
-                        ? "For national operators & franchises"
+                        ? "BMS & ERP integrations for national operators"
                         : tier === "premium"
                         ? "For regional & national operators"
                         : "For small HVAC contractors"
@@ -195,27 +225,34 @@ export default function Pricing() {
                   
                   <CardContent className="flex-1">
                     <div className="text-center mb-6">
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-bold">
-                          {formatPrice(getDisplayPrice(tier), config.currency)}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {tier === "enterprise" ? "/month" : "/user/month"}
-                        </span>
-                      </div>
-                      {tier !== "enterprise" && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {isAnnual ? (
-                            <>billed annually ({formatPrice(getDisplayPrice(tier) * 12, config.currency)}/year)</>
-                          ) : (
-                            <>or {formatPrice(hasAnnual ? config.annual_price : config.price, config.currency)}/month billed annually</>
+                      {isCustomPricing(tier) ? (
+                        <>
+                          <span className="text-2xl font-bold text-primary">Custom Pricing</span>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Tailored to your organisation's needs
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-bold">
+                              {formatPrice(getDisplayPrice(tier) as number, config.currency)}
+                            </span>
+                            <span className="text-muted-foreground">/user/month</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {isAnnual ? (
+                              <>billed annually ({formatPrice((getDisplayPrice(tier) as number) * 12, config.currency)}/year)</>
+                            ) : (
+                              <>or {formatPrice(hasAnnual ? config.annual_price : config.price, config.currency)}/month billed annually</>
+                            )}
+                          </p>
+                          {isAnnual && hasAnnual && savingsPercent > 0 && (
+                            <Badge variant="outline" className="mt-2 text-primary border-primary">
+                              Save {savingsPercent}%
+                            </Badge>
                           )}
-                        </p>
-                      )}
-                      {isAnnual && hasAnnual && savingsPercent > 0 && (
-                        <Badge variant="outline" className="mt-2 text-primary border-primary">
-                          Save {savingsPercent}%
-                        </Badge>
+                        </>
                       )}
                     </div>
 
@@ -258,11 +295,12 @@ export default function Pricing() {
                       </Button>
                     ) : tier === "enterprise" ? (
                       <Button
-                        variant={isPopular ? "default" : "outline"}
+                        variant="default"
                         className="w-full"
-                        onClick={() => window.location.href = "mailto:sales@fgascomply.com?subject=Enterprise%20Inquiry"}
+                        onClick={handleEnterpriseCallback}
                       >
-                        Contact Sales
+                        <Phone className="h-4 w-4 mr-2" />
+                        Request a Call-back
                       </Button>
                     ) : (
                       <Button
