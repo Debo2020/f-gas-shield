@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMemberList } from "@/components/team/TeamMemberList";
 import { PendingInvitations } from "@/components/team/PendingInvitations";
-import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
+import { InviteMemberDialog, InviteMemberData } from "@/components/team/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -98,23 +98,25 @@ export function OrganisationTeamTab() {
     fetchTeamData();
   }, [profile?.company_id]);
 
-  const handleInvite = async (email: string, role: "manager" | "stores_manager" | "engineer") => {
+  const handleInvite = async (data: InviteMemberData) => {
     if (!profile?.company_id || !user) return;
 
-    const { data, error } = await supabase.functions.invoke("invite-member", {
+    const { data: result, error } = await supabase.functions.invoke("invite-member", {
       body: {
         org_id: profile.company_id,
-        email: email.toLowerCase(),
-        role,
+        email: data.email.toLowerCase(),
+        role: data.role,
+        full_name: data.fullName,
+        phone: data.phone,
       },
     });
 
-    if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Failed to send invitation");
-      throw error || new Error(data?.error);
+    if (error || result?.error) {
+      toast.error(result?.error || error?.message || "Failed to send invitation");
+      throw error || new Error(result?.error);
     }
 
-    toast.success(`Invitation sent to ${email}`);
+    toast.success(`Invitation sent to ${data.email}`);
     fetchTeamData();
   };
 

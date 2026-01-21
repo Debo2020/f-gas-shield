@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TeamMemberList } from "@/components/team/TeamMemberList";
 import { PendingInvitations } from "@/components/team/PendingInvitations";
-import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
+import { InviteMemberDialog, InviteMemberData } from "@/components/team/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -93,7 +93,7 @@ export default function Team() {
     fetchTeamData();
   }, [profile?.company_id]);
 
-  const handleInvite = async (email: string, role: "manager" | "stores_manager" | "engineer") => {
+  const handleInvite = async (inviteData: InviteMemberData) => {
     if (!profile?.company_id || !user) return;
 
     // Call the invite-member edge function which handles:
@@ -104,8 +104,10 @@ export default function Team() {
     const { data, error } = await supabase.functions.invoke("invite-member", {
       body: {
         org_id: profile.company_id,
-        email: email.toLowerCase(),
-        role,
+        email: inviteData.email.toLowerCase(),
+        role: inviteData.role,
+        full_name: inviteData.fullName,
+        phone: inviteData.phone,
       },
     });
 
@@ -114,7 +116,7 @@ export default function Team() {
       throw error || new Error(data?.error);
     }
 
-    toast.success(`Invitation sent to ${email}`);
+    toast.success(`Invitation sent to ${inviteData.email}`);
     fetchTeamData();
   };
 
@@ -212,10 +214,10 @@ export default function Team() {
             <Button 
               onClick={() => setIsInviteOpen(true)}
               disabled={!canInviteWithLicense}
-              title={!canInviteWithLicense ? "License required to invite members" : undefined}
+              title={!canInviteWithLicense ? "License required to add members" : undefined}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Invite Member
+              Add Team Member
             </Button>
           )}
         </div>

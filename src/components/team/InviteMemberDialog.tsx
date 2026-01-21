@@ -26,19 +26,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, UserPlus } from "lucide-react";
+import { Mail, UserPlus, User, Phone } from "lucide-react";
 
 const inviteSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
-  role: z.enum(["manager", "stores_manager", "engineer"]),
+  phone: z.string().optional(),
+  role: z.enum(["admin", "manager", "stores_manager", "engineer", "read_only"]),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
 
+export type InviteMemberData = {
+  fullName: string;
+  email: string;
+  phone?: string;
+  role: "admin" | "manager" | "stores_manager" | "engineer" | "read_only";
+};
+
 interface InviteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvite: (email: string, role: "manager" | "stores_manager" | "engineer") => Promise<void>;
+  onInvite: (data: InviteMemberData) => Promise<void>;
   existingEmails: string[];
 }
 
@@ -53,7 +62,9 @@ export function InviteMemberDialog({
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
+      fullName: "",
       email: "",
+      phone: "",
       role: "engineer",
     },
   });
@@ -68,7 +79,12 @@ export function InviteMemberDialog({
 
     setIsSubmitting(true);
     try {
-      await onInvite(values.email, values.role);
+      await onInvite({
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone || undefined,
+        role: values.role,
+      });
       form.reset();
       onOpenChange(false);
     } catch (error) {
@@ -95,6 +111,23 @@ export function InviteMemberDialog({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    Full Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Smith" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -112,17 +145,42 @@ export function InviteMemberDialog({
 
             <FormField
               control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    Mobile Number (optional)
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="+44 7700 900000" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>Position</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder="Select a position" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="admin">
+                        <div className="flex flex-col">
+                          <span>Admin</span>
+                          <span className="text-xs text-muted-foreground">
+                            Full access to manage company settings and team
+                          </span>
+                        </div>
+                      </SelectItem>
                       <SelectItem value="manager">
                         <div className="flex flex-col">
                           <span>Manager</span>
@@ -133,9 +191,9 @@ export function InviteMemberDialog({
                       </SelectItem>
                       <SelectItem value="stores_manager">
                         <div className="flex flex-col">
-                          <span>Gas Stores Manager</span>
+                          <span>Stores Manager</span>
                           <span className="text-xs text-muted-foreground">
-                            Can receive stock from suppliers and issue to engineers
+                            Can receive stock and issue to engineers
                           </span>
                         </div>
                       </SelectItem>
@@ -144,6 +202,14 @@ export function InviteMemberDialog({
                           <span>Engineer</span>
                           <span className="text-xs text-muted-foreground">
                             Can perform inspections and log activities
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="read_only">
+                        <div className="flex flex-col">
+                          <span>Client</span>
+                          <span className="text-xs text-muted-foreground">
+                            View-only access to reports and compliance data
                           </span>
                         </div>
                       </SelectItem>
