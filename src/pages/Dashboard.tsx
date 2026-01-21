@@ -12,6 +12,7 @@ import {
   Clock,
   Plus,
   ScanLine,
+  PartyPopper,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +39,9 @@ export default function Dashboard() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannedEquipment, setScannedEquipment] = useState<ScannedEquipment | null>(null);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(() => {
+    return localStorage.getItem('ftrack_setup_dismissed') === 'true';
+  });
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -98,6 +102,18 @@ export default function Dashboard() {
   });
 
   const isLoading = sitesLoading || equipmentLoading;
+
+  // Check if all setup steps are complete
+  const isSetupComplete = !!(
+    profile?.company_id && 
+    sitesCount > 0 && 
+    (equipmentData?.count || 0) > 0
+  );
+
+  const handleDismissSetup = () => {
+    localStorage.setItem('ftrack_setup_dismissed', 'true');
+    setSetupDismissed(true);
+  };
 
   const stats = [
     {
@@ -208,110 +224,143 @@ export default function Dashboard() {
 
         {/* Quick Actions & Recent Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Getting Started */}
-          <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-success" />
-                Getting Started
-              </CardTitle>
-              <CardDescription>
-                Complete these steps to set up FTrack for your business
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Create your account</p>
-                  <p className="text-xs text-muted-foreground">Account created successfully</p>
-                </div>
-              </div>
-              {profile?.company_id ? (
-                <Link to="/settings/company" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
-                      <CheckCircle2 className="h-4 w-4" />
+          {/* Getting Started / Setup Complete */}
+          {isSetupComplete && setupDismissed ? null : (
+            <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
+              {isSetupComplete ? (
+                // Setup Complete Celebration
+                <>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-success">
+                      <PartyPopper className="h-5 w-5" />
+                      Setup Complete!
+                    </CardTitle>
+                    <CardDescription>
+                      You're all set to track F-Gas compliance
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
+                        <CheckCircle2 className="h-8 w-8 text-success" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Your company, sites, and equipment are configured. Start recording inspections to maintain compliance.
+                      </p>
+                      <Button onClick={handleDismissSetup} variant="outline" size="sm">
+                        Got it!
+                      </Button>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Set up your company</p>
-                      <p className="text-xs text-muted-foreground">Company details configured</p>
-                    </div>
-                  </div>
-                </Link>
+                  </CardContent>
+                </>
               ) : (
-                <Link to="/company/setup" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
-                      <Building2 className="h-4 w-4" />
+                // Getting Started Checklist
+                <>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                      Getting Started
+                    </CardTitle>
+                    <CardDescription>
+                      Complete these steps to set up FTrack for your business
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Create your account</p>
+                        <p className="text-xs text-muted-foreground">Account created successfully</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Set up your company</p>
-                      <p className="text-xs text-muted-foreground">Add company details and branding</p>
-                    </div>
-                  </div>
-                </Link>
+                    {profile?.company_id ? (
+                      <Link to="/settings/company" className="block">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Set up your company</p>
+                            <p className="text-xs text-muted-foreground">Company details configured</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <Link to="/company/setup" className="block">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                            <Building2 className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Set up your company</p>
+                            <p className="text-xs text-muted-foreground">Add company details and branding</p>
+                          </div>
+                        </div>
+                      </Link>
+                    )}
+                    {sitesCount > 0 ? (
+                      <Link to="/sites" className="block">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Add your first site</p>
+                            <p className="text-xs text-muted-foreground">{sitesCount} site{sitesCount > 1 ? 's' : ''} registered</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div 
+                        onClick={() => navigate("/sites?action=new")} 
+                        className="block cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
+                            <Building2 className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Add your first site</p>
+                            <p className="text-xs text-muted-foreground">Register a customer location</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {(equipmentData?.count || 0) > 0 ? (
+                      <Link to="/equipment" className="block">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Register equipment</p>
+                            <p className="text-xs text-muted-foreground">{equipmentData?.count} equipment registered</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div 
+                        onClick={() => navigate("/equipment?action=new")} 
+                        className="block cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
+                            <Shield className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Register equipment</p>
+                            <p className="text-xs text-muted-foreground">Add F-Gas equipment to track</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </>
               )}
-              {sitesCount > 0 ? (
-                <Link to="/sites" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Add your first site</p>
-                      <p className="text-xs text-muted-foreground">{sitesCount} site{sitesCount > 1 ? 's' : ''} registered</p>
-                    </div>
-                  </div>
-                </Link>
-              ) : (
-                <div 
-                  onClick={() => navigate("/sites?action=new")} 
-                  className="block cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Add your first site</p>
-                      <p className="text-xs text-muted-foreground">Register a customer location</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {(equipmentData?.count || 0) > 0 ? (
-                <Link to="/equipment" className="block">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success/10 text-success">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Register equipment</p>
-                      <p className="text-xs text-muted-foreground">{equipmentData?.count} equipment registered</p>
-                    </div>
-                  </div>
-                </Link>
-              ) : (
-                <div 
-                  onClick={() => navigate("/equipment?action=new")} 
-                  className="block cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 hover:border-primary/20 transition-all">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Register equipment</p>
-                      <p className="text-xs text-muted-foreground">Add F-Gas equipment to track</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </Card>
+          )}
 
           {/* License Widget & Compliance Status */}
           <div className="space-y-6">
