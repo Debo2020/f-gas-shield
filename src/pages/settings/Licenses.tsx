@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -33,11 +34,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLicenses, License } from "@/hooks/useLicenses";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
-import { SUBSCRIPTION_TIERS } from "@/lib/subscription";
+import { SUBSCRIPTION_TIERS, SubscriptionTier, formatPrice } from "@/lib/subscription";
+import { toast } from "sonner";
 import { 
   Users, 
   Plus, 
@@ -51,6 +52,8 @@ import {
   Shield,
   RefreshCw,
   AlertCircle,
+  Sparkles,
+  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -58,12 +61,13 @@ import { cn } from "@/lib/utils";
 export default function Licenses() {
   const { hasRole } = useAuth();
   const { licenses, stats, loading, refetch, assignLicense, toggleLicense, revokeLicense, updateLicenseCount, resendInvitation } = useLicenses();
-  const { tier, openCustomerPortal, subscribed, checkSubscription, loading: subscriptionLoading } = useSubscription();
+  const { tier, openCustomerPortal, subscribed, checkSubscription, createCheckout, loading: subscriptionLoading } = useSubscription();
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [addLicensesDialogOpen, setAddLicensesDialogOpen] = useState(false);
   const [confirmDisableDialog, setConfirmDisableDialog] = useState<License | null>(null);
   const [confirmRevokeDialog, setConfirmRevokeDialog] = useState<License | null>(null);
+  const [subscribeDialogOpen, setSubscribeDialogOpen] = useState(false);
 
   const [newLicenseEmail, setNewLicenseEmail] = useState("");
   const [newLicenseType, setNewLicenseType] = useState<"manager" | "engineer">("engineer");
@@ -71,6 +75,9 @@ export default function Licenses() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState<"basic" | "premium">("premium");
+  const [isAnnual, setIsAnnual] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
@@ -81,6 +88,20 @@ export default function Licenses() {
     await checkSubscription();
     await refetch();
     setIsRefreshing(false);
+  };
+
+  const handleQuickSubscribe = async () => {
+    setIsCheckingOut(true);
+    try {
+      const config = SUBSCRIPTION_TIERS[selectedTier];
+      const priceId = isAnnual && "annual_price_id" in config ? config.annual_price_id : config.price_id;
+      await createCheckout(priceId, 1, undefined, selectedTier);
+      setSubscribeDialogOpen(false);
+    } catch (err) {
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   const utilizationPercent = stats.total > 0 
@@ -248,28 +269,47 @@ export default function Licenses() {
 
         {/* Subscription Status Warning */}
         {!subscribed && !subscriptionLoading && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>
-                No active subscription detected. License management requires an active subscription.
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefreshSubscription}
-                disabled={isRefreshing}
-                className="ml-4"
-              >
-                {isRefreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-                <span className="ml-2">Refresh Status</span>
-              </Button>
-            </AlertDescription>
-          </Alert>
+          <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                      No Active Subscription
+                    </h3>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      License management requires an active subscription. Activate now to start adding team members.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshSubscription}
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Refresh</span>
+                  </Button>
+                  {isOwner && (
+                    <Button
+                      size="sm"
+                      onClick={() => setSubscribeDialogOpen(true)}
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Activate Subscription
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Utilization */}
@@ -567,6 +607,101 @@ export default function Licenses() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Subscribe Dialog */}
+      <Dialog open={subscribeDialogOpen} onOpenChange={setSubscribeDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Choose Your Plan</DialogTitle>
+            <DialogDescription>
+              Select a subscription to enable license management and team features
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-4 py-4">
+            <Label htmlFor="billing-toggle" className={cn(!isAnnual && "font-semibold")}>Monthly</Label>
+            <Switch 
+              id="billing-toggle"
+              checked={isAnnual} 
+              onCheckedChange={setIsAnnual} 
+            />
+            <Label htmlFor="billing-toggle" className={cn("flex items-center gap-2", isAnnual && "font-semibold")}>
+              Annual <Badge variant="secondary" className="text-xs">Save 17%</Badge>
+            </Label>
+          </div>
+          
+          {/* Plan cards */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {(["basic", "premium"] as const).map((planTier) => {
+              const config = SUBSCRIPTION_TIERS[planTier];
+              const price = isAnnual && "annual_price" in config ? config.annual_price : config.price;
+              const isPopular = planTier === "premium";
+              const TierIcon = planTier === "premium" ? Sparkles : Users;
+              
+              return (
+                <Card 
+                  key={planTier}
+                  className={cn(
+                    "cursor-pointer transition-all hover:shadow-md relative",
+                    selectedTier === planTier && "ring-2 ring-primary",
+                    isPopular && "border-primary"
+                  )}
+                  onClick={() => setSelectedTier(planTier)}
+                >
+                  {isPopular && (
+                    <Badge className="absolute -top-2 right-4 bg-primary text-primary-foreground">
+                      Most Popular
+                    </Badge>
+                  )}
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <TierIcon className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-lg">{config.name}</CardTitle>
+                    </div>
+                    <div className="text-2xl font-bold mt-2">
+                      {formatPrice(price as number, config.currency)}
+                      <span className="text-sm font-normal text-muted-foreground">/user/month</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-1">
+                    <p>Up to {config.limits.users} users</p>
+                    <p>Up to {config.limits.sites} sites</p>
+                    <p>{config.limits.ai_credits_monthly} AI credits/month</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-center">
+            <Button 
+              variant="link" 
+              className="text-muted-foreground"
+              onClick={() => {
+                setSubscribeDialogOpen(false);
+                window.location.href = "/enterprise-contact";
+              }}
+            >
+              <Building2 className="h-4 w-4 mr-2" />
+              Need Enterprise? Contact us
+            </Button>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubscribeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleQuickSubscribe}
+              disabled={isCheckingOut}
+            >
+              {isCheckingOut && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Continue to Checkout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
