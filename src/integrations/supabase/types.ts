@@ -760,6 +760,7 @@ export type Database = {
           created_at: string
           current_weight_kg: number
           cylinder_code: string
+          delivery_note_reference: string | null
           disposal_date: string | null
           disposal_method: Database["public"]["Enums"]["disposal_method"] | null
           disposal_reference: string | null
@@ -770,9 +771,11 @@ export type Database = {
           notes: string | null
           purchase_date: string | null
           purchase_invoice_id: string | null
+          purchase_order_number: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           status: Database["public"]["Enums"]["cylinder_status"]
           supplier: string | null
+          supplier_id: string | null
           tare_weight_kg: number | null
           updated_at: string
         }
@@ -785,6 +788,7 @@ export type Database = {
           created_at?: string
           current_weight_kg: number
           cylinder_code: string
+          delivery_note_reference?: string | null
           disposal_date?: string | null
           disposal_method?:
             | Database["public"]["Enums"]["disposal_method"]
@@ -797,9 +801,11 @@ export type Database = {
           notes?: string | null
           purchase_date?: string | null
           purchase_invoice_id?: string | null
+          purchase_order_number?: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
+          supplier_id?: string | null
           tare_weight_kg?: number | null
           updated_at?: string
         }
@@ -812,6 +818,7 @@ export type Database = {
           created_at?: string
           current_weight_kg?: number
           cylinder_code?: string
+          delivery_note_reference?: string | null
           disposal_date?: string | null
           disposal_method?:
             | Database["public"]["Enums"]["disposal_method"]
@@ -824,9 +831,11 @@ export type Database = {
           notes?: string | null
           purchase_date?: string | null
           purchase_invoice_id?: string | null
+          purchase_order_number?: string | null
           refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
+          supplier_id?: string | null
           tare_weight_kg?: number | null
           updated_at?: string
         }
@@ -852,6 +861,13 @@ export type Database = {
             referencedRelation: "documents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "refrigerant_cylinders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       refrigerant_movements: {
@@ -864,12 +880,15 @@ export type Database = {
           engineer_name: string
           equipment_id: string | null
           id: string
+          issued_by_user_id: string | null
+          issued_to_engineer_id: string | null
           job_reference: string | null
           movement_date: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes: string | null
           reason: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          site_id: string | null
           source: string | null
           updated_at: string
           waste_transfer_note_id: string | null
@@ -884,12 +903,15 @@ export type Database = {
           engineer_name: string
           equipment_id?: string | null
           id?: string
+          issued_by_user_id?: string | null
+          issued_to_engineer_id?: string | null
           job_reference?: string | null
           movement_date?: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           reason?: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          site_id?: string | null
           source?: string | null
           updated_at?: string
           waste_transfer_note_id?: string | null
@@ -904,12 +926,15 @@ export type Database = {
           engineer_name?: string
           equipment_id?: string | null
           id?: string
+          issued_by_user_id?: string | null
+          issued_to_engineer_id?: string | null
           job_reference?: string | null
           movement_date?: string
           movement_type?: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           reason?: Database["public"]["Enums"]["movement_reason"] | null
           refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
+          site_id?: string | null
           source?: string | null
           updated_at?: string
           waste_transfer_note_id?: string | null
@@ -935,6 +960,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refrigerant_movements_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
           {
@@ -1001,6 +1033,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          account_number: string | null
+          address: string | null
+          company_id: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          address?: string | null
+          company_id: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          address?: string | null
+          company_id?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format, startOfYear, endOfYear } from "date-fns";
-import { Download, Plus, Snowflake, Filter, Calendar, User, Building2, Package } from "lucide-react";
+import { Download, Plus, Snowflake, Filter, Calendar, User, Building2, Package, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -20,6 +20,8 @@ import { GasLogTable } from "@/components/gas-log/GasLogTable";
 import { EngineerGasLog } from "@/components/gas-log/EngineerGasLog";
 import { ManagerGasLog } from "@/components/gas-log/ManagerGasLog";
 import { CylinderInventory } from "@/components/cylinders/CylinderInventory";
+import { StockReceiptDialog } from "@/components/gas-log/StockReceiptDialog";
+import { StockIssuanceDialog } from "@/components/gas-log/StockIssuanceDialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { LiveClock } from "@/components/ui/live-clock";
@@ -63,7 +65,9 @@ export default function GasLog() {
   const { profile, hasRole, hasActiveLicense } = useAuth();
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
+  const isStoresManager = hasRole("stores_manager");
   const canViewCompanyLog = isOwner || isManager;
+  const canManageStock = isOwner || isManager || isStoresManager;
   const canRecord = isOwner || hasActiveLicense;
   const navigate = useNavigate();
   const [movements, setMovements] = useState<GasMovement[]>([]);
@@ -72,6 +76,8 @@ export default function GasLog() {
   const [siteFilter, setSiteFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
   const [activeTab, setActiveTab] = useState<string>(canViewCompanyLog ? "company" : "personal");
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [issuanceDialogOpen, setIssuanceDialogOpen] = useState(false);
 
   useEffect(() => {
     if (profile?.company_id && activeTab === "inspections") {
@@ -230,6 +236,20 @@ export default function GasLog() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Stores Manager Actions */}
+            {canManageStock && (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setReceiptDialogOpen(true)}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Receive Stock
+                </Button>
+                <Button variant="outline" onClick={() => setIssuanceDialogOpen(true)}>
+                  <Truck className="h-4 w-4 mr-2" />
+                  Issue to Engineer
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -345,6 +365,20 @@ export default function GasLog() {
         {/* AI Compliance Assistant */}
         <ComplianceAssistantButton />
       </div>
+
+      {/* Stock Receipt Dialog */}
+      <StockReceiptDialog
+        open={receiptDialogOpen}
+        onOpenChange={setReceiptDialogOpen}
+        onSuccess={() => {}}
+      />
+
+      {/* Stock Issuance Dialog */}
+      <StockIssuanceDialog
+        open={issuanceDialogOpen}
+        onOpenChange={setIssuanceDialogOpen}
+        onSuccess={() => {}}
+      />
     </AppLayout>
   );
 }

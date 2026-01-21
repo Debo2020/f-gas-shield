@@ -35,6 +35,7 @@ import Terms from "./pages/Terms";
 import Help from "./pages/Help";
 import Onboarding from "./pages/Onboarding";
 import Licenses from "./pages/settings/Licenses";
+import Suppliers from "./pages/settings/Suppliers";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
 import SetupCompany from "./pages/SetupCompany";
 
@@ -173,6 +174,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Licenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/suppliers"
+              element={
+                <ProtectedRoute>
+                  <Suppliers />
                 </ProtectedRoute>
               }
             />
