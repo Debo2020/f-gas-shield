@@ -34,7 +34,7 @@ interface UseLicensesReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  assignLicense: (email: string, licenseType: "manager" | "engineer") => Promise<boolean>;
+  assignLicense: (emailOrUserId: string, licenseType: "manager" | "engineer", isExistingUser?: boolean) => Promise<boolean>;
   toggleLicense: (licenseId: string, enable: boolean) => Promise<boolean>;
   revokeLicense: (licenseId: string) => Promise<boolean>;
   updateLicenseCount: (newCount: number) => Promise<boolean>;
@@ -124,7 +124,11 @@ export function useLicenses(): UseLicensesReturn {
     fetchLicenses();
   }, [fetchLicenses]);
 
-  const assignLicense = async (email: string, licenseType: "manager" | "engineer"): Promise<boolean> => {
+  const assignLicense = async (
+    emailOrUserId: string,
+    licenseType: "manager" | "engineer",
+    isExistingUser: boolean = false
+  ): Promise<boolean> => {
     if (!profile?.company_id) return false;
 
     try {
@@ -134,12 +138,39 @@ export function useLicenses(): UseLicensesReturn {
         return false;
       }
 
+      if (isExistingUser) {
+        // Direct assignment to existing team member - no invitation needed
+        const { error } = await supabase.from("user_licenses").insert({
+          company_id: profile.company_id,
+          user_id: emailOrUserId,
+          license_type: licenseType,
+          status: "active", // Immediate activation for existing users
+          assigned_by: profile.user_id,
+        });
+
+        if (error) {
+          if (error.code === "23505") {
+            toast.error("This user already has a license assigned");
+          } else {
+            throw error;
+          }
+          return false;
+        }
+
+        toast.success("License assigned successfully");
+        await fetchLicenses();
+        return true;
+      }
+
+      // Original email invitation flow for new users
+      const email = emailOrUserId.toLowerCase();
+
       // Insert the license record
       const { data: insertedLicense, error } = await supabase
         .from("user_licenses")
         .insert({
           company_id: profile.company_id,
-          email: email.toLowerCase(),
+          email: email,
           license_type: licenseType,
           status: "pending",
           assigned_by: profile.user_id,

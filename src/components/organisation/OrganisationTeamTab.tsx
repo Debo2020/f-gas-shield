@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Mail } from "lucide-react";
+import { Users, UserPlus, Mail, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,7 @@ interface TeamMember {
   email: string;
   avatar_url: string | null;
   roles: string[];
+  licenseStatus: "active" | "disabled" | "pending" | null;
 }
 
 interface PendingInvitation {
@@ -37,6 +38,7 @@ export function OrganisationTeamTab() {
   const isOwner = hasRole("owner");
   const canInvite = isOwner || hasRole("manager");
   const canInviteWithLicense = canInvite && (isOwner || hasActiveLicense);
+  const canManage = isOwner || hasRole("manager");
 
   const fetchTeamData = async () => {
     if (!profile?.company_id) return;
@@ -50,6 +52,8 @@ export function OrganisationTeamTab() {
       if (profilesError) throw profilesError;
 
       const memberIds = profilesData?.map((p) => p.user_id) || [];
+      
+      // Fetch roles
       const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role")
@@ -57,12 +61,21 @@ export function OrganisationTeamTab() {
 
       if (rolesError) throw rolesError;
 
-      const membersWithRoles = profilesData?.map((p) => ({
+      // Fetch license status for each member
+      const { data: licensesData, error: licensesError } = await supabase
+        .from("user_licenses")
+        .select("user_id, status")
+        .eq("company_id", profile.company_id);
+
+      if (licensesError) throw licensesError;
+
+      const membersWithRolesAndLicenses = profilesData?.map((p) => ({
         ...p,
         roles: rolesData?.filter((r) => r.user_id === p.user_id).map((r) => r.role) || [],
+        licenseStatus: (licensesData?.find((l) => l.user_id === p.user_id)?.status as "active" | "disabled" | "pending") || null,
       })) || [];
 
-      setMembers(membersWithRoles);
+      setMembers(membersWithRolesAndLicenses);
 
       const { data: invitationsData, error: invitationsError } = await supabase
         .from("team_invitations")
@@ -136,25 +149,62 @@ export function OrganisationTeamTab() {
     fetchTeamData();
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    const { error: rolesError } = await supabase.from("user_roles").delete().eq("user_id", userId);
-    if (rolesError) {
-      toast.error("Failed to remove team member");
+  const handleToggleAccess = async (userId: string, enable: boolean) => {
+    if (!profile?.company_id) return;
+
+    const { error } = await supabase
+      .from("user_licenses")
+      .update({
+        status: enable ? "active" : "disabled",
+        disabled_at: enable ? null : new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("company_id", profile.company_id);
+
+    if (error) {
+      toast.error("Failed to update access");
       return;
     }
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ company_id: null })
-      .eq("user_id", userId);
-
-    if (profileError) {
-      toast.error("Failed to remove team member");
-      return;
-    }
-
-    toast.success("Team member removed");
+    toast.success(enable ? "Access enabled" : "Access disabled");
     fetchTeamData();
+  };
+
+  const handleDeleteMember = async (userId: string) => {
+    if (!profile?.company_id) return;
+
+    try {
+      // 1. Delete user roles
+      const { error: rolesError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (rolesError) throw rolesError;
+
+      // 2. Delete user license
+      const { error: licenseError } = await supabase
+        .from("user_licenses")
+        .delete()
+        .eq("user_id", userId)
+        .eq("company_id", profile.company_id);
+
+      if (licenseError) throw licenseError;
+
+      // 3. Unlink from company
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ company_id: null })
+        .eq("user_id", userId);
+
+      if (profileError) throw profileError;
+
+      toast.success("Team member removed");
+      fetchTeamData();
+    } catch (error: any) {
+      console.error("Error removing team member:", error);
+      toast.error("Failed to remove team member");
+    }
   };
 
   const existingEmails = [
@@ -163,6 +213,14 @@ export function OrganisationTeamTab() {
   ];
 
   const pendingCount = invitations.filter((i) => new Date(i.expires_at) > new Date()).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -173,7 +231,7 @@ export function OrganisationTeamTab() {
             Team Management
           </h2>
           <p className="text-sm text-muted-foreground">
-            Manage your team members and invitations
+            Manage your team members and their access levels
           </p>
         </div>
         {canInvite && (
@@ -214,18 +272,14 @@ export function OrganisationTeamTab() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading team members...
-                </div>
-              ) : (
-                <TeamMemberList
-                  members={members}
-                  currentUserId={user?.id || ""}
-                  isOwner={isOwner}
-                  onRemoveMember={handleRemoveMember}
-                />
-              )}
+              <TeamMemberList
+                members={members}
+                currentUserId={user?.id || ""}
+                isOwner={isOwner}
+                canManage={canManage}
+                onToggleAccess={handleToggleAccess}
+                onDeleteMember={handleDeleteMember}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -239,11 +293,7 @@ export function OrganisationTeamTab() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading invitations...
-                </div>
-              ) : invitations.length === 0 ? (
+              {invitations.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No pending invitations
                 </div>
