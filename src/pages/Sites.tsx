@@ -1,27 +1,15 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { MapPin, Plus, Search, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MapPin, Search, AlertCircle, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SiteCard } from "@/components/sites/SiteCard";
-import { SiteDialog } from "@/components/sites/SiteDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { SiteFormValues } from "@/components/sites/SiteForm";
 import { LiveClock } from "@/components/ui/live-clock";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
@@ -43,23 +31,13 @@ interface Site {
 }
 
 export default function Sites() {
-  const { profile, hasRole, hasActiveLicense } = useAuth();
+  const { profile } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSite, setEditingSite] = useState<Site | null>(null);
-  const [deletingSite, setDeletingSite] = useState<Site | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasCompany = !!profile?.company_id;
-  const isOwner = hasRole("owner");
-  const isManager = hasRole("manager");
-  const canEdit = isOwner || isManager;
-  const canDelete = isOwner;
-  const canPerformActions = canEdit && hasCompany && (isOwner || hasActiveLicense);
 
   const fetchSites = async () => {
     if (!profile?.company_id) return;
@@ -69,6 +47,7 @@ export default function Sites() {
         .from("sites")
         .select("id, name, address, city, postcode, contact_name, contact_phone, contact_email, notes, client_id, clients(id, name)")
         .eq("company_id", profile.company_id)
+        .or("is_deleted.is.null,is_deleted.eq.false")
         .order("name");
 
       if (error) throw error;
@@ -91,102 +70,13 @@ export default function Sites() {
     fetchSites();
   }, [profile?.company_id]);
 
-  // Handle ?action=new from URL
-  useEffect(() => {
-    if (searchParams.get("action") === "new" && canPerformActions && !isLoading) {
-      setIsDialogOpen(true);
-      setSearchParams({}, { replace: true });
-    }
-  }, [searchParams, canPerformActions, isLoading]);
-
-  const handleAddSite = async (values: SiteFormValues) => {
-    if (!profile?.company_id) {
-      toast.error("Please complete company setup first");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.from("sites").insert({
-        company_id: profile.company_id,
-        name: values.name,
-        address: values.address,
-        city: values.city || null,
-        postcode: values.postcode || null,
-        contact_name: values.contact_name || null,
-        contact_phone: values.contact_phone || null,
-        contact_email: values.contact_email || null,
-        notes: values.notes || null,
-      });
-
-      if (error) throw error;
-
-      toast.success("Site added successfully");
-      setIsDialogOpen(false);
-      fetchSites();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add site");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEditSite = async (values: SiteFormValues) => {
-    if (!editingSite) return;
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("sites")
-        .update({
-          name: values.name,
-          address: values.address,
-          city: values.city || null,
-          postcode: values.postcode || null,
-          contact_name: values.contact_name || null,
-          contact_phone: values.contact_phone || null,
-          contact_email: values.contact_email || null,
-          notes: values.notes || null,
-        })
-        .eq("id", editingSite.id);
-
-      if (error) throw error;
-
-      toast.success("Site updated successfully");
-      setEditingSite(null);
-      fetchSites();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update site");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteSite = async () => {
-    if (!deletingSite) return;
-
-    try {
-      const { error } = await supabase
-        .from("sites")
-        .delete()
-        .eq("id", deletingSite.id);
-
-      if (error) throw error;
-
-      toast.success("Site deleted successfully");
-      setDeletingSite(null);
-      fetchSites();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete site");
-    }
-  };
-
   const filteredSites = sites.filter(
     (site) =>
       site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      site.postcode?.toLowerCase().includes(searchQuery.toLowerCase())
+      site.postcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      site.client?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -208,17 +98,6 @@ export default function Sites() {
 
           <div className="flex flex-col items-end gap-3">
             <LiveClock showDate className="animate-slide-up" />
-            {canEdit && (
-              <Button 
-                onClick={() => setIsDialogOpen(true)} 
-                disabled={!canPerformActions}
-                title={!hasCompany ? "Complete company setup first" : !canPerformActions ? "License required" : undefined}
-                className="animate-scale-in"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Site
-              </Button>
-            )}
           </div>
         </div>
 
@@ -228,7 +107,7 @@ export default function Sites() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Company Setup Required</AlertTitle>
             <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <span>You need to create or join a company before you can add sites.</span>
+              <span>You need to create or join a company before you can view sites.</span>
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -241,12 +120,29 @@ export default function Sites() {
           </Alert>
         )}
 
+        {/* Info Banner */}
+        <Alert className="mb-6 animate-fade-in border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-900 dark:text-blue-100">Sites are managed through Clients</AlertTitle>
+          <AlertDescription className="text-blue-700 dark:text-blue-300">
+            To add or edit sites, go to{" "}
+            <Button 
+              variant="link" 
+              className="h-auto p-0 text-blue-700 dark:text-blue-300 underline"
+              onClick={() => navigate("/organisation?tab=clients")}
+            >
+              Organisation → Clients
+            </Button>{" "}
+            and manage sites from there.
+          </AlertDescription>
+        </Alert>
+
         {/* Search */}
         <div className="mb-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search sites..."
+              placeholder="Search sites by name, address, or client..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -270,18 +166,14 @@ export default function Sites() {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No sites yet</h3>
                     <p className="text-muted-foreground mb-4">
-                      Add your first site to start tracking equipment and inspections
+                      Sites are created and managed through the Clients module
                     </p>
-                    {canEdit && (
-                      <Button 
-                        onClick={() => setIsDialogOpen(true)}
-                        disabled={!canPerformActions}
-                        title={!canPerformActions ? "License required" : undefined}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Site
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate("/organisation?tab=clients")}
+                    >
+                      Go to Clients
+                    </Button>
                   </>
                 ) : (
                   <>
@@ -302,58 +194,13 @@ export default function Sites() {
                   className="animate-slide-up opacity-0"
                   style={{ animationDelay: `${(index + 3) * 50}ms`, animationFillMode: 'forwards' }}
                 >
-                  <SiteCard
-                    site={site}
-                    canEdit={canPerformActions}
-                    canDelete={canDelete && (isOwner || hasActiveLicense)}
-                    onEdit={() => setEditingSite(site)}
-                    onDelete={() => setDeletingSite(site)}
-                  />
+                  <SiteCard site={site} />
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-
-      {/* Add Site Dialog */}
-      <SiteDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSubmit={handleAddSite}
-        isSubmitting={isSubmitting}
-      />
-
-      {/* Edit Site Dialog */}
-      <SiteDialog
-        open={!!editingSite}
-        onOpenChange={(open) => !open && setEditingSite(null)}
-        onSubmit={handleEditSite}
-        site={editingSite}
-        isSubmitting={isSubmitting}
-      />
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingSite} onOpenChange={(open) => !open && setDeletingSite(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Site</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deletingSite?.name}"? This action cannot be undone
-              and will remove all associated equipment and inspection records.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteSite}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppLayout>
   );
 }
