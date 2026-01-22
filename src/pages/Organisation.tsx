@@ -4,8 +4,6 @@ import {
   Building,
   Building2,
   Users,
-  Key,
-  FileText,
   FolderOpen,
   Truck,
   Settings,
@@ -17,8 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Tab content components (lazy loaded sections from existing pages)
 import { OrganisationTeamTab } from "@/components/organisation/OrganisationTeamTab";
-import { OrganisationLicensesTab } from "@/components/organisation/OrganisationLicensesTab";
-import { OrganisationReportsTab } from "@/components/organisation/OrganisationReportsTab";
 import { OrganisationDocumentsTab } from "@/components/organisation/OrganisationDocumentsTab";
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
 import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
@@ -27,10 +23,8 @@ import { OrganisationClientsTab } from "@/components/organisation/OrganisationCl
 const TAB_CONFIG = [
   { id: "team", label: "Team", icon: Users, roles: ["owner", "manager"] },
   { id: "clients", label: "Clients", icon: Building2, roles: ["owner", "manager"] },
-  { id: "licenses", label: "Licenses", icon: Key, roles: ["owner", "manager"] },
-  { id: "reports", label: "Reports", icon: FileText, roles: ["owner", "manager", "engineer"] },
-  { id: "documents", label: "Documents", icon: FolderOpen, roles: ["owner", "manager", "stores_manager", "engineer"] },
   { id: "suppliers", label: "Suppliers", icon: Truck, roles: ["owner", "manager", "stores_manager"] },
+  { id: "documents", label: "Documents", icon: FolderOpen, roles: ["owner", "manager", "stores_manager", "engineer"] },
   { id: "settings", label: "Settings", icon: Settings, roles: ["owner"] },
 ] as const;
 
@@ -134,17 +128,10 @@ export default function Organisation() {
             </TabsContent>
           )}
 
-          {/* Licenses Tab */}
-          {accessibleTabs.some((t) => t.id === "licenses") && (
-            <TabsContent value="licenses">
-              <OrganisationLicensesTab />
-            </TabsContent>
-          )}
-
-          {/* Reports Tab */}
-          {accessibleTabs.some((t) => t.id === "reports") && (
-            <TabsContent value="reports">
-              <OrganisationReportsTab />
+          {/* Suppliers Tab */}
+          {accessibleTabs.some((t) => t.id === "suppliers") && (
+            <TabsContent value="suppliers">
+              <OrganisationSuppliersTab />
             </TabsContent>
           )}
 
@@ -152,13 +139,6 @@ export default function Organisation() {
           {accessibleTabs.some((t) => t.id === "documents") && (
             <TabsContent value="documents">
               <OrganisationDocumentsTab />
-            </TabsContent>
-          )}
-
-          {/* Suppliers Tab */}
-          {accessibleTabs.some((t) => t.id === "suppliers") && (
-            <TabsContent value="suppliers">
-              <OrganisationSuppliersTab />
             </TabsContent>
           )}
 

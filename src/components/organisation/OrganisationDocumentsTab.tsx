@@ -7,6 +7,7 @@ import {
   Shield,
   ImagePlus,
   FolderOpen,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +24,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
 import { BulkPhotoUploader } from "@/components/documents/BulkPhotoUploader";
 import { DocumentCategorySection } from "@/components/documents/DocumentCategorySection";
+import { OrganisationReportsTab } from "./OrganisationReportsTab";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -73,7 +74,7 @@ export function OrganisationDocumentsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [bulkPhotoDialogOpen, setBulkPhotoDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("compliance");
+  const [subTab, setSubTab] = useState("documents");
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   const canDelete = hasRole("owner") || hasRole("manager");
@@ -180,101 +181,123 @@ export function OrganisationDocumentsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FolderOpen className="h-5 w-5 text-primary" />
-            Organisation Documents
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Company-wide compliance documents and certificates
-          </p>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
-              <FileText className="h-4 w-4 mr-2" />
-              Single Document
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setBulkPhotoDialogOpen(true)}>
-              <ImagePlus className="h-4 w-4 mr-2" />
-              Bulk Photos
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {/* Sub-tabs for Documents and Reports */}
+      <Tabs value={subTab} onValueChange={setSubTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="documents" className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Reports
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Total Documents</p>
-          <p className="text-2xl font-bold">{stats.total}</p>
-        </div>
-        <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Certificates</p>
-          <p className="text-2xl font-bold">{stats.certificates}</p>
-        </div>
-        <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Declarations</p>
-          <p className="text-2xl font-bold">{stats.declarations}</p>
-        </div>
-        <div className="bg-card rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Reports</p>
-          <p className="text-2xl font-bold">{stats.reports}</p>
-        </div>
-      </div>
+        {/* Documents Sub-Tab */}
+        <TabsContent value="documents" className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <FolderOpen className="h-5 w-5 text-primary" />
+                Organisation Documents
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Company-wide compliance documents and certificates
+              </p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Single Document
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setBulkPhotoDialogOpen(true)}>
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                  Bulk Photos
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search documents..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">Total Documents</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">Certificates</p>
+              <p className="text-2xl font-bold">{stats.certificates}</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">Declarations</p>
+              <p className="text-2xl font-bold">{stats.declarations}</p>
+            </div>
+            <div className="bg-card rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">Reports</p>
+              <p className="text-2xl font-bold">{stats.reports}</p>
+            </div>
+          </div>
 
-      {/* Documents */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Compliance Documents
-            </CardTitle>
-            <CardDescription>
-              Company-wide certificates, declarations, and regulatory compliance reports
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {companyId && (
-              <DocumentCategorySection
-                category="compliance"
-                documents={filteredDocuments}
-                sites={sites}
-                equipment={equipment}
-                companyId={companyId}
-                canDelete={canDelete}
-                signedUrls={signedUrls}
-                onDocumentDeleted={handleDocumentDeleted}
-                onUploadComplete={handleUploadComplete}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Documents */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Compliance Documents
+                </CardTitle>
+                <CardDescription>
+                  Company-wide certificates, declarations, and regulatory compliance reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {companyId && (
+                  <DocumentCategorySection
+                    category="compliance"
+                    documents={filteredDocuments}
+                    sites={sites}
+                    equipment={equipment}
+                    companyId={companyId}
+                    canDelete={canDelete}
+                    signedUrls={signedUrls}
+                    onDocumentDeleted={handleDocumentDeleted}
+                    onUploadComplete={handleUploadComplete}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Reports Sub-Tab */}
+        <TabsContent value="reports">
+          <OrganisationReportsTab />
+        </TabsContent>
+      </Tabs>
 
       {/* Upload Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
