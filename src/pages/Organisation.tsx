@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Building,
+  Building2,
   Users,
   Key,
   FileText,
@@ -21,9 +22,11 @@ import { OrganisationReportsTab } from "@/components/organisation/OrganisationRe
 import { OrganisationDocumentsTab } from "@/components/organisation/OrganisationDocumentsTab";
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
 import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
+import { OrganisationClientsTab } from "@/components/organisation/OrganisationClientsTab";
 
 const TAB_CONFIG = [
   { id: "team", label: "Team", icon: Users, roles: ["owner", "manager"] },
+  { id: "clients", label: "Clients", icon: Building2, roles: ["owner", "manager"] },
   { id: "licenses", label: "Licenses", icon: Key, roles: ["owner", "manager"] },
   { id: "reports", label: "Reports", icon: FileText, roles: ["owner", "manager", "engineer"] },
   { id: "documents", label: "Documents", icon: FolderOpen, roles: ["owner", "manager", "stores_manager", "engineer"] },
@@ -121,6 +124,13 @@ export default function Organisation() {
           {accessibleTabs.some((t) => t.id === "team") && (
             <TabsContent value="team">
               <OrganisationTeamTab />
+            </TabsContent>
+          )}
+
+          {/* Clients Tab */}
+          {accessibleTabs.some((t) => t.id === "clients") && (
+            <TabsContent value="clients">
+              <OrganisationClientsTab />
             </TabsContent>
           )}
 

@@ -36,6 +36,10 @@ interface Site {
   contact_phone: string | null;
   contact_email: string | null;
   notes: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export default function Sites() {
@@ -63,12 +67,19 @@ export default function Sites() {
     try {
       const { data, error } = await supabase
         .from("sites")
-        .select("id, name, address, city, postcode, contact_name, contact_phone, contact_email, notes")
+        .select("id, name, address, city, postcode, contact_name, contact_phone, contact_email, notes, client_id, clients(id, name)")
         .eq("company_id", profile.company_id)
         .order("name");
 
       if (error) throw error;
-      setSites(data || []);
+      
+      // Map the data to include client info
+      const mappedSites = (data || []).map(site => ({
+        ...site,
+        client: site.clients ? { id: site.clients.id, name: site.clients.name } : null,
+      }));
+      
+      setSites(mappedSites);
     } catch (error: any) {
       toast.error("Failed to load sites");
     } finally {
