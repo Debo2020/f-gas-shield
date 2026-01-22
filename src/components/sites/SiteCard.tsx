@@ -1,14 +1,7 @@
-import { MapPin, Phone, Mail, User, MoreVertical, Pencil, Trash2, ChevronRight, Building2 } from "lucide-react";
+import { MapPin, Phone, Mail, User, ChevronRight, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface Site {
   id: string;
@@ -27,13 +20,9 @@ interface Site {
 
 interface SiteCardProps {
   site: Site;
-  canEdit: boolean;
-  canDelete: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
 }
 
-export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCardProps) {
+export function SiteCard({ site }: SiteCardProps) {
   const navigate = useNavigate();
   const fullAddress = [site.address, site.city, site.postcode].filter(Boolean).join(", ");
 
@@ -58,35 +47,7 @@ export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCar
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {(canEdit || canDelete) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canEdit && (
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit Site
-                  </DropdownMenuItem>
-                )}
-                {canDelete && (
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Site
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-start gap-2 text-sm">

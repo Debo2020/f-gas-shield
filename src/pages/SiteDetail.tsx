@@ -8,15 +8,12 @@ import {
   Phone,
   Mail,
   User,
-  Pencil,
   Thermometer,
-  FileText,
   Loader2,
   Plus,
   FolderOpen,
   Camera,
   RefreshCw,
-  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { SiteDialog } from "@/components/sites/SiteDialog";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { SiteInspectionsTable } from "@/components/sites/SiteInspectionsTable";
 import { DocumentUploader } from "@/components/documents/DocumentUploader";
@@ -33,7 +29,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
-import type { SiteFormValues } from "@/components/sites/SiteForm";
 
 interface Site {
   id: string;
@@ -67,8 +62,6 @@ export default function SiteDetail() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [documentCount, setDocumentCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [docRefresh, setDocRefresh] = useState(0);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
@@ -124,37 +117,6 @@ export default function SiteDetail() {
   useEffect(() => {
     fetchData();
   }, [profile?.company_id, id]);
-
-  const handleEditSite = async (values: SiteFormValues) => {
-    if (!site) return;
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from("sites")
-        .update({
-          name: values.name,
-          address: values.address,
-          city: values.city || null,
-          postcode: values.postcode || null,
-          contact_name: values.contact_name || null,
-          contact_phone: values.contact_phone || null,
-          contact_email: values.contact_email || null,
-          notes: values.notes || null,
-        })
-        .eq("id", site.id);
-
-      if (error) throw error;
-
-      toast.success("Site updated successfully");
-      setIsEditOpen(false);
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update site");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const fullAddress = site
     ? [site.address, site.city, site.postcode].filter(Boolean).join(", ")
@@ -227,12 +189,6 @@ export default function SiteDetail() {
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Sync to BMS
-                </Button>
-              )}
-              {canPerformActions && (
-                <Button size="sm" onClick={() => setIsEditOpen(true)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit Site
                 </Button>
               )}
             </div>
@@ -470,15 +426,13 @@ export default function SiteDetail() {
                       siteId={site.id}
                       documentType="photo"
                       onUploadComplete={() => {
-                        setDocRefresh((prev) => prev + 1);
-                        setDocumentCount((prev) => prev + 1);
+                        setDocRefresh((p) => p + 1);
+                        fetchData();
                       }}
                     />
-                    <Separator />
                     <DocumentList
                       companyId={profile.company_id}
                       siteId={site.id}
-                      canDelete={isOwner}
                       refreshTrigger={docRefresh}
                     />
                   </>
@@ -489,16 +443,7 @@ export default function SiteDetail() {
         </Tabs>
       </div>
 
-      {/* Edit Site Dialog */}
-      <SiteDialog
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        onSubmit={handleEditSite}
-        site={site}
-        isSubmitting={isSubmitting}
-      />
-
-      {/* Camera Capture */}
+      {/* Camera Capture Dialog */}
       {profile?.company_id && (
         <CameraCapture
           open={isCameraOpen}
@@ -506,9 +451,8 @@ export default function SiteDetail() {
           companyId={profile.company_id}
           siteId={site.id}
           onCaptureComplete={() => {
-            setDocRefresh((prev) => prev + 1);
-            setDocumentCount((prev) => prev + 1);
-            toast.success("Photo saved to site documents");
+            setDocRefresh((p) => p + 1);
+            fetchData();
           }}
         />
       )}
