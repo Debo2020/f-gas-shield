@@ -35,7 +35,7 @@ const inviteSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
-  role: z.enum(["admin", "manager", "stores_manager", "engineer", "read_only"]),
+  role: z.enum(["admin", "manager", "stores_manager", "engineer"]),
   activationOption: z.enum(["send_invite", "keep_inactive"]),
 });
 
@@ -45,7 +45,7 @@ export type InviteMemberData = {
   fullName: string;
   email: string;
   phone?: string;
-  role: "admin" | "manager" | "stores_manager" | "engineer" | "read_only";
+  role: "admin" | "manager" | "stores_manager" | "engineer";
   sendInvite: boolean;
 };
 
@@ -212,14 +212,6 @@ export function InviteMemberDialog({
                             <span>Engineer</span>
                             <span className="text-xs text-muted-foreground">
                               Can perform inspections and log activities
-                            </span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="read_only">
-                          <div className="flex flex-col">
-                            <span>Client</span>
-                            <span className="text-xs text-muted-foreground">
-                              View-only access to reports and compliance data
                             </span>
                           </div>
                         </SelectItem>

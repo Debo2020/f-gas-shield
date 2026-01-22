@@ -1,7 +1,8 @@
-import { MapPin, Phone, Mail, User, MoreVertical, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { MapPin, Phone, Mail, User, MoreVertical, Pencil, Trash2, ChevronRight, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,10 @@ interface Site {
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface SiteCardProps {
@@ -42,9 +47,17 @@ export function SiteCard({ site, canEdit, canDelete, onEdit, onDelete }: SiteCar
       onClick={handleCardClick}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-          {site.name}
-        </CardTitle>
+        <div>
+          <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+            {site.name}
+          </CardTitle>
+          {site.client && (
+            <Badge variant="outline" className="mt-1 text-xs">
+              <Building2 className="h-3 w-3 mr-1" />
+              {site.client.name}
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-1">
           {(canEdit || canDelete) && (
             <DropdownMenu>
