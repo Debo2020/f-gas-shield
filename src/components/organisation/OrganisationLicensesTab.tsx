@@ -70,7 +70,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-import type { EnrichedTeamMember } from "@/hooks/useTeamMembers";
+import type { EnrichedTeamMember, PendingInvitation } from "@/hooks/useTeamMembers";
 
 interface TeamMemberWithLicense {
   user_id: string;
@@ -85,10 +85,11 @@ interface TeamMemberWithLicense {
 
 interface OrganisationLicensesTabProps {
   members: EnrichedTeamMember[];
+  invitations: PendingInvitation[];
   refetch: () => Promise<void>;
 }
 
-export function OrganisationLicensesTab({ members: sharedMembers, refetch: sharedRefetch }: OrganisationLicensesTabProps) {
+export function OrganisationLicensesTab({ members: sharedMembers, invitations, refetch: sharedRefetch }: OrganisationLicensesTabProps) {
   const { hasRole, profile, user } = useAuth();
   const {
     licenses,
