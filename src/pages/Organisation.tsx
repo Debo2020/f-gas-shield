@@ -18,7 +18,6 @@ import { OrganisationTeamTab } from "@/components/organisation/OrganisationTeamT
 import { OrganisationDocumentsTab } from "@/components/organisation/OrganisationDocumentsTab";
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
 import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
-import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
 const TAB_CONFIG = [
   { id: "team", label: "Team", icon: Users, roles: ["owner", "manager"] },
   { id: "clients", label: "Clients", icon: Building2, roles: ["owner", "manager"] },
