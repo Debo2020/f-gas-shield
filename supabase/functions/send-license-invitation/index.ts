@@ -29,13 +29,69 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // --- Authentication: verify caller identity ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("JWT verification failed", { claimsError });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const callerUserId = claimsData.claims.sub as string;
+    logStep("Authenticated caller", { callerUserId });
+
+    // --- Authorization: verify caller is owner or manager ---
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
+
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("company_id")
+      .eq("user_id", callerUserId)
+      .single();
+
+    if (!callerProfile?.company_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: no company association" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { data: callerRoles } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerUserId);
+
+    const roleSet = new Set((callerRoles || []).map((r: { role: string }) => r.role));
+    if (!roleSet.has("owner") && !roleSet.has("manager")) {
+      logStep("Caller lacks required role", { roles: Array.from(roleSet) });
+      return new Response(
+        JSON.stringify({ error: "Forbidden: insufficient permissions" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const { licenseId, origin }: LicenseInvitationRequest = await req.json();
     logStep("Received invitation request", { licenseId, origin });
@@ -72,7 +128,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!license.email) {
+    // Verify the license belongs to the caller's company
+    if (license.company_id !== callerProfile.company_id) {
+      logStep("License does not belong to caller's company", { licenseCompany: license.company_id, callerCompany: callerProfile.company_id });
+      return new Response(
+        JSON.stringify({ error: "Forbidden: license belongs to another company" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
       return new Response(
         JSON.stringify({ error: "License has no email address" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
