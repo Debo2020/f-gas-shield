@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.enterprise-contact]
 verify_jwt = false
+
+[functions.create-addon-checkout]
+verify_jwt = false
+
+[functions.check-addon]
+verify_jwt = false

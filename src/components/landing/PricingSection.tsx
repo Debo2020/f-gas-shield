@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Check, Briefcase, Zap, Building, Loader2, Phone } from "lucide-react";
+import { Check, Briefcase, Zap, Building, Loader2, Phone, Flame } from "lucide-react";
 import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { SUBSCRIPTION_TIERS, SubscriptionTier, formatPrice, getAnnualSavingsPercent } from "@/lib/subscription";
+import { ADDON_MODULES } from "@/lib/gas-addons";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -213,6 +214,29 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
               );
             }
           )}
+        </div>
+
+        {/* Add-on Modules */}
+        <div className="mt-16 max-w-3xl mx-auto">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold mb-1">Add-on Modules</h3>
+            <p className="text-sm text-muted-foreground">Optional modules available with any plan</p>
+          </div>
+          <Card className="border-primary/20">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-6">
+              <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                <Flame className="h-5 w-5 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">{ADDON_MODULES.natural_gas.name}</p>
+                <p className="text-sm text-muted-foreground">{ADDON_MODULES.natural_gas.description}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-xl font-bold">{formatPrice(ADDON_MODULES.natural_gas.price, "GBP")}</span>
+                <span className="text-muted-foreground text-sm">/user/mo</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
