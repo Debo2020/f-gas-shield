@@ -95,12 +95,12 @@ export default function GasCertificates() {
         .eq("certificate_id", cert.id)
         .order("position");
 
-      // For ND Gas Safety, fetch company + engineer info
+      // For ND Gas Safety, fetch company + engineer info + logo
       let companyData: any = {};
       if (cert.certificate_type === "nd_gas_safety" && companyId) {
         const { data: company } = await supabase
           .from("companies")
-          .select("name, address, phone, gas_safe_reg_no")
+          .select("name, address, phone, gas_safe_reg_no, logo_url")
           .eq("id", companyId)
           .single();
 
@@ -110,12 +110,29 @@ export default function GasCertificates() {
           .eq("user_id", cert.engineer_id)
           .single();
 
+        // Attempt to fetch company logo as base64
+        let logoBase64: string | undefined;
+        if (company?.logo_url) {
+          try {
+            const response = await fetch(company.logo_url);
+            const blob = await response.blob();
+            logoBase64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+          } catch {
+            // Logo fetch failed — continue without it
+          }
+        }
+
         companyData = {
           company_name: company?.name || "",
           company_address: company?.address || "",
           company_phone: company?.phone || "",
           gas_safe_reg_no: (company as any)?.gas_safe_reg_no || "",
           engineer_gas_safe_id: (engineer as any)?.gas_safe_id_card_no || "",
+          company_logo_base64: logoBase64,
         };
       }
 

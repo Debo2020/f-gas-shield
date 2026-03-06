@@ -60,12 +60,13 @@ interface CertificateData {
     appliance_serviced?: boolean | null;
     appliance_safe_to_use?: boolean | null;
   }>;
-  // Company/installer info passed in for ND certificates
+  // Company/installer info
   company_name?: string;
   company_address?: string;
   company_phone?: string;
   gas_safe_reg_no?: string;
   engineer_gas_safe_id?: string;
+  company_logo_base64?: string;
 }
 
 const TYPE_TITLES: Record<string, string> = {
@@ -77,12 +78,12 @@ const TYPE_TITLES: Record<string, string> = {
 };
 
 const yn = (v?: boolean | null) => v ? "Yes" : "No";
+const tick = (v?: boolean | null) => v ? "✓" : "✗";
 
 export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   const doc = new jsPDF();
   const title = TYPE_TITLES[data.certificate_type] || "Gas Certificate";
 
-  // Use ND-specific layout
   if (data.certificate_type === "nd_gas_safety") {
     return generateNDGasSafetyPDF(doc, data, title);
   }
@@ -224,27 +225,54 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   return doc;
 }
 
-// ---- Non-Domestic Gas Safety Record — full layout matching sample certificate ----
+// ---- Non-Domestic Gas Safety Record — Portrait layout matching sample ----
 function generateNDGasSafetyPDF(doc: jsPDF, data: CertificateData, title: string): jsPDF {
-  const blue: [number, number, number] = [41, 128, 185];
-  const green: [number, number, number] = [39, 174, 96];
-  const purple: [number, number, number] = [142, 68, 173];
-  const red: [number, number, number] = [192, 57, 43];
-  const dark: [number, number, number] = [44, 62, 80];
+  const navy: [number, number, number] = [26, 54, 93];
+  const darkGrey: [number, number, number] = [55, 65, 81];
+  const pageWidth = 210;
+  const marginL = 14;
+  const marginR = 14;
+  const contentWidth = pageWidth - marginL - marginR;
 
-  // Header
-  doc.setFontSize(16);
+  let y = 12;
+
+  // ── HEADER: Logo (left) | Title (centre) | Cert No (right) ──
+  const logoW = 28;
+  const logoH = 16;
+  if (data.company_logo_base64) {
+    try {
+      doc.addImage(data.company_logo_base64, "PNG", marginL, y - 2, logoW, logoH);
+    } catch {
+      // logo failed — skip gracefully
+    }
+  }
+
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text(title, 105, 18, { align: "center" });
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Certificate No: ${data.certificate_number}`, 105, 26, { align: "center" });
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text(title, pageWidth / 2, y + 5, { align: "center" });
 
-  let y = 32;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Cert. No. ${data.certificate_number}`, pageWidth - marginR, y + 5, { align: "right" });
 
-  // 1. Company / Installer Details
+  y += logoH + 4;
+
+  // ── Regulatory subtitle ──
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(100, 100, 100);
+  const subtitle = "Safety inspection and reporting carried out in accordance with the Gas Safety (Installation and Use) Regulations 1998 as amended.";
+  doc.text(subtitle, pageWidth / 2, y, { align: "center", maxWidth: contentWidth });
+  y += 6;
+
+  doc.setTextColor(0, 0, 0);
+
+  // ── 1. Company / Installer Details ──
   autoTable(doc, {
-    startY: y, theme: "grid", headStyles: { fillColor: blue },
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
     head: [["Company / Installer Details", ""]],
     body: [
       ["Engineer Name", data.issued_by_name || "-"],
@@ -254,54 +282,77 @@ function generateNDGasSafetyPDF(doc: jsPDF, data: CertificateData, title: string
       ["Gas Safe Registration No.", data.gas_safe_reg_no || "-"],
       ["ID Card Number", data.engineer_gas_safe_id || "-"],
     ],
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
+    margin: { left: marginL, right: marginR },
   });
-  y = (doc as any).lastAutoTable.finalY + 4;
+  y = (doc as any).lastAutoTable.finalY + 3;
 
-  // 2. Job Address
+  // ── 2. Job Address ──
   autoTable(doc, {
-    startY: y, theme: "grid", headStyles: { fillColor: blue },
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
     head: [["Job Address", ""]],
     body: [
       ["Site Name", data.job_address_name || "-"],
       ["Address", data.job_address || "-"],
-      ["Postcode", data.job_postcode || "-"],
+      ["Post Code", data.job_postcode || "-"],
       ["Telephone", data.job_phone || "-"],
       ["Inspection Date", data.inspection_date],
     ],
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
+    margin: { left: marginL, right: marginR },
   });
-  y = (doc as any).lastAutoTable.finalY + 4;
+  y = (doc as any).lastAutoTable.finalY + 3;
 
-  // 3. Customer / Landlord
+  // ── 3. Customer / Landlord ──
   autoTable(doc, {
-    startY: y, theme: "grid", headStyles: { fillColor: blue },
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
     head: [["Customer / Landlord", ""]],
     body: [
       ["Name", data.customer_name || "-"],
       ["Company", data.customer_company || "-"],
       ["Address", data.customer_address || "-"],
-      ["Postcode", data.customer_postcode || "-"],
+      ["Post Code", data.customer_postcode || "-"],
       ["Telephone", data.customer_phone || "-"],
     ],
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
+    margin: { left: marginL, right: marginR },
   });
-  y = (doc as any).lastAutoTable.finalY + 4;
+  y = (doc as any).lastAutoTable.finalY + 3;
 
-  // Check if we need a new page before appliances
-  if (y > 200) { doc.addPage(); y = 15; }
+  // ── 4. Appliance Details / Inspection Table ──
+  if (y > 190) { doc.addPage(); y = 15; }
 
-  // 4. Appliance Inspection Table
   if (data.appliances && data.appliances.length > 0) {
     autoTable(doc, {
-      startY: y, theme: "grid",
-      headStyles: { fillColor: purple, fontSize: 6, halign: "center" },
+      startY: y,
+      theme: "grid",
+      headStyles: { fillColor: navy, fontSize: 5.5, halign: "center", fontStyle: "bold", cellPadding: 1.5 },
       head: [[
-        "#", "Location", "Type", "Make", "Model", "Flue", "L/L",
-        "Insp.", "Press.", "kW",
-        "Hi Ratio", "Hi CO", "Hi CO₂",
-        "Lo Ratio", "Lo CO", "Lo CO₂",
-        "Safety", "Vent.", "Visual", "Flue Perf", "Serv.", "Safe",
+        "#",
+        "Location",
+        "Type",
+        "Make",
+        "Model",
+        "Flue Type",
+        "L/L App",
+        "Inspected",
+        "Op. Press.\n(mbar)",
+        "Heat Input\n(kW/h)",
+        "High CO\n(ppm)",
+        "High CO₂\n(%)",
+        "Low CO\n(ppm)",
+        "Low CO₂\n(%)",
+        "Safety\nDevices",
+        "Vent.\nProv.",
+        "Visual\nCond.",
+        "Safe to\nUse",
       ]],
       body: data.appliances.map((a, i) => [
         String(i + 1),
@@ -310,102 +361,134 @@ function generateNDGasSafetyPDF(doc: jsPDF, data: CertificateData, title: string
         a.make || "-",
         a.model || "-",
         a.flue_type || "-",
-        yn(a.landlord_appliance),
-        yn(a.appliance_inspected),
+        tick(a.landlord_appliance),
+        tick(a.appliance_inspected),
         a.operating_pressure_mbar?.toString() || "-",
         a.heat_input_kw?.toString() || "-",
-        a.high_co_ratio?.toString() || "-",
         a.high_co_ppm?.toString() || "-",
         a.high_co2_percent?.toString() || "-",
-        a.low_co_ratio?.toString() || "-",
         a.low_co_ppm?.toString() || "-",
         a.low_co2_percent?.toString() || "-",
-        yn(a.safety_devices_correct),
-        yn(a.ventilation_satisfactory),
-        yn(a.visual_condition_satisfactory),
-        a.flue_performance_test || "-",
-        yn(a.appliance_serviced),
-        yn(a.appliance_safe_to_use),
+        tick(a.safety_devices_correct),
+        tick(a.ventilation_satisfactory),
+        tick(a.visual_condition_satisfactory),
+        tick(a.appliance_safe_to_use),
       ]),
-      styles: { fontSize: 6, cellPadding: 1.5 },
+      styles: { fontSize: 6, cellPadding: 1.5, halign: "center" },
       columnStyles: {
         0: { cellWidth: 6 },
+        1: { cellWidth: 14, halign: "left" },
+        2: { cellWidth: 12, halign: "left" },
+        3: { cellWidth: 11, halign: "left" },
+        4: { cellWidth: 11, halign: "left" },
+        5: { cellWidth: 10 },
+        6: { cellWidth: 8 },
+        7: { cellWidth: 9 },
+        8: { cellWidth: 11 },
+        9: { cellWidth: 11 },
+        10: { cellWidth: 10 },
+        11: { cellWidth: 10 },
+        12: { cellWidth: 10 },
+        13: { cellWidth: 10 },
+        14: { cellWidth: 8 },
+        15: { cellWidth: 8 },
+        16: { cellWidth: 8 },
+        17: { cellWidth: 8 },
       },
+      margin: { left: marginL, right: marginR },
     });
-    y = (doc as any).lastAutoTable.finalY + 4;
+    y = (doc as any).lastAutoTable.finalY + 3;
   }
 
-  // 5. Defects
+  // ── 5. Defects / Identified ──
   if (y > 240) { doc.addPage(); y = 15; }
   const defectsArray = Array.isArray(data.defects) ? data.defects : [];
-  if (defectsArray.length > 0) {
-    autoTable(doc, {
-      startY: y, theme: "grid", headStyles: { fillColor: red },
-      head: [["#", "Defect Description", "Warning Labels"]],
-      body: defectsArray.map((d: any, i: number) => [
-        String(d.number || i + 1),
-        d.description || "-",
-        yn(d.warning_labels_issued),
-      ]),
-      styles: { fontSize: 9 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 4;
-  }
-
-  // 6. Gas Installation Safety Checks
-  if (y > 240) { doc.addPage(); y = 15; }
   autoTable(doc, {
-    startY: y, theme: "grid", headStyles: { fillColor: green },
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
+    head: [["#", "Defect Description", "Labels & Warning Notice Issued"]],
+    body: defectsArray.length > 0
+      ? defectsArray.map((d: any, i: number) => [
+          String(d.number || i + 1),
+          d.description || "-",
+          yn(d.warning_labels_issued),
+        ])
+      : [["—", "No defects identified", "—"]],
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: {
+      0: { cellWidth: 10, halign: "center" },
+      2: { cellWidth: 45, halign: "center" },
+    },
+    margin: { left: marginL, right: marginR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 3;
+
+  // ── 6. Gas Installation Safety Checks ──
+  if (y > 250) { doc.addPage(); y = 15; }
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
     head: [["Gas Installation Safety Checks", "Result"]],
     body: [
       ["Emergency Control Accessible", yn(data.emergency_control_accessible)],
       ["Gas Tightness Satisfactory", yn(data.gas_tightness_satisfactory)],
-      ["Pipework Visual Inspection Satisfactory", yn(data.pipework_visual_satisfactory)],
-      ["Equipotential Bonding", yn(data.equipotential_bonding)],
     ],
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 100 }, 1: { halign: "center" } },
+    margin: { left: marginL, right: marginR },
   });
-  y = (doc as any).lastAutoTable.finalY + 4;
+  y = (doc as any).lastAutoTable.finalY + 3;
 
-  // 7. Comments
-  if (data.comments) {
-    if (y > 250) { doc.addPage(); y = 15; }
+  // ── 7. Next Inspection Due ──
+  if (data.next_inspection_due) {
+    if (y > 260) { doc.addPage(); y = 15; }
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Comments:", 14, y);
-    doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(data.comments, 180);
-    doc.text(lines, 14, y + 6);
-    y += 6 + lines.length * 5;
-  }
-
-  // 8. Signatures
-  y += 8;
-  if (y > 250) { doc.addPage(); y = 15; }
-  autoTable(doc, {
-    startY: y, theme: "grid", headStyles: { fillColor: dark },
-    head: [["Signatures", ""]],
-    body: [
-      ["Engineer (Printed Name)", data.issued_by_name || "-"],
-      ["Date", data.inspection_date],
-      ["Customer / Representative (Printed Name)", data.received_by_name || "-"],
-    ],
-    styles: { fontSize: 9 },
-  });
-  y = (doc as any).lastAutoTable.finalY + 4;
-
-  // 9. Next Inspection Due
-  if (data.next_inspection_due) {
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Next Inspection Due: ${data.next_inspection_due}`, 14, y + 4);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.text(`Next Inspection Due: ${data.next_inspection_due}`, marginL, y + 4);
+    doc.setTextColor(0, 0, 0);
     y += 10;
   }
 
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(128);
-  doc.text("Generated by FTrack Gas Compliance", 105, 290, { align: "center" });
+  // ── 8. Comments ──
+  if (data.comments) {
+    if (y > 250) { doc.addPage(); y = 15; }
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Comments:", marginL, y);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(data.comments, contentWidth);
+    doc.text(lines, marginL, y + 5);
+    y += 5 + lines.length * 4;
+  }
+
+  // ── 9. Signatures ──
+  y += 4;
+  if (y > 240) { doc.addPage(); y = 15; }
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 8, fontStyle: "bold", halign: "left" },
+    head: [["Signatures", ""]],
+    body: [
+      ["Issued By — Signed", ""],
+      ["Issued By — Print Name", data.issued_by_name || "-"],
+      ["Received By — Signed", ""],
+      ["Received By — Print Name", data.received_by_name || "-"],
+      ["Date", data.inspection_date],
+    ],
+    styles: { fontSize: 8, cellPadding: 3 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } },
+    margin: { left: marginL, right: marginR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 4;
+
+  // ── Footer ──
+  doc.setFontSize(7);
+  doc.setTextColor(128, 128, 128);
+  doc.text("Generated by FTrack Gas Compliance", pageWidth / 2, 290, { align: "center" });
 
   return doc;
 }
