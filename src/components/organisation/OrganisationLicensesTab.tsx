@@ -270,6 +270,7 @@ export function OrganisationLicensesTab() {
         toast.success("Natural Gas add-on removed");
       }
       await fetchGasAddonLicenses();
+      await fetchAllMembers();
       // Sync quantity to Stripe
       const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
       if (syncError) {
