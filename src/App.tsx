@@ -40,6 +40,7 @@ import Suppliers from "./pages/settings/Suppliers";
 import CheckoutRedirect from "./pages/CheckoutRedirect";
 import SetupCompany from "./pages/SetupCompany";
 import EnterpriseContact from "./pages/EnterpriseContact";
+import GasCertificates from "./pages/GasCertificates";
 
 const queryClient = new QueryClient();
 
@@ -200,6 +201,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gas-certificates"
+              element={
+                <ProtectedRoute requireLicense>
+                  <GasCertificates />
                 </ProtectedRoute>
               }
             />

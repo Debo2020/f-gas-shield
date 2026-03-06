@@ -16,12 +16,14 @@ import {
   Building,
   Gauge,
   Snowflake,
+  Flame,
   Users,
   LogOut,
   Menu,
   X,
   Download,
 } from "lucide-react";
+import { useGasAddon } from "@/hooks/useGasAddon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
 import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
@@ -49,13 +51,17 @@ const storesManagerNavigation = [
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { profile, signOut, hasRole } = useAuth();
+  const { hasGasAddon } = useGasAddon();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Stores managers get limited navigation
   const isStoresManagerOnly = hasRole("stores_manager") && !hasRole("owner") && !hasRole("manager") && !hasRole("engineer");
-  const navigation = isStoresManagerOnly ? storesManagerNavigation : fullNavigation;
+  const baseNav = isStoresManagerOnly ? storesManagerNavigation : fullNavigation;
+  const navigation = hasGasAddon
+    ? [...baseNav.slice(0, 3), { name: "Gas Certs", href: "/gas-certificates", icon: Flame }, ...baseNav.slice(3)]
+    : baseNav;
 
   const handleSignOut = async () => {
     await signOut();
