@@ -94,10 +94,17 @@ export function OrganisationLicensesTab() {
     createCheckout,
     openCustomerPortal,
   } = useSubscription();
+  const { companyHasAddon } = useGasAddon();
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
+
+  // Gas addon licenses state
+  const [gasAddonUserIds, setGasAddonUserIds] = useState<Set<string>>(new Set());
+  const [gasAddonLicenseMap, setGasAddonLicenseMap] = useState<Record<string, string>>({});
+  const [includeGasAddon, setIncludeGasAddon] = useState(false);
+  const [togglingGas, setTogglingGas] = useState<string | null>(null);
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [addLicensesDialogOpen, setAddLicensesDialogOpen] = useState(false);
