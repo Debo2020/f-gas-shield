@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { GasCertificateType } from "@/lib/gas-addons";
@@ -12,7 +12,7 @@ import { ApplianceFields, ApplianceData, emptyAppliance } from "./ApplianceField
 import { WarningNoticeFields } from "./WarningNoticeFields";
 import { TestingPurgingFields } from "./TestingPurgingFields";
 import { toast } from "sonner";
-import { Loader2, Plus, ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, ArrowRight, Save, Trash2 } from "lucide-react";
 
 interface GasCertificateFormProps {
   certificateType: GasCertificateType;
@@ -20,10 +20,16 @@ interface GasCertificateFormProps {
   onCancel: () => void;
 }
 
+interface DefectRow {
+  number: number;
+  description: string;
+  warning_labels_issued: boolean;
+}
+
 const STEPS = {
   landlord_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
   homeowner_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
-  nd_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
+  nd_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign"],
   nd_gas_testing_purging: ["Job Details", "Testing & Purging", "Comments & Sign"],
   gas_warning_notice: ["Job Details", "Warning Details", "Comments & Sign"],
 };
@@ -34,6 +40,40 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const [saving, setSaving] = useState(false);
 
   const steps = STEPS[certificateType];
+
+  // Company/Installer info (auto-populated, read-only for ND)
+  const [companyInfo, setCompanyInfo] = useState({
+    company_name: "", company_address: "", company_phone: "",
+    gas_safe_reg_no: "", engineer_name: "", gas_safe_id_card_no: "",
+  });
+
+  // Fetch company & profile details for ND Gas Safety
+  useEffect(() => {
+    if (certificateType !== "nd_gas_safety" || !profile?.company_id) return;
+    const fetchCompanyInfo = async () => {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("name, address, phone, gas_safe_reg_no")
+        .eq("id", profile.company_id!)
+        .single();
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("full_name, gas_safe_id_card_no")
+        .eq("user_id", user!.id)
+        .single();
+
+      setCompanyInfo({
+        company_name: company?.name || "",
+        company_address: company?.address || "",
+        company_phone: company?.phone || "",
+        gas_safe_reg_no: (company as any)?.gas_safe_reg_no || "",
+        engineer_name: prof?.full_name || "",
+        gas_safe_id_card_no: (prof as any)?.gas_safe_id_card_no || "",
+      });
+    };
+    fetchCompanyInfo();
+  }, [certificateType, profile?.company_id, user?.id]);
 
   // Form state
   const [jobDetails, setJobDetails] = useState({
@@ -51,6 +91,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
 
   const [appliances, setAppliances] = useState<ApplianceData[]>([{ ...emptyAppliance }]);
 
+  const [defects, setDefects] = useState<DefectRow[]>([]);
+
   const [warningData, setWarningData] = useState({
     classification: "", issue_type: "",
     actions_taken: "", actions_required: "",
@@ -65,6 +107,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
 
   const [comments, setComments] = useState("");
   const [issuedByName, setIssuedByName] = useState(profile?.full_name || "");
+  const [receivedByName, setReceivedByName] = useState("");
 
   const handleApplianceChange = (index: number, data: ApplianceData) => {
     const updated = [...appliances];
@@ -94,6 +137,13 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
       if (["landlord_gas_safety", "homeowner_gas_safety", "nd_gas_safety"].includes(certificateType)) {
         Object.assign(certData, gasChecks);
       }
+
+      // ND Gas Safety specific: defects + received_by
+      if (certificateType === "nd_gas_safety") {
+        certData.defects = defects.length > 0 ? defects : [];
+        certData.received_by_name = receivedByName || null;
+      }
+
       if (certificateType === "gas_warning_notice") {
         Object.assign(certData, warningData);
       }
@@ -129,16 +179,21 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
           make: a.make || null,
           model: a.model || null,
           flue_type: a.flue_type || null,
+          landlord_appliance: a.landlord_appliance,
           appliance_inspected: a.appliance_inspected,
           operating_pressure_mbar: a.operating_pressure_mbar ? Number(a.operating_pressure_mbar) : null,
           heat_input_kw: a.heat_input_kw ? Number(a.heat_input_kw) : null,
+          high_co_ratio: a.high_co_ratio ? Number(a.high_co_ratio) : null,
           high_co_ppm: a.high_co_ppm ? Number(a.high_co_ppm) : null,
           high_co2_percent: a.high_co2_percent ? Number(a.high_co2_percent) : null,
+          low_co_ratio: a.low_co_ratio ? Number(a.low_co_ratio) : null,
           low_co_ppm: a.low_co_ppm ? Number(a.low_co_ppm) : null,
           low_co2_percent: a.low_co2_percent ? Number(a.low_co2_percent) : null,
           safety_devices_correct: a.safety_devices_correct,
           ventilation_satisfactory: a.ventilation_satisfactory,
           visual_condition_satisfactory: a.visual_condition_satisfactory,
+          flue_performance_test: a.flue_performance_test || null,
+          appliance_serviced: a.appliance_serviced,
           appliance_safe_to_use: a.appliance_safe_to_use,
         }));
 
@@ -160,6 +215,25 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const renderStepContent = () => {
     const currentStepName = steps[step];
 
+    if (currentStepName === "Company / Installer") {
+      return (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Company / Installer Details</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">Auto-populated from your company and profile settings. Update via Settings if needed.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><Label className="text-xs">Engineer Name</Label><Input value={companyInfo.engineer_name} readOnly className="bg-muted" /></div>
+              <div><Label className="text-xs">Company Name</Label><Input value={companyInfo.company_name} readOnly className="bg-muted" /></div>
+              <div className="md:col-span-2"><Label className="text-xs">Company Address</Label><Input value={companyInfo.company_address} readOnly className="bg-muted" /></div>
+              <div><Label className="text-xs">Telephone</Label><Input value={companyInfo.company_phone} readOnly className="bg-muted" /></div>
+              <div><Label className="text-xs">Gas Safe Registration No.</Label><Input value={companyInfo.gas_safe_reg_no} readOnly className="bg-muted" /></div>
+              <div><Label className="text-xs">ID Card Number</Label><Input value={companyInfo.gas_safe_id_card_no} readOnly className="bg-muted" /></div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (currentStepName === "Job Details") {
       return (
         <div className="space-y-4">
@@ -174,7 +248,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-base">Customer Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Customer / Landlord Details</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div><Label>Name</Label><Input value={jobDetails.customer_name} onChange={e => setJobDetails(d => ({ ...d, customer_name: e.target.value }))} /></div>
               <div><Label>Company</Label><Input value={jobDetails.customer_company} onChange={e => setJobDetails(d => ({ ...d, customer_company: e.target.value }))} /></div>
@@ -190,7 +264,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     if (currentStepName === "Gas Checks") {
       return (
         <Card>
-          <CardHeader><CardTitle className="text-base">Gas Installation Checks</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Gas Installation Safety Checks</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {[
               ["emergency_control_accessible", "Emergency control valve accessible"],
@@ -234,6 +308,58 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
       );
     }
 
+    if (currentStepName === "Defects") {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Defects Identified</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {defects.length === 0 && (
+              <p className="text-sm text-muted-foreground">No defects recorded. Add one if applicable.</p>
+            )}
+            {defects.map((d, i) => (
+              <div key={i} className="border rounded-md p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Defect {d.number}</Label>
+                  <Button variant="ghost" size="icon" onClick={() => setDefects(prev => prev.filter((_, j) => j !== i))}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs">Description</Label>
+                  <Textarea
+                    value={d.description}
+                    onChange={e => {
+                      const updated = [...defects];
+                      updated[i] = { ...updated[i], description: e.target.value };
+                      setDefects(updated);
+                    }}
+                    rows={2}
+                    placeholder="Describe the defect..."
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={d.warning_labels_issued}
+                    onCheckedChange={v => {
+                      const updated = [...defects];
+                      updated[i] = { ...updated[i], warning_labels_issued: !!v };
+                      setDefects(updated);
+                    }}
+                  />
+                  Warning labels issued
+                </label>
+              </div>
+            ))}
+            <Button variant="outline" onClick={() => setDefects(prev => [...prev, { number: prev.length + 1, description: "", warning_labels_issued: false }])}>
+              <Plus className="h-4 w-4 mr-2" /> Add Defect
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (currentStepName === "Warning Details") {
       return (
         <Card>
@@ -259,11 +385,11 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     if (currentStepName === "Comments & Sign") {
       return (
         <Card>
-          <CardHeader><CardTitle className="text-base">Comments & Signature</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Comments & Signatures</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Comments / Defects</Label>
-              <Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="Enter any comments or defect details..." rows={4} />
+              <Label>Comments</Label>
+              <Textarea value={comments} onChange={e => setComments(e.target.value)} placeholder="Enter any comments..." rows={4} />
             </div>
             {certificateType !== "gas_warning_notice" && (
               <div>
@@ -271,9 +397,17 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
                 <Input type="date" value={jobDetails.next_inspection_due} onChange={e => setJobDetails(d => ({ ...d, next_inspection_due: e.target.value }))} />
               </div>
             )}
-            <div>
-              <Label>Issued By (Engineer Name)</Label>
-              <Input value={issuedByName} onChange={e => setIssuedByName(e.target.value)} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Engineer Name (Issued By)</Label>
+                <Input value={issuedByName} onChange={e => setIssuedByName(e.target.value)} />
+              </div>
+              {certificateType === "nd_gas_safety" && (
+                <div>
+                  <Label>Customer / Representative Name (Received By)</Label>
+                  <Input value={receivedByName} onChange={e => setReceivedByName(e.target.value)} placeholder="Name of person receiving certificate" />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -286,7 +420,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   return (
     <div className="space-y-6">
       {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         {steps.map((s, i) => (
           <span key={s} className={i === step ? "text-foreground font-medium" : ""}>
             {i > 0 && <span className="mx-1">›</span>}

@@ -95,9 +95,34 @@ export default function GasCertificates() {
         .eq("certificate_id", cert.id)
         .order("position");
 
+      // For ND Gas Safety, fetch company + engineer info
+      let companyData: any = {};
+      if (cert.certificate_type === "nd_gas_safety" && companyId) {
+        const { data: company } = await supabase
+          .from("companies")
+          .select("name, address, phone, gas_safe_reg_no")
+          .eq("id", companyId)
+          .single();
+
+        const { data: engineer } = await supabase
+          .from("profiles")
+          .select("gas_safe_id_card_no")
+          .eq("user_id", cert.engineer_id)
+          .single();
+
+        companyData = {
+          company_name: company?.name || "",
+          company_address: company?.address || "",
+          company_phone: company?.phone || "",
+          gas_safe_reg_no: (company as any)?.gas_safe_reg_no || "",
+          engineer_gas_safe_id: (engineer as any)?.gas_safe_id_card_no || "",
+        };
+      }
+
       const doc = generateGasCertificatePDF({
         ...cert,
         appliances: appliances || [],
+        ...companyData,
       });
       doc.save(`${cert.certificate_number}.pdf`);
     } catch {
