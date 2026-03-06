@@ -433,6 +433,24 @@ export type Database = {
           },
         ]
       }
+      contact_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           bucket_id: string | null
