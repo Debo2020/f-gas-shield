@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { Check, Loader2, Sparkles, Building2, Users, Phone } from "lucide-react";
+import { Check, Loader2, Sparkles, Building2, Users, Phone, Flame } from "lucide-react";
 import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SUBSCRIPTION_TIERS, formatPrice, SubscriptionTier, getAnnualSavingsPercent } from "@/lib/subscription";
+import { ADDON_MODULES } from "@/lib/gas-addons";
 import { useAuth } from "@/hooks/useAuth";
+import { useGasAddon } from "@/hooks/useGasAddon";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 const tierIcons = {
   basic: Users,
@@ -22,8 +25,10 @@ const tierIcons = {
 export default function Pricing() {
   const { user } = useAuth();
   const { subscribed, tier: currentTier, createCheckout, openCustomerPortal, loading } = useSubscription();
+  const { hasGasAddon } = useGasAddon();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [isAnnual, setIsAnnual] = useState(true);
+  const [addonLoading, setAddonLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleEnterpriseCallback = () => {
@@ -303,6 +308,77 @@ export default function Pricing() {
             })}
           </div>
         )}
+
+        {/* Add-on Modules */}
+        <div className="mt-20 max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <Badge variant="secondary" className="mb-3">Add-on Modules</Badge>
+            <h2 className="text-2xl font-bold mb-2">Extend Your Platform</h2>
+            <p className="text-muted-foreground">Optional modules to add alongside any subscription plan</p>
+          </div>
+
+          <Card className="max-w-2xl mx-auto border-primary/30">
+            <CardHeader className="flex flex-row items-start gap-4">
+              <div className="h-12 w-12 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                <Flame className="h-6 w-6 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="flex items-center gap-2">
+                  {ADDON_MODULES.natural_gas.name}
+                  {hasGasAddon && <Badge variant="secondary">Active</Badge>}
+                </CardTitle>
+                <CardDescription>{ADDON_MODULES.natural_gas.description}</CardDescription>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold">{formatPrice(ADDON_MODULES.natural_gas.price, "GBP")}</span>
+                <span className="text-muted-foreground text-sm">/user/mo</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {ADDON_MODULES.natural_gas.features.map(f => (
+                  <div key={f} className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter>
+              {hasGasAddon ? (
+                <Button variant="outline" className="w-full" onClick={() => navigate("/gas-certificates")}>
+                  Go to Gas Certificates
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  disabled={addonLoading}
+                  onClick={async () => {
+                    if (!user) {
+                      navigate("/auth?redirect=pricing");
+                      return;
+                    }
+                    setAddonLoading(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke("create-addon-checkout", {
+                        body: { priceId: ADDON_MODULES.natural_gas.price_id, quantity: 1 },
+                      });
+                      if (error) throw error;
+                      if (data?.url) window.location.href = data.url;
+                    } catch {
+                      toast.error("Failed to start add-on checkout");
+                    } finally {
+                      setAddonLoading(false);
+                    }
+                  }}
+                >
+                  {addonLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Flame className="h-4 w-4 mr-2" />}
+                  Add to Subscription
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        </div>
 
         {/* FAQ or additional info */}
         <div className="mt-20 text-center">
