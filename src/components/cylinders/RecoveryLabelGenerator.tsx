@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Printer, Download, AlertTriangle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { escapeHtml } from "@/lib/html-escape";
 import type { Database } from "@/integrations/supabase/types";
 
 type Cylinder = Database["public"]["Tables"]["refrigerant_cylinders"]["Row"];
@@ -85,15 +86,18 @@ export function RecoveryLabelGenerator({ cylinder, companyName }: RecoveryLabelG
       </style>
     `;
 
+    const safeCylinderCode = escapeHtml(cylinder.cylinder_code);
+    const labelContent = labelRef.current.innerHTML;
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Recovery Label - ${cylinder.cylinder_code}</title>
+          <title>Recovery Label - ${safeCylinderCode}</title>
           ${styles}
         </head>
         <body>
-          ${labelRef.current.innerHTML}
+          ${labelContent}
         </body>
       </html>
     `);
