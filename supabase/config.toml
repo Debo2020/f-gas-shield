@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.check-addon]
 verify_jwt = false
+
+[functions.update-addon-license-count]
+verify_jwt = false
