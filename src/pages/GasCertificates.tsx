@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useGasAddon } from "@/hooks/useGasAddon";
@@ -14,7 +14,7 @@ import { GasCertificateForm } from "@/components/gas-certificates/GasCertificate
 import { generateGasCertificatePDF } from "@/components/gas-certificates/GasCertificatePDF";
 import { ADDON_MODULES, GasCertificateType } from "@/lib/gas-addons";
 import { Plus, Search, FileText, Download, Loader2, Lock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -22,9 +22,36 @@ type ViewState = "list" | "select-type" | "form";
 
 export default function GasCertificates() {
   const { profile, user } = useAuth();
-  const { hasGasAddon, isLoading: addonLoading } = useGasAddon();
+  const { hasGasAddon, companyHasAddon, isLoading: addonLoading } = useGasAddon();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const syncAttempted = useRef(false);
   const [view, setView] = useState<ViewState>("list");
+
+  // Call check-addon after Stripe checkout redirect or when addon not yet active
+  useEffect(() => {
+    const addonParam = searchParams.get("addon");
+    const shouldSync = addonParam === "success" || (!companyHasAddon && !addonLoading && !syncAttempted.current);
+    if (!shouldSync) return;
+    syncAttempted.current = true;
+
+    const syncAddon = async () => {
+      try {
+        await supabase.functions.invoke("check-addon");
+        queryClient.invalidateQueries({ queryKey: ["gas-addon"] });
+      } catch {
+        // Silent fail
+      }
+      if (addonParam === "success") {
+        const next = new URLSearchParams(searchParams);
+        next.delete("addon");
+        setSearchParams(next, { replace: true });
+        toast.success("Gas add-on activated!");
+      }
+    };
+    syncAddon();
+  }, [searchParams, companyHasAddon, addonLoading]);
   const [selectedType, setSelectedType] = useState<GasCertificateType | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
