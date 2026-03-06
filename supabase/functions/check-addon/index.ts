@@ -82,8 +82,8 @@ serve(async (req) => {
               stripe_subscription_id: sub.id,
               stripe_price_id: item.price.id,
               status: "active",
-              current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+              current_period_start: sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : null,
+              current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
             }, { onConflict: "company_id,addon_type" });
           }
           break;
