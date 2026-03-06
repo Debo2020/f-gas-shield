@@ -45,8 +45,8 @@ const handler = async (req: Request): Promise<Response> => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    const jwtToken = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(jwtToken);
     if (claimsError || !claimsData?.claims) {
       logStep("JWT verification failed", { claimsError });
       return new Response(
