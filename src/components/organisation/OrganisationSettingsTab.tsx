@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OrganisationAddonsTab } from "./OrganisationAddonsTab";
 import { OrganisationLicensesTab } from "./OrganisationLicensesTab";
-import type { EnrichedTeamMember } from "@/hooks/useTeamMembers";
+import type { EnrichedTeamMember, PendingInvitation } from "@/hooks/useTeamMembers";
 
 interface CompanyData {
   id: string;
@@ -23,10 +23,11 @@ interface CompanyData {
 
 interface OrganisationSettingsTabProps {
   members: EnrichedTeamMember[];
+  invitations: PendingInvitation[];
   refetch: () => Promise<void>;
 }
 
-export function OrganisationSettingsTab({ members, refetch }: OrganisationSettingsTabProps) {
+export function OrganisationSettingsTab({ members, invitations, refetch }: OrganisationSettingsTabProps) {
   const { profile, hasRole } = useAuth();
   const [company, setCompany] = useState<CompanyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -323,7 +324,7 @@ export function OrganisationSettingsTab({ members, refetch }: OrganisationSettin
       </div>
 
       {/* Full License Management - uses shared team data */}
-      <OrganisationLicensesTab members={members} refetch={refetch} />
+      <OrganisationLicensesTab members={members} invitations={invitations} refetch={refetch} />
 
       {/* Add-on Modules */}
       <OrganisationAddonsTab />
