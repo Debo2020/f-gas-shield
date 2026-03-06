@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Send,
   Building,
+  Flame,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useLicenses, type License } from "@/hooks/useLicenses";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useGasAddon } from "@/hooks/useGasAddon";
 import { SUBSCRIPTION_TIERS, type SubscriptionTier } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -91,10 +94,17 @@ export function OrganisationLicensesTab() {
     createCheckout,
     openCustomerPortal,
   } = useSubscription();
+  const { companyHasAddon } = useGasAddon();
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
+
+  // Gas addon licenses state
+  const [gasAddonUserIds, setGasAddonUserIds] = useState<Set<string>>(new Set());
+  const [gasAddonLicenseMap, setGasAddonLicenseMap] = useState<Record<string, string>>({});
+  const [includeGasAddon, setIncludeGasAddon] = useState(false);
+  const [togglingGas, setTogglingGas] = useState<string | null>(null);
 
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [addLicensesDialogOpen, setAddLicensesDialogOpen] = useState(false);
@@ -169,6 +179,68 @@ export function OrganisationLicensesTab() {
     fetchUnlicensedMembers();
   }, [profile?.company_id, licenses]);
 
+  // Fetch gas addon licenses for company
+  const fetchGasAddonLicenses = useCallback(async () => {
+    if (!profile?.company_id) return;
+    try {
+      const { data, error } = await supabase
+        .from("addon_licenses")
+        .select("id, user_id")
+        .eq("company_id", profile.company_id)
+        .eq("addon_type", "natural_gas")
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      const ids = new Set<string>();
+      const map: Record<string, string> = {};
+      data?.forEach((row) => {
+        if (row.user_id) {
+          ids.add(row.user_id);
+          map[row.user_id] = row.id;
+        }
+      });
+      setGasAddonUserIds(ids);
+      setGasAddonLicenseMap(map);
+    } catch (err) {
+      console.error("Error fetching gas addon licenses:", err);
+    }
+  }, [profile?.company_id]);
+
+  useEffect(() => {
+    fetchGasAddonLicenses();
+  }, [fetchGasAddonLicenses, licenses]);
+
+  const handleToggleGasAddon = async (license: License, checked: boolean) => {
+    if (!profile?.company_id || !license.user_id) return;
+    setTogglingGas(license.id);
+    try {
+      if (checked) {
+        const { error } = await supabase.from("addon_licenses").insert({
+          company_id: profile.company_id,
+          addon_type: "natural_gas" as any,
+          user_id: license.user_id,
+          status: "active",
+          assigned_by: profile.user_id,
+        });
+        if (error) throw error;
+        toast.success("Natural Gas add-on enabled");
+      } else {
+        const addonId = gasAddonLicenseMap[license.user_id];
+        if (addonId) {
+          const { error } = await supabase.from("addon_licenses").delete().eq("id", addonId);
+          if (error) throw error;
+        }
+        toast.success("Natural Gas add-on removed");
+      }
+      await fetchGasAddonLicenses();
+    } catch (err) {
+      toast.error("Failed to update gas add-on");
+    } finally {
+      setTogglingGas(null);
+    }
+  };
+
   const handleRefreshSubscription = async () => {
     setIsRefreshing(true);
     try {
@@ -209,9 +281,25 @@ export function OrganisationLicensesTab() {
     // Assign license to existing user
     const success = await assignLicense(selectedUserId, assignType, true);
     if (success) {
+      // If gas addon checkbox was ticked, also assign gas addon license
+      if (includeGasAddon && companyHasAddon) {
+        try {
+          await supabase.from("addon_licenses").insert({
+            company_id: profile.company_id,
+            addon_type: "natural_gas" as any,
+            user_id: selectedUserId,
+            status: "active",
+            assigned_by: profile.user_id,
+          });
+          await fetchGasAddonLicenses();
+        } catch (err) {
+          console.error("Failed to assign gas addon:", err);
+        }
+      }
       setAssignDialogOpen(false);
       setSelectedUserId("");
       setAssignType("engineer");
+      setIncludeGasAddon(false);
     }
     setIsSubmitting(false);
   };
@@ -464,6 +552,7 @@ export function OrganisationLicensesTab() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Type</TableHead>
+                  {companyHasAddon && <TableHead>Gas Add-on</TableHead>}
                   <TableHead>Status</TableHead>
                   <TableHead>Assigned</TableHead>
                   {canManage && <TableHead className="text-right">Actions</TableHead>}
@@ -485,6 +574,25 @@ export function OrganisationLicensesTab() {
                         {license.license_type}
                       </Badge>
                     </TableCell>
+                    {companyHasAddon && (
+                      <TableCell>
+                        {license.user_id && license.status === "active" ? (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={gasAddonUserIds.has(license.user_id)}
+                              onCheckedChange={(checked) => handleToggleGasAddon(license, !!checked)}
+                              disabled={!canManage || togglingGas === license.id}
+                            />
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Flame className="h-3 w-3" />
+                              +£15/mo
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell>{getStatusBadge(license.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(license.created_at), "dd MMM yyyy")}
@@ -575,6 +683,22 @@ export function OrganisationLicensesTab() {
                     </SelectContent>
                   </Select>
                 </div>
+                {companyHasAddon && (
+                  <div className="flex items-center space-x-2 rounded-lg border p-4">
+                    <Checkbox
+                      id="include-gas"
+                      checked={includeGasAddon}
+                      onCheckedChange={(checked) => setIncludeGasAddon(!!checked)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="include-gas" className="flex items-center gap-2 cursor-pointer">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        Include Natural Gas Compliance
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">+£15/user/month</p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -1,19 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { Building2, Upload, X, ImageIcon, Settings, CreditCard, Clock, ExternalLink, Loader2 } from "lucide-react";
+import { Building2, Upload, X, ImageIcon, Settings, CreditCard } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { CompanyDetailsForm, type CompanyFormValues } from "@/components/company/CompanyDetailsForm";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
-import { SUBSCRIPTION_TIERS } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OrganisationAddonsTab } from "./OrganisationAddonsTab";
-import { format } from "date-fns";
+import { OrganisationLicensesTab } from "./OrganisationLicensesTab";
 
 interface CompanyData {
   id: string;
@@ -30,14 +26,11 @@ export function OrganisationSettingsTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
-
-  const { tier, subscribed, licenseCount, licensesUsed, subscriptionEnd, loading: subLoading, openCustomerPortal } = useSubscription();
 
   useEffect(() => {
     const fetchCompany = async () => {
@@ -323,81 +316,8 @@ export function OrganisationSettingsTab() {
         </p>
       </div>
 
-      {/* Main Subscription Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {tier ? SUBSCRIPTION_TIERS[tier]?.name || "Subscription" : "No Active Plan"}
-                </CardTitle>
-                <CardDescription>
-                  {subscribed ? "Your current subscription plan" : "Subscribe to get started"}
-                </CardDescription>
-              </div>
-            </div>
-            <Badge variant={subscribed ? "default" : "secondary"}>
-              {subscribed ? "Active" : "Inactive"}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {subLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading subscription…</span>
-            </div>
-          ) : subscribed && tier ? (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Application Licenses</span>
-                  <span className="font-medium">
-                    {licensesUsed} / {licenseCount} used
-                  </span>
-                </div>
-                <Progress value={licenseCount > 0 ? (licensesUsed / licenseCount) * 100 : 0} className="h-2" />
-              </div>
-
-              {subscriptionEnd && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>Renews {format(new Date(subscriptionEnd), "dd MMM yyyy")}</span>
-                </div>
-              )}
-
-              {canManage && (
-                <Button
-                  variant="outline"
-                  className="mt-2"
-                  disabled={portalLoading}
-                  onClick={async () => {
-                    setPortalLoading(true);
-                    try {
-                      await openCustomerPortal();
-                    } catch {
-                      toast.error("Failed to open subscription portal");
-                    } finally {
-                      setPortalLoading(false);
-                    }
-                  }}
-                >
-                  {portalLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-                  Manage Subscription
-                </Button>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No active subscription found. Contact your account owner.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {/* Full License Management */}
+      <OrganisationLicensesTab />
 
       {/* Add-on Modules */}
       <OrganisationAddonsTab />
