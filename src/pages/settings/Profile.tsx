@@ -224,6 +224,19 @@ export default function Profile() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="gas_safe_id_card_no"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gas Safe ID Card Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g. 123456" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   <div className="flex justify-end">
