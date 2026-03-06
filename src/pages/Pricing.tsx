@@ -364,7 +364,7 @@ export default function Pricing() {
                         body: { priceId: ADDON_MODULES.natural_gas.price_id, quantity: 1 },
                       });
                       if (error) throw error;
-                      if (data?.url) window.location.href = data.url;
+                      if (data?.url) window.open(data.url, "_blank");
                     } catch {
                       toast.error("Failed to start add-on checkout");
                     } finally {
