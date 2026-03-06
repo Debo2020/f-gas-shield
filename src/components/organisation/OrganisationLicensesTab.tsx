@@ -447,10 +447,10 @@ export function OrganisationLicensesTab() {
               Billing
             </Button>
           )}
-          {canManage && stats.available > 0 && (
+          {canManage && (
             <Button size="sm" onClick={() => setAssignDialogOpen(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Assign License
+              Manage Licenses
             </Button>
           )}
         </div>
