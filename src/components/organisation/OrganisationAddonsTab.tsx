@@ -52,7 +52,7 @@ import { ADDON_MODULES } from "@/lib/gas-addons";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Separator } from "@/components/ui/separator";
+
 
 
 interface TeamMember {
