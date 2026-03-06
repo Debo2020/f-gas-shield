@@ -55,10 +55,11 @@ import { format } from "date-fns";
 
 
 
-interface TeamMember {
-  user_id: string;
-  full_name: string;
+interface SelectableMember {
+  id: string; // user_id for members, email for invitations
+  label: string;
   email: string;
+  type: "member" | "invitation";
 }
 
 interface AddonLicense {
@@ -138,29 +139,31 @@ export function OrganisationAddonsTab() {
     enabled: !!companyId,
   });
 
-  // Fetch team members without gas addon license
-  const { data: unlicensedMembers = [], isLoading: membersLoading } = useQuery({
+  const { data: selectableMembers = [], isLoading: membersLoading } = useQuery({
     queryKey: ["unlicensed-gas-members", companyId, licenses],
-    queryFn: async () => {
+    queryFn: async (): Promise<SelectableMember[]> => {
       if (!companyId) return [];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .eq("company_id", companyId);
 
-      if (!profiles) return [];
+      const [profilesRes, invitationsRes, ownerRolesRes] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, email").eq("company_id", companyId),
+        supabase.from("team_invitations").select("email, role").eq("company_id", companyId).is("accepted_at", null),
+        supabase.from("user_roles").select("user_id").eq("role", "owner"),
+      ]);
 
       const licensedUserIds = new Set(licenses.filter(l => l.user_id).map(l => l.user_id));
-      // Exclude owners from needing licenses
-      const { data: ownerRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner");
-      const ownerIds = new Set(ownerRoles?.map(r => r.user_id) || []);
+      const licensedEmails = new Set(licenses.filter(l => l.email).map(l => l.email?.toLowerCase()));
+      const ownerIds = new Set(ownerRolesRes.data?.map(r => r.user_id) || []);
 
-      return profiles.filter(
-        p => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id)
-      ) as TeamMember[];
+      const members: SelectableMember[] = (profilesRes.data || [])
+        .filter(p => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id))
+        .map(p => ({ id: p.user_id, label: p.full_name, email: p.email, type: "member" as const }));
+
+      const invitations: SelectableMember[] = (invitationsRes.data || [])
+        .filter(i => !licensedEmails.has(i.email?.toLowerCase()))
+        .filter(i => !members.some(m => m.email.toLowerCase() === i.email.toLowerCase()))
+        .map(i => ({ id: i.email, label: i.email, email: i.email, type: "invitation" as const }));
+
+      return [...members, ...invitations];
     },
     enabled: !!companyId && companyHasAddon,
   });
@@ -173,17 +176,22 @@ export function OrganisationAddonsTab() {
     if (!selectedUserId || !companyId || !user?.id) return;
     setIsSubmitting(true);
     try {
-      const member = unlicensedMembers.find(m => m.user_id === selectedUserId);
-      const { error } = await supabase.from("addon_licenses").insert({
+      const selected = selectableMembers.find(m => m.id === selectedUserId);
+      const insertData: any = {
         company_id: companyId,
         addon_type: "natural_gas" as any,
-        user_id: selectedUserId,
-        email: member?.email || null,
         status: "active",
         assigned_by: user.id,
-      });
+      };
+      if (selected?.type === "member") {
+        insertData.user_id = selected.id;
+        insertData.email = selected.email;
+      } else {
+        insertData.email = selected?.email || null;
+      }
+      const { error } = await supabase.from("addon_licenses").insert(insertData);
       if (error) throw error;
-      toast.success(`Gas add-on license assigned to ${member?.full_name || "member"}`);
+      toast.success(`Gas add-on license assigned to ${selected?.label || "member"}`);
       setAssignDialogOpen(false);
       setSelectedUserId("");
       refetch();
@@ -471,14 +479,21 @@ export function OrganisationAddonsTab() {
                 <SelectValue placeholder="Select team member..." />
               </SelectTrigger>
               <SelectContent>
-                {unlicensedMembers.length === 0 ? (
+                {selectableMembers.length === 0 ? (
                   <SelectItem value="none" disabled>
                     All team members already have licenses
                   </SelectItem>
                 ) : (
-                  unlicensedMembers.map((member) => (
-                    <SelectItem key={member.user_id} value={member.user_id}>
-                      {member.full_name} ({member.email})
+                  selectableMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="flex items-center gap-2">
+                        {m.label}
+                        {m.type === "invitation" && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/30 text-amber-600 bg-amber-500/10">
+                            Invited
+                          </Badge>
+                        )}
+                      </span>
                     </SelectItem>
                   ))
                 )}
