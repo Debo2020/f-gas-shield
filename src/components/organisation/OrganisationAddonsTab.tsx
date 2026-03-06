@@ -54,7 +54,7 @@ import { ADDON_MODULES } from "@/lib/gas-addons";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+
 
 interface TeamMember {
   user_id: string;
@@ -78,7 +78,7 @@ interface AddonLicense {
 export function OrganisationAddonsTab() {
   const { hasRole, profile, user } = useAuth();
   const { companyHasAddon, addon } = useGasAddon();
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
 
   const isOwner = hasRole("owner");
@@ -100,6 +100,7 @@ export function OrganisationAddonsTab() {
     sync();
   }, [companyHasAddon, canManage, companyId]);
 
+  const [addonLoading, setAddonLoading] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [revokeConfirmOpen, setRevokeConfirmOpen] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<AddonLicense | null>(null);
@@ -309,7 +310,24 @@ export function OrganisationAddonsTab() {
 
           {!companyHasAddon && (
             <div className="pt-2">
-              <Button onClick={() => navigate("/pricing")}>
+              <Button
+                disabled={addonLoading}
+                onClick={async () => {
+                  setAddonLoading(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke("create-addon-checkout", {
+                      body: { priceId: ADDON_MODULES.natural_gas.price_id, quantity: 1 },
+                    });
+                    if (error) throw error;
+                    if (data?.url) window.open(data.url, "_blank");
+                  } catch {
+                    toast.error("Failed to start add-on checkout");
+                  } finally {
+                    setAddonLoading(false);
+                  }
+                }}
+              >
+                {addonLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Flame className="h-4 w-4 mr-2" />}
                 Subscribe to Add-on
               </Button>
             </div>
