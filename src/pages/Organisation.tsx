@@ -134,12 +134,8 @@ export default function Organisation() {
             </TabsContent>
           )}
 
-          {/* Add-ons Tab */}
-          {accessibleTabs.some((t) => t.id === "addons") && (
-            <TabsContent value="addons">
-              <OrganisationAddonsTab />
-            </TabsContent>
-          )}
+
+
 
           {/* Documents Tab */}
           {accessibleTabs.some((t) => t.id === "documents") && (
