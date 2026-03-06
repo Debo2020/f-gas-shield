@@ -136,7 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-
+    if (!license.email) {
       return new Response(
         JSON.stringify({ error: "License has no email address" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
