@@ -479,14 +479,21 @@ export function OrganisationAddonsTab() {
                 <SelectValue placeholder="Select team member..." />
               </SelectTrigger>
               <SelectContent>
-                {unlicensedMembers.length === 0 ? (
+                {selectableMembers.length === 0 ? (
                   <SelectItem value="none" disabled>
                     All team members already have licenses
                   </SelectItem>
                 ) : (
-                  unlicensedMembers.map((member) => (
-                    <SelectItem key={member.user_id} value={member.user_id}>
-                      {member.full_name} ({member.email})
+                  selectableMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="flex items-center gap-2">
+                        {m.label}
+                        {m.type === "invitation" && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/30 text-amber-600 bg-amber-500/10">
+                            Invited
+                          </Badge>
+                        )}
+                      </span>
                     </SelectItem>
                   ))
                 )}
