@@ -54,7 +54,7 @@ import { ADDON_MODULES } from "@/lib/gas-addons";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+
 
 interface TeamMember {
   user_id: string;
