@@ -1,49 +1,77 @@
 
 
-# Natural Gas Compliance Add-on -- Current Status
+# Add-on Management via Organisation Module
 
-The add-on is **already fully implemented** across database, Stripe, edge functions, forms, PDF generation, navigation, and pricing UI. Here is the complete inventory:
+## Overview
+Move the Natural Gas add-on access control from a simple company-level toggle to a per-user licensing model managed through a new "Add-ons" tab in the Organisation hub. Owners/managers can purchase gas add-on licenses, assign them to specific team members, and manage them alongside existing platform licenses.
 
-## What's Built
+## Database Changes
 
-| Layer | Component | Status |
-|---|---|---|
-| **Database** | `gas_certificates`, `gas_certificate_appliances`, `company_addons` tables with RLS | Done |
-| **Database** | Auto-numbering trigger (`LGSR-`, `HGSR-`, `NDGS-`, `NDTP-`, `GWN-`) | Done |
-| **Stripe** | Product `prod_U66CcCxINGyl6y`, Price `price_1T7u0OF9KjzL48NkyYDPnOqO` (£15/mo) | Done |
-| **Edge Functions** | `create-addon-checkout` (Stripe session) | Done |
-| **Edge Functions** | `check-addon` (verify & upsert subscription status) | Done |
-| **Config** | `src/lib/gas-addons.ts` (module config, cert types, pricing) | Done |
-| **Hook** | `src/hooks/useGasAddon.ts` (checks `company_addons` table) | Done |
-| **UI -- Pricing** | Add-on module section in `Pricing.tsx` and `PricingSection.tsx` | Done |
-| **UI -- Navigation** | Conditional "Gas Certs" nav item in `AppLayout.tsx` | Done |
-| **UI -- List Page** | `GasCertificates.tsx` with search, type filter, PDF download | Done |
-| **UI -- Type Selector** | `CertificateTypeSelector.tsx` with 5 certificate type cards | Done |
-| **UI -- Form** | `GasCertificateForm.tsx` (4-step: Job Details → Gas Checks → Appliances → Comments & Sign) | Done |
-| **UI -- Appliances** | `ApplianceFields.tsx` (combustion readings, safety checks) | Done |
-| **UI -- Warning** | `WarningNoticeFields.tsx` (classification, RIDDOR) | Done |
-| **UI -- Testing** | `TestingPurgingFields.tsx` (strength/tightness/purge) | Done |
-| **PDF** | `GasCertificatePDF.tsx` (jsPDF + autotable) | Done |
-| **Route** | `/gas-certificates` in `App.tsx` (protected, requires license) | Done |
+### New table: `addon_licenses`
+Tracks per-user assignment of add-on licenses (mirrors `user_licenses` pattern):
+- `id`, `company_id`, `addon_type` (addon_type enum), `user_id` (nullable, for unassigned), `email` (nullable)
+- `status` (active, disabled, pending), `assigned_by`, `assigned_at`, `created_at`, `updated_at`
+- RLS: company_id-scoped, owners/managers can create/update, owners can delete, all company members can view
 
-## What's Required to Use It
+### Modify `useGasAddon` hook
+Currently checks if the **company** has the add-on active. Change it to also check if the **current user** has an assigned gas add-on license. The company-level `company_addons` record still gates overall availability, but individual access requires a license row in `addon_licenses`.
 
-The module is fully functional. To activate it for a company, one of these paths applies:
+## Organisation Module Changes
 
-1. **Production flow**: A user clicks "Add to Subscription" on the Pricing page → completes Stripe checkout → the `check-addon` edge function upserts a row in `company_addons` with `status = 'active'` → the nav item appears and certificates become accessible.
+### New tab: "Add-ons" (Flame icon)
+- Position it after Suppliers, before Documents in `TAB_CONFIG`
+- Accessible to: `owner`, `manager`
+- Shows the Natural Gas add-on card with:
+  - Current subscription status (from `company_addons`)
+  - License count stats (total purchased, assigned, available)
+  - "Subscribe" button if not yet subscribed (triggers `create-addon-checkout`)
+  - License assignment table (same pattern as `OrganisationLicensesTab`)
+  - Assign/revoke gas licenses to team members
 
-2. **Testing/manual activation**: Insert a row directly into the `company_addons` table with your `company_id`, `addon_type = 'natural_gas'`, and `status = 'active'`.
+### New component: `OrganisationAddonsTab.tsx`
+- Reads `company_addons` for subscription status
+- Reads `addon_licenses` for per-user assignments
+- Shows add-on card with features list, price, and status
+- License management table: user name, email, status, assign/revoke actions
+- "Assign License" dialog: dropdown of unlicensed team members
+- "Add Licenses" button: calls `update-license-count` or equivalent for addon quantity
 
-## Potential Enhancements (not blockers)
+## Navigation Changes
 
-These are optional improvements you may want in the future but are **not required** for the add-on to function:
+### `AppLayout.tsx`
+Update the gas certs nav condition: instead of just `hasGasAddon` (company-level), check if the **current user** has a gas addon license OR is an owner/manager of a company with the addon active.
 
-- **Edit existing draft certificates** before issuing
-- **Digital signature capture** (canvas-based signature pad)
-- **Company logo/branding** on PDF output (fetching from `companies.logo_url`)
-- **PDF storage** to the `certificates` storage bucket after generation
-- **Annual pricing toggle** for the add-on (currently monthly only in Stripe)
-- **More detailed PDF layout** matching the exact formatting of the uploaded example documents
+### `useGasAddon` hook update
+```typescript
+// Returns both company-level and user-level status
+return {
+  hasGasAddon: companyAddonActive && (userHasLicense || isOwner),
+  companyHasAddon: companyAddonActive,
+  userLicense: userAddonLicense,
+};
+```
 
-No code changes are needed. The add-on is complete and ready for end-to-end testing.
+## Files to Create
+| File | Purpose |
+|---|---|
+| `src/components/organisation/OrganisationAddonsTab.tsx` | Add-ons management tab with subscription + per-user license assignment |
+
+## Files to Modify
+| File | Changes |
+|---|---|
+| `src/pages/Organisation.tsx` | Add "Add-ons" tab to TAB_CONFIG, import and render OrganisationAddonsTab |
+| `src/hooks/useGasAddon.ts` | Add per-user license check alongside company-level check |
+| `src/components/layout/AppLayout.tsx` | Update nav condition for gas certs visibility |
+| `src/pages/GasCertificates.tsx` | Update paywall to mention per-user licensing |
+
+## Migration SQL
+- Create `addon_licenses` table with RLS policies
+- Policies follow same pattern as `user_licenses`: company_id-scoped, owner/manager can manage
+
+## Implementation Order
+1. Database migration: create `addon_licenses` table with RLS
+2. Update `useGasAddon` hook to check per-user licenses
+3. Create `OrganisationAddonsTab` component
+4. Add "Add-ons" tab to Organisation page
+5. Update navigation and paywall logic
 
