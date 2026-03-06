@@ -70,6 +70,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import type { EnrichedTeamMember } from "@/hooks/useTeamMembers";
+
 interface TeamMemberWithLicense {
   user_id: string;
   full_name: string;
@@ -81,7 +83,12 @@ interface TeamMemberWithLicense {
   hasGasAddon: boolean;
 }
 
-export function OrganisationLicensesTab() {
+interface OrganisationLicensesTabProps {
+  members: EnrichedTeamMember[];
+  refetch: () => Promise<void>;
+}
+
+export function OrganisationLicensesTab({ members: sharedMembers, refetch: sharedRefetch }: OrganisationLicensesTabProps) {
   const { hasRole, profile, user } = useAuth();
   const {
     licenses,
