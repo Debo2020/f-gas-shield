@@ -2,6 +2,7 @@ import { MapPin, Phone, Mail, User, ChevronRight, Building2 } from "lucide-react
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Site {
   id: string;
@@ -24,6 +25,8 @@ interface SiteCardProps {
 
 export function SiteCard({ site }: SiteCardProps) {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
+  const canViewContact = hasRole("owner") || hasRole("manager");
   const fullAddress = [site.address, site.city, site.postcode].filter(Boolean).join(", ");
 
   const handleCardClick = () => {
@@ -55,14 +58,14 @@ export function SiteCard({ site }: SiteCardProps) {
           <span className="text-muted-foreground">{fullAddress}</span>
         </div>
 
-        {site.contact_name && (
+        {canViewContact && site.contact_name && (
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
             <span>{site.contact_name}</span>
           </div>
         )}
 
-        {site.contact_phone && (
+        {canViewContact && site.contact_phone && (
           <div className="flex items-center gap-2 text-sm">
             <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
             <a 
@@ -75,7 +78,7 @@ export function SiteCard({ site }: SiteCardProps) {
           </div>
         )}
 
-        {site.contact_email && (
+        {canViewContact && site.contact_email && (
           <div className="flex items-center gap-2 text-sm">
             <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
             <a 
