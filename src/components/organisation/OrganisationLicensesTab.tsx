@@ -132,6 +132,8 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [assigningUserId, setAssigningUserId] = useState<string | null>(null);
+  const [inlineAssignType, setInlineAssignType] = useState<Record<string, "manager" | "engineer">>({});
 
   // Form states
   const [addCount, setAddCount] = useState(1);
