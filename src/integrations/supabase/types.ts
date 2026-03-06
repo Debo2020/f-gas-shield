@@ -229,6 +229,53 @@ export type Database = {
         }
         Relationships: []
       }
+      company_addons: {
+        Row: {
+          addon_type: Database["public"]["Enums"]["addon_type"]
+          company_id: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          addon_type: Database["public"]["Enums"]["addon_type"]
+          company_id: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          addon_type?: Database["public"]["Enums"]["addon_type"]
+          company_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_addons_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_certificates: {
         Row: {
           certificate_number: string
@@ -521,6 +568,282 @@ export type Database = {
           },
           {
             foreignKeyName: "equipment_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gas_certificate_appliances: {
+        Row: {
+          appliance_inspected: boolean | null
+          appliance_safe_to_use: boolean | null
+          appliance_type: string | null
+          certificate_id: string
+          created_at: string
+          flue_type: string | null
+          heat_input_kw: number | null
+          high_co_ppm: number | null
+          high_co2_percent: number | null
+          id: string
+          location: string | null
+          low_co_ppm: number | null
+          low_co2_percent: number | null
+          make: string | null
+          model: string | null
+          operating_pressure_mbar: number | null
+          performance_test_result: string | null
+          position: number
+          safety_devices_correct: boolean | null
+          updated_at: string
+          ventilation_satisfactory: boolean | null
+          visual_condition_satisfactory: boolean | null
+          warning_label_attached: boolean | null
+          warning_notice_issued: boolean | null
+        }
+        Insert: {
+          appliance_inspected?: boolean | null
+          appliance_safe_to_use?: boolean | null
+          appliance_type?: string | null
+          certificate_id: string
+          created_at?: string
+          flue_type?: string | null
+          heat_input_kw?: number | null
+          high_co_ppm?: number | null
+          high_co2_percent?: number | null
+          id?: string
+          location?: string | null
+          low_co_ppm?: number | null
+          low_co2_percent?: number | null
+          make?: string | null
+          model?: string | null
+          operating_pressure_mbar?: number | null
+          performance_test_result?: string | null
+          position?: number
+          safety_devices_correct?: boolean | null
+          updated_at?: string
+          ventilation_satisfactory?: boolean | null
+          visual_condition_satisfactory?: boolean | null
+          warning_label_attached?: boolean | null
+          warning_notice_issued?: boolean | null
+        }
+        Update: {
+          appliance_inspected?: boolean | null
+          appliance_safe_to_use?: boolean | null
+          appliance_type?: string | null
+          certificate_id?: string
+          created_at?: string
+          flue_type?: string | null
+          heat_input_kw?: number | null
+          high_co_ppm?: number | null
+          high_co2_percent?: number | null
+          id?: string
+          location?: string | null
+          low_co_ppm?: number | null
+          low_co2_percent?: number | null
+          make?: string | null
+          model?: string | null
+          operating_pressure_mbar?: number | null
+          performance_test_result?: string | null
+          position?: number
+          safety_devices_correct?: boolean | null
+          updated_at?: string
+          ventilation_satisfactory?: boolean | null
+          visual_condition_satisfactory?: boolean | null
+          warning_label_attached?: boolean | null
+          warning_notice_issued?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gas_certificate_appliances_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "gas_certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gas_certificates: {
+        Row: {
+          actions_required: string | null
+          actions_taken: string | null
+          actual_pressure_drop: number | null
+          certificate_number: string
+          certificate_type: Database["public"]["Enums"]["gas_certificate_type"]
+          classification:
+            | Database["public"]["Enums"]["gas_warning_classification"]
+            | null
+          client_id: string | null
+          co_alarm_fitted: boolean | null
+          co_alarm_present: boolean | null
+          co_alarm_satisfactory: boolean | null
+          comments: string | null
+          company_id: string
+          created_at: string
+          customer_address: string | null
+          customer_company: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_postcode: string | null
+          defects: Json | null
+          emergency_control_accessible: boolean | null
+          engineer_id: string
+          equipotential_bonding: boolean | null
+          gas_tightness_satisfactory: boolean | null
+          id: string
+          inspection_date: string
+          issue_type: string | null
+          issued_by_name: string | null
+          issued_by_signature: string | null
+          job_address: string | null
+          job_address_name: string | null
+          job_phone: string | null
+          job_postcode: string | null
+          next_inspection_due: string | null
+          pdf_url: string | null
+          permitted_pressure_drop: number | null
+          pipework_visual_satisfactory: boolean | null
+          purge_completed: boolean | null
+          received_by_name: string | null
+          received_by_signature: string | null
+          riddor_reported_11_1: boolean | null
+          riddor_reported_11_2: boolean | null
+          site_id: string | null
+          stabilisation_period: string | null
+          status: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_test_result: string | null
+          test_duration: string | null
+          test_method: string | null
+          test_pressure_mbar: number | null
+          tightness_test_result: string | null
+          updated_at: string
+        }
+        Insert: {
+          actions_required?: string | null
+          actions_taken?: string | null
+          actual_pressure_drop?: number | null
+          certificate_number: string
+          certificate_type: Database["public"]["Enums"]["gas_certificate_type"]
+          classification?:
+            | Database["public"]["Enums"]["gas_warning_classification"]
+            | null
+          client_id?: string | null
+          co_alarm_fitted?: boolean | null
+          co_alarm_present?: boolean | null
+          co_alarm_satisfactory?: boolean | null
+          comments?: string | null
+          company_id: string
+          created_at?: string
+          customer_address?: string | null
+          customer_company?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_postcode?: string | null
+          defects?: Json | null
+          emergency_control_accessible?: boolean | null
+          engineer_id: string
+          equipotential_bonding?: boolean | null
+          gas_tightness_satisfactory?: boolean | null
+          id?: string
+          inspection_date?: string
+          issue_type?: string | null
+          issued_by_name?: string | null
+          issued_by_signature?: string | null
+          job_address?: string | null
+          job_address_name?: string | null
+          job_phone?: string | null
+          job_postcode?: string | null
+          next_inspection_due?: string | null
+          pdf_url?: string | null
+          permitted_pressure_drop?: number | null
+          pipework_visual_satisfactory?: boolean | null
+          purge_completed?: boolean | null
+          received_by_name?: string | null
+          received_by_signature?: string | null
+          riddor_reported_11_1?: boolean | null
+          riddor_reported_11_2?: boolean | null
+          site_id?: string | null
+          stabilisation_period?: string | null
+          status?: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_test_result?: string | null
+          test_duration?: string | null
+          test_method?: string | null
+          test_pressure_mbar?: number | null
+          tightness_test_result?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actions_required?: string | null
+          actions_taken?: string | null
+          actual_pressure_drop?: number | null
+          certificate_number?: string
+          certificate_type?: Database["public"]["Enums"]["gas_certificate_type"]
+          classification?:
+            | Database["public"]["Enums"]["gas_warning_classification"]
+            | null
+          client_id?: string | null
+          co_alarm_fitted?: boolean | null
+          co_alarm_present?: boolean | null
+          co_alarm_satisfactory?: boolean | null
+          comments?: string | null
+          company_id?: string
+          created_at?: string
+          customer_address?: string | null
+          customer_company?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_postcode?: string | null
+          defects?: Json | null
+          emergency_control_accessible?: boolean | null
+          engineer_id?: string
+          equipotential_bonding?: boolean | null
+          gas_tightness_satisfactory?: boolean | null
+          id?: string
+          inspection_date?: string
+          issue_type?: string | null
+          issued_by_name?: string | null
+          issued_by_signature?: string | null
+          job_address?: string | null
+          job_address_name?: string | null
+          job_phone?: string | null
+          job_postcode?: string | null
+          next_inspection_due?: string | null
+          pdf_url?: string | null
+          permitted_pressure_drop?: number | null
+          pipework_visual_satisfactory?: boolean | null
+          purge_completed?: boolean | null
+          received_by_name?: string | null
+          received_by_signature?: string | null
+          riddor_reported_11_1?: boolean | null
+          riddor_reported_11_2?: boolean | null
+          site_id?: string | null
+          stabilisation_period?: string | null
+          status?: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_test_result?: string | null
+          test_duration?: string | null
+          test_method?: string | null
+          test_pressure_mbar?: number | null
+          tightness_test_result?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gas_certificates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gas_certificates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gas_certificates_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -1479,6 +1802,7 @@ export type Database = {
       }
     }
     Enums: {
+      addon_type: "natural_gas"
       app_role:
         | "owner"
         | "manager"
@@ -1514,6 +1838,17 @@ export type Database = {
         | "waste_transfer_note"
         | "consignment_note"
         | "purchase_invoice"
+      gas_certificate_status: "draft" | "issued"
+      gas_certificate_type:
+        | "landlord_gas_safety"
+        | "homeowner_gas_safety"
+        | "nd_gas_safety"
+        | "nd_gas_testing_purging"
+        | "gas_warning_notice"
+      gas_warning_classification:
+        | "immediately_dangerous"
+        | "at_risk"
+        | "not_to_current_standards"
       inspection_result: "pass" | "pass_with_observations" | "fail" | "deferred"
       leak_check_result:
         | "pass"
@@ -1679,6 +2014,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      addon_type: ["natural_gas"],
       app_role: [
         "owner",
         "manager",
@@ -1717,6 +2053,19 @@ export const Constants = {
         "waste_transfer_note",
         "consignment_note",
         "purchase_invoice",
+      ],
+      gas_certificate_status: ["draft", "issued"],
+      gas_certificate_type: [
+        "landlord_gas_safety",
+        "homeowner_gas_safety",
+        "nd_gas_safety",
+        "nd_gas_testing_purging",
+        "gas_warning_notice",
+      ],
+      gas_warning_classification: [
+        "immediately_dangerous",
+        "at_risk",
+        "not_to_current_standards",
       ],
       inspection_result: ["pass", "pass_with_observations", "fail", "deferred"],
       leak_check_result: [
