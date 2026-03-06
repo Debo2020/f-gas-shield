@@ -85,12 +85,14 @@ interface AddonLicense {
 export function OrganisationAddonsTab() {
   const { hasRole, profile, user } = useAuth();
   const { companyHasAddon, addon } = useGasAddon();
+  const { tier, subscribed, licenseCount, licensesUsed, subscriptionEnd, loading: subLoading, openCustomerPortal } = useSubscription();
   const queryClient = useQueryClient();
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
   const companyId = profile?.company_id;
+  const [portalLoading, setPortalLoading] = useState(false);
 
   // Auto-sync addon status from Stripe when tab loads and addon appears inactive
   useEffect(() => {
