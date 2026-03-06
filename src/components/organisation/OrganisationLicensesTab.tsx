@@ -215,7 +215,7 @@ export function OrganisationLicensesTab() {
     if (!profile?.company_id || !license.user_id) return;
     setTogglingGas(license.id);
     try {
-      if (checked) {
+    if (checked) {
         const { error } = await supabase.from("addon_licenses").insert({
           company_id: profile.company_id,
           addon_type: "natural_gas" as any,
@@ -234,6 +234,12 @@ export function OrganisationLicensesTab() {
         toast.success("Natural Gas add-on removed");
       }
       await fetchGasAddonLicenses();
+      // Sync quantity to Stripe
+      const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
+      if (syncError) {
+        console.error("Failed to sync addon license count to Stripe:", syncError);
+        toast.error("Add-on updated locally but billing sync failed");
+      }
     } catch (err) {
       toast.error("Failed to update gas add-on");
     } finally {
@@ -292,6 +298,11 @@ export function OrganisationLicensesTab() {
             assigned_by: profile.user_id,
           });
           await fetchGasAddonLicenses();
+          // Sync quantity to Stripe
+          const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
+          if (syncError) {
+            console.error("Failed to sync addon license count to Stripe:", syncError);
+          }
         } catch (err) {
           console.error("Failed to assign gas addon:", err);
         }

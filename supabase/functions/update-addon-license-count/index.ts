@@ -1,0 +1,171 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[UPDATE-ADDON-LICENSE-COUNT] ${step}${detailsStr}`);
+};
+
+const GAS_PRODUCT_ID = "prod_U66CcCxINGyl6y";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAnonClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAnonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("JWT validation failed", { error: claimsError?.message });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string;
+    if (!userEmail) throw new Error("User email not available in claims");
+    logStep("User authenticated", { userId, email: userEmail });
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Get user's company
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles")
+      .select("company_id")
+      .eq("user_id", userId)
+      .single();
+
+    if (!profileData?.company_id) throw new Error("User has no company");
+    const companyId = profileData.company_id;
+    logStep("Company found", { companyId });
+
+    // Count active gas addon licenses
+    const { count: addonLicenseCount } = await supabaseAdmin
+      .from("addon_licenses")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("addon_type", "natural_gas")
+      .eq("status", "active");
+
+    const newQuantity = addonLicenseCount || 0;
+    logStep("Active gas addon licenses counted", { newQuantity });
+
+    // Get addon record for Stripe subscription ID
+    const { data: addonRecord } = await supabaseAdmin
+      .from("company_addons")
+      .select("stripe_subscription_id")
+      .eq("company_id", companyId)
+      .eq("addon_type", "natural_gas")
+      .single();
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    let stripeSubscriptionId = addonRecord?.stripe_subscription_id;
+
+    // If no subscription ID in DB, find it from Stripe
+    if (!stripeSubscriptionId) {
+      logStep("No addon subscription in DB, searching Stripe", { email: userEmail });
+
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+      if (customers.data.length === 0) {
+        throw new Error("No Stripe customer found");
+      }
+
+      const customerId = customers.data[0].id;
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 10,
+      });
+
+      for (const sub of subscriptions.data) {
+        for (const item of sub.items.data) {
+          if (item.price.product === GAS_PRODUCT_ID) {
+            stripeSubscriptionId = sub.id;
+            break;
+          }
+        }
+        if (stripeSubscriptionId) break;
+      }
+
+      if (!stripeSubscriptionId) {
+        throw new Error("No active gas addon subscription found in Stripe");
+      }
+      logStep("Found gas addon subscription in Stripe", { subscriptionId: stripeSubscriptionId });
+    }
+
+    // Get subscription item for the gas product
+    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    let subscriptionItemId: string | null = null;
+
+    for (const item of stripeSubscription.items.data) {
+      if (item.price.product === GAS_PRODUCT_ID) {
+        subscriptionItemId = item.id;
+        break;
+      }
+    }
+
+    if (!subscriptionItemId) {
+      throw new Error("Gas product not found in subscription items");
+    }
+
+    logStep("Updating Stripe quantity", { subscriptionItemId, newQuantity: Math.max(newQuantity, 1) });
+
+    // Update quantity (minimum 1 to keep subscription active)
+    await stripe.subscriptions.update(stripeSubscriptionId, {
+      items: [{
+        id: subscriptionItemId,
+        quantity: Math.max(newQuantity, 1),
+      }],
+      proration_behavior: "always_invoice",
+    });
+
+    logStep("Stripe subscription updated successfully");
+
+    return new Response(JSON.stringify({
+      success: true,
+      addon_license_count: newQuantity,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
