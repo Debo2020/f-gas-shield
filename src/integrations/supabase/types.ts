@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_licenses: {
+        Row: {
+          addon_type: Database["public"]["Enums"]["addon_type"]
+          assigned_at: string | null
+          assigned_by: string | null
+          company_id: string
+          created_at: string
+          email: string | null
+          id: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          addon_type: Database["public"]["Enums"]["addon_type"]
+          assigned_at?: string | null
+          assigned_by?: string | null
+          company_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          addon_type?: Database["public"]["Enums"]["addon_type"]
+          assigned_at?: string | null
+          assigned_by?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_licenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_credit_usage: {
         Row: {
           company_id: string

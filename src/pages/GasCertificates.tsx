@@ -93,11 +93,11 @@ export default function GasCertificates() {
       <AppLayout>
         <div className="container mx-auto px-4 py-16 text-center">
           <Lock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Natural Gas Module Required</h1>
+          <h1 className="text-2xl font-bold mb-2">Gas Add-on License Required</h1>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Add the Natural Gas Compliance module to your subscription to create and manage gas safety certificates.
+            You need a Natural Gas Compliance license to access gas certificates. Ask your organisation owner or manager to assign one to you via Organisation → Add-ons.
           </p>
-          <Button onClick={() => navigate("/pricing")}>View Add-on Pricing</Button>
+          <Button onClick={() => navigate("/organisation?tab=addons")}>Go to Add-ons</Button>
         </div>
       </AppLayout>
     );
