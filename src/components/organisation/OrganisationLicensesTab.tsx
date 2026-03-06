@@ -670,11 +670,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, refetch: share
             <DialogDescription>View all team members and manage their license and gas add-on status</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto py-2">
-            {sharedMembers.length === 0 && allMembers.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : allMembers.length === 0 ? (
+            {allMembers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No team members found</p>
