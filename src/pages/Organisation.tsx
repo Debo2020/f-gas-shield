@@ -18,15 +18,11 @@ import { OrganisationTeamTab } from "@/components/organisation/OrganisationTeamT
 import { OrganisationDocumentsTab } from "@/components/organisation/OrganisationDocumentsTab";
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
 import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
-import { OrganisationClientsTab } from "@/components/organisation/OrganisationClientsTab";
-import { OrganisationAddonsTab } from "@/components/organisation/OrganisationAddonsTab";
-import { KeyRound } from "lucide-react";
-
+import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
 const TAB_CONFIG = [
   { id: "team", label: "Team", icon: Users, roles: ["owner", "manager"] },
   { id: "clients", label: "Clients", icon: Building2, roles: ["owner", "manager"] },
   { id: "suppliers", label: "Suppliers", icon: Truck, roles: ["owner", "manager", "stores_manager"] },
-  { id: "addons", label: "Licenses", icon: KeyRound, roles: ["owner", "manager"] },
   { id: "documents", label: "Documents", icon: FolderOpen, roles: ["owner", "manager", "stores_manager", "engineer"] },
   { id: "settings", label: "Settings", icon: Settings, roles: ["owner"] },
 ] as const;
