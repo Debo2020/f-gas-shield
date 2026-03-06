@@ -44,6 +44,7 @@ const profileSchema = z.object({
   phone: z.string().optional(),
   f_gas_certificate_number: z.string().optional(),
   f_gas_certificate_expiry: z.string().optional(),
+  gas_safe_id_card_no: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -64,6 +65,7 @@ export default function Profile() {
       phone: "",
       f_gas_certificate_number: "",
       f_gas_certificate_expiry: "",
+      gas_safe_id_card_no: "",
     },
   });
 
@@ -75,6 +77,7 @@ export default function Profile() {
         phone: profile.phone || "",
         f_gas_certificate_number: profile.f_gas_certificate_number || "",
         f_gas_certificate_expiry: profile.f_gas_certificate_expiry || "",
+        gas_safe_id_card_no: (profile as any).gas_safe_id_card_no || "",
       });
       setIsLoading(false);
     }
@@ -92,7 +95,8 @@ export default function Profile() {
           phone: values.phone || null,
           f_gas_certificate_number: values.f_gas_certificate_number || null,
           f_gas_certificate_expiry: values.f_gas_certificate_expiry || null,
-        })
+          gas_safe_id_card_no: values.gas_safe_id_card_no || null,
+        } as any)
         .eq("id", profile.id);
 
       if (error) throw error;
@@ -215,6 +219,19 @@ export default function Profile() {
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
                             <Input {...field} type="tel" placeholder="+44 7..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gas_safe_id_card_no"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gas Safe ID Card Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="e.g. 123456" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

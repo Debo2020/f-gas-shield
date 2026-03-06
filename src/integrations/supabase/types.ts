@@ -245,6 +245,7 @@ export type Database = {
           address: string | null
           created_at: string
           email: string | null
+          gas_safe_reg_no: string | null
           id: string
           logo_url: string | null
           name: string
@@ -256,6 +257,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          gas_safe_reg_no?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -267,6 +269,7 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          gas_safe_reg_no?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -644,16 +647,21 @@ export type Database = {
         Row: {
           appliance_inspected: boolean | null
           appliance_safe_to_use: boolean | null
+          appliance_serviced: boolean | null
           appliance_type: string | null
           certificate_id: string
           created_at: string
+          flue_performance_test: string | null
           flue_type: string | null
           heat_input_kw: number | null
           high_co_ppm: number | null
+          high_co_ratio: number | null
           high_co2_percent: number | null
           id: string
+          landlord_appliance: boolean | null
           location: string | null
           low_co_ppm: number | null
+          low_co_ratio: number | null
           low_co2_percent: number | null
           make: string | null
           model: string | null
@@ -670,16 +678,21 @@ export type Database = {
         Insert: {
           appliance_inspected?: boolean | null
           appliance_safe_to_use?: boolean | null
+          appliance_serviced?: boolean | null
           appliance_type?: string | null
           certificate_id: string
           created_at?: string
+          flue_performance_test?: string | null
           flue_type?: string | null
           heat_input_kw?: number | null
           high_co_ppm?: number | null
+          high_co_ratio?: number | null
           high_co2_percent?: number | null
           id?: string
+          landlord_appliance?: boolean | null
           location?: string | null
           low_co_ppm?: number | null
+          low_co_ratio?: number | null
           low_co2_percent?: number | null
           make?: string | null
           model?: string | null
@@ -696,16 +709,21 @@ export type Database = {
         Update: {
           appliance_inspected?: boolean | null
           appliance_safe_to_use?: boolean | null
+          appliance_serviced?: boolean | null
           appliance_type?: string | null
           certificate_id?: string
           created_at?: string
+          flue_performance_test?: string | null
           flue_type?: string | null
           heat_input_kw?: number | null
           high_co_ppm?: number | null
+          high_co_ratio?: number | null
           high_co2_percent?: number | null
           id?: string
+          landlord_appliance?: boolean | null
           location?: string | null
           low_co_ppm?: number | null
+          low_co_ratio?: number | null
           low_co2_percent?: number | null
           make?: string | null
           model?: string | null
@@ -1190,6 +1208,7 @@ export type Database = {
           f_gas_certificate_number: string | null
           f_gas_certificate_url: string | null
           full_name: string
+          gas_safe_id_card_no: string | null
           id: string
           phone: string | null
           updated_at: string
@@ -1204,6 +1223,7 @@ export type Database = {
           f_gas_certificate_number?: string | null
           f_gas_certificate_url?: string | null
           full_name: string
+          gas_safe_id_card_no?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
@@ -1218,6 +1238,7 @@ export type Database = {
           f_gas_certificate_number?: string | null
           f_gas_certificate_url?: string | null
           full_name?: string
+          gas_safe_id_card_no?: string | null
           id?: string
           phone?: string | null
           updated_at?: string

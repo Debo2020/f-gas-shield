@@ -19,6 +19,7 @@ const companySchema = z.object({
   address: z.string().max(500, "Address must be less than 500 characters").optional().or(z.literal("")),
   phone: z.string().max(20, "Phone must be less than 20 characters").optional().or(z.literal("")),
   email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
+  gas_safe_reg_no: z.string().max(50, "Must be less than 50 characters").optional().or(z.literal("")),
 });
 
 export type CompanyFormValues = z.infer<typeof companySchema>;
@@ -43,6 +44,7 @@ export function CompanyDetailsForm({
       address: defaultValues?.address || "",
       phone: defaultValues?.phone || "",
       email: defaultValues?.email || "",
+      gas_safe_reg_no: defaultValues?.gas_safe_reg_no || "",
     },
   });
 
@@ -123,6 +125,23 @@ export function CompanyDetailsForm({
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="gas_safe_reg_no"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                Gas Safe Registration Number
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 123456" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : submitLabel}
