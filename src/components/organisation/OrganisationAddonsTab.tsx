@@ -86,6 +86,20 @@ export function OrganisationAddonsTab() {
   const canManage = isOwner || isManager;
   const companyId = profile?.company_id;
 
+  // Auto-sync addon status from Stripe when tab loads and addon appears inactive
+  useEffect(() => {
+    if (companyHasAddon || !canManage || !companyId) return;
+    const sync = async () => {
+      try {
+        await supabase.functions.invoke("check-addon");
+        queryClient.invalidateQueries({ queryKey: ["gas-addon"] });
+      } catch {
+        // Silent
+      }
+    };
+    sync();
+  }, [companyHasAddon, canManage, companyId]);
+
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [revokeConfirmOpen, setRevokeConfirmOpen] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<AddonLicense | null>(null);
