@@ -10,6 +10,9 @@ import {
   Users,
   Trash2,
   AlertCircle,
+  KeyRound,
+  ExternalLink,
+  CreditCard,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,10 +53,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useGasAddon } from "@/hooks/useGasAddon";
+import { useSubscription } from "@/hooks/useSubscription";
 import { ADDON_MODULES } from "@/lib/gas-addons";
+import { SUBSCRIPTION_TIERS } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 
 interface TeamMember {
