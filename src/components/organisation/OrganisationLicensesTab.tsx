@@ -70,6 +70,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import type { EnrichedTeamMember } from "@/hooks/useTeamMembers";
+
 interface TeamMemberWithLicense {
   user_id: string;
   full_name: string;
@@ -81,7 +83,12 @@ interface TeamMemberWithLicense {
   hasGasAddon: boolean;
 }
 
-export function OrganisationLicensesTab() {
+interface OrganisationLicensesTabProps {
+  members: EnrichedTeamMember[];
+  refetch: () => Promise<void>;
+}
+
+export function OrganisationLicensesTab({ members: sharedMembers, refetch: sharedRefetch }: OrganisationLicensesTabProps) {
   const { hasRole, profile, user } = useAuth();
   const {
     licenses,
@@ -130,90 +137,25 @@ export function OrganisationLicensesTab() {
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("premium");
   const [isAnnual, setIsAnnual] = useState(true);
 
-  // All team members with license info
-  const [allMembers, setAllMembers] = useState<TeamMemberWithLicense[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(false);
-  const [assigningUserId, setAssigningUserId] = useState<string | null>(null);
-  const [inlineAssignType, setInlineAssignType] = useState<Record<string, "manager" | "engineer">>({});
-
-  const tierConfig = useMemo(() => SUBSCRIPTION_TIERS[selectedTier], [selectedTier]);
-
-  // Fetch all team members with license and gas addon status
-  const fetchAllMembers = useCallback(async () => {
-    if (!profile?.company_id) return;
-    setLoadingMembers(true);
-
-    try {
-      // Fetch profiles, licenses, owner roles, and gas addon licenses in parallel
-      const [profilesRes, licensesRes, ownerRolesRes, addonRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("user_id, full_name, email")
-          .eq("company_id", profile.company_id),
-        supabase
-          .from("user_licenses")
-          .select("id, user_id, license_type, status")
-          .eq("company_id", profile.company_id),
-        supabase
-          .from("user_roles")
-          .select("user_id")
-          .eq("role", "owner"),
-        supabase
-          .from("addon_licenses")
-          .select("user_id")
-          .eq("company_id", profile.company_id)
-          .eq("addon_type", "natural_gas")
-          .eq("status", "active"),
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      if (licensesRes.error) throw licensesRes.error;
-
-      const ownerIds = new Set(ownerRolesRes.data?.map((r) => r.user_id) || []);
-      const licenseMap = new Map(
-        licensesRes.data?.filter((l) => l.user_id).map((l) => [l.user_id!, l]) || []
-      );
-      const gasAddonSet = new Set(addonRes.data?.map((a) => a.user_id).filter(Boolean) || []);
-
-      const members: TeamMemberWithLicense[] = (profilesRes.data || [])
-        .filter((p) => !ownerIds.has(p.user_id))
-        .map((p) => {
-          const license = licenseMap.get(p.user_id);
-          return {
-            user_id: p.user_id,
-            full_name: p.full_name,
-            email: p.email,
-            hasLicense: !!license,
-            licenseId: license?.id,
-            licenseType: license?.license_type,
-            licenseStatus: license?.status,
-            hasGasAddon: gasAddonSet.has(p.user_id),
-          };
-        })
-        .sort((a, b) => {
-          // Licensed first, then by name
-          if (a.hasLicense !== b.hasLicense) return a.hasLicense ? -1 : 1;
-          return a.full_name.localeCompare(b.full_name);
-        });
-
-      setAllMembers(members);
-    } catch (error) {
-      console.error("Error fetching team members:", error);
-    } finally {
-      setLoadingMembers(false);
-    }
-  }, [profile?.company_id]);
-
-  useEffect(() => {
-    fetchAllMembers();
-  }, [fetchAllMembers, licenses]);
-
-  // Re-fetch when assign dialog opens to ensure fresh data
-  useEffect(() => {
-    if (assignDialogOpen) {
-      fetchAllMembers();
-    }
-  }, [assignDialogOpen, fetchAllMembers]);
+  // Derive allMembers from shared team data (excluding owners)
+  const allMembers = useMemo<TeamMemberWithLicense[]>(() => {
+    return sharedMembers
+      .filter((m) => !m.roles.includes("owner"))
+      .map((m) => ({
+        user_id: m.user_id,
+        full_name: m.full_name,
+        email: m.email,
+        hasLicense: !!m.licenseId,
+        licenseId: m.licenseId,
+        licenseType: m.licenseType,
+        licenseStatus: m.licenseStatus,
+        hasGasAddon: m.hasGasAddon,
+      }))
+      .sort((a, b) => {
+        if (a.hasLicense !== b.hasLicense) return a.hasLicense ? -1 : 1;
+        return a.full_name.localeCompare(b.full_name);
+      });
+  }, [sharedMembers]);
 
   // Fetch gas addon licenses for company
   const fetchGasAddonLicenses = useCallback(async () => {
@@ -270,7 +212,7 @@ export function OrganisationLicensesTab() {
         toast.success("Natural Gas add-on removed");
       }
       await fetchGasAddonLicenses();
-      await fetchAllMembers();
+      await sharedRefetch();
       // Sync quantity to Stripe
       const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
       if (syncError) {
@@ -340,7 +282,7 @@ export function OrganisationLicensesTab() {
       }
       setIncludeGasAddon(false);
       // Refresh members list in-place
-      await fetchAllMembers();
+      await sharedRefetch();
     }
     setIsSubmitting(false);
     setAssigningUserId(null);
@@ -728,11 +670,7 @@ export function OrganisationLicensesTab() {
             <DialogDescription>View all team members and manage their license and gas add-on status</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto py-2">
-            {loadingMembers ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : allMembers.length === 0 ? (
+            {allMembers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No team members found</p>

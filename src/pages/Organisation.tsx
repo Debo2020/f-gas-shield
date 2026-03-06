@@ -12,8 +12,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
-// Tab content components (lazy loaded sections from existing pages)
+// Tab content components
 import { OrganisationTeamTab } from "@/components/organisation/OrganisationTeamTab";
 import { OrganisationDocumentsTab } from "@/components/organisation/OrganisationDocumentsTab";
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
@@ -33,27 +34,24 @@ type TabId = typeof TAB_CONFIG[number]["id"];
 export default function Organisation() {
   const { profile, hasRole, isLoading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const teamData = useTeamMembers();
 
-  // Determine which tabs the user can access
   const accessibleTabs = useMemo(() => {
     return TAB_CONFIG.filter((tab) =>
       tab.roles.some((role) => hasRole(role as any))
     );
   }, [hasRole]);
 
-  // Get default tab from URL or first accessible tab
   const urlTab = searchParams.get("tab") as TabId | null;
   const defaultTab = accessibleTabs.find((t) => t.id === urlTab)?.id || accessibleTabs[0]?.id || "team";
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
 
-  // Sync URL with active tab
   useEffect(() => {
     if (activeTab && activeTab !== searchParams.get("tab")) {
       setSearchParams({ tab: activeTab }, { replace: true });
     }
   }, [activeTab, searchParams, setSearchParams]);
 
-  // Update active tab when URL changes
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab && accessibleTabs.some((t) => t.id === tab)) {
@@ -114,41 +112,41 @@ export default function Organisation() {
             ))}
           </TabsList>
 
-          {/* Team Tab */}
           {accessibleTabs.some((t) => t.id === "team") && (
             <TabsContent value="team">
-              <OrganisationTeamTab />
+              <OrganisationTeamTab
+                members={teamData.members}
+                invitations={teamData.invitations}
+                isLoading={teamData.isLoading}
+                refetch={teamData.refetch}
+              />
             </TabsContent>
           )}
 
-          {/* Clients Tab */}
           {accessibleTabs.some((t) => t.id === "clients") && (
             <TabsContent value="clients">
               <OrganisationClientsTab />
             </TabsContent>
           )}
 
-          {/* Suppliers Tab */}
           {accessibleTabs.some((t) => t.id === "suppliers") && (
             <TabsContent value="suppliers">
               <OrganisationSuppliersTab />
             </TabsContent>
           )}
 
-
-
-
-          {/* Documents Tab */}
           {accessibleTabs.some((t) => t.id === "documents") && (
             <TabsContent value="documents">
               <OrganisationDocumentsTab />
             </TabsContent>
           )}
 
-          {/* Settings Tab */}
           {accessibleTabs.some((t) => t.id === "settings") && (
             <TabsContent value="settings">
-              <OrganisationSettingsTab />
+              <OrganisationSettingsTab
+                members={teamData.members}
+                refetch={teamData.refetch}
+              />
             </TabsContent>
           )}
         </Tabs>
