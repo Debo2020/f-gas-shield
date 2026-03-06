@@ -8,52 +8,48 @@ export function useGasAddon() {
   const userId = user?.id;
   const isOwnerOrManager = hasRole("owner") || hasRole("manager");
 
-  // Check company-level addon subscription
-  const { data: companyAddon, isLoading: addonLoading } = useQuery({
-    queryKey: ["gas-addon", companyId],
+  const { data, isLoading } = useQuery({
+    queryKey: ["gas-addon", companyId, userId],
     queryFn: async () => {
-      if (!companyId) return null;
-      const { data, error } = await supabase
-        .from("company_addons")
-        .select("*")
-        .eq("company_id", companyId)
-        .eq("addon_type", "natural_gas")
-        .maybeSingle();
-      if (error) throw error;
-      return data;
+      if (!companyId) return { addon: null, license: null };
+
+      // Fetch company addon and user license in parallel
+      const [addonResult, licenseResult] = await Promise.all([
+        supabase
+          .from("company_addons")
+          .select("*")
+          .eq("company_id", companyId)
+          .eq("addon_type", "natural_gas")
+          .maybeSingle(),
+        userId
+          ? supabase
+              .from("addon_licenses")
+              .select("*")
+              .eq("company_id", companyId)
+              .eq("addon_type", "natural_gas")
+              .eq("user_id", userId)
+              .eq("status", "active")
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (addonResult.error) throw addonResult.error;
+      if (licenseResult.error) throw licenseResult.error;
+
+      return { addon: addonResult.data, license: licenseResult.data };
     },
     enabled: !!companyId,
   });
 
-  // Check per-user addon license
-  const { data: userLicense, isLoading: licenseLoading } = useQuery({
-    queryKey: ["addon-license", companyId, userId],
-    queryFn: async () => {
-      if (!companyId || !userId) return null;
-      const { data, error } = await supabase
-        .from("addon_licenses")
-        .select("*")
-        .eq("company_id", companyId)
-        .eq("addon_type", "natural_gas")
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!companyId && !!userId,
-  });
-
-  const companyHasAddon = companyAddon?.status === "active";
-  const userHasLicense = !!userLicense;
+  const companyHasAddon = data?.addon?.status === "active";
+  const userHasLicense = !!data?.license;
 
   return {
-    // User can access gas certs if company has addon AND (user has license OR is owner/manager)
     hasGasAddon: companyHasAddon && (userHasLicense || isOwnerOrManager),
     companyHasAddon,
     userHasLicense,
-    addon: companyAddon,
-    userLicense,
-    isLoading: addonLoading || licenseLoading,
+    addon: data?.addon ?? null,
+    userLicense: data?.license ?? null,
+    isLoading,
   };
 }
