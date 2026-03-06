@@ -179,6 +179,68 @@ export function OrganisationLicensesTab() {
     fetchUnlicensedMembers();
   }, [profile?.company_id, licenses]);
 
+  // Fetch gas addon licenses for company
+  const fetchGasAddonLicenses = useCallback(async () => {
+    if (!profile?.company_id) return;
+    try {
+      const { data, error } = await supabase
+        .from("addon_licenses")
+        .select("id, user_id")
+        .eq("company_id", profile.company_id)
+        .eq("addon_type", "natural_gas")
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      const ids = new Set<string>();
+      const map: Record<string, string> = {};
+      data?.forEach((row) => {
+        if (row.user_id) {
+          ids.add(row.user_id);
+          map[row.user_id] = row.id;
+        }
+      });
+      setGasAddonUserIds(ids);
+      setGasAddonLicenseMap(map);
+    } catch (err) {
+      console.error("Error fetching gas addon licenses:", err);
+    }
+  }, [profile?.company_id]);
+
+  useEffect(() => {
+    fetchGasAddonLicenses();
+  }, [fetchGasAddonLicenses, licenses]);
+
+  const handleToggleGasAddon = async (license: License, checked: boolean) => {
+    if (!profile?.company_id || !license.user_id) return;
+    setTogglingGas(license.id);
+    try {
+      if (checked) {
+        const { error } = await supabase.from("addon_licenses").insert({
+          company_id: profile.company_id,
+          addon_type: "natural_gas" as any,
+          user_id: license.user_id,
+          status: "active",
+          assigned_by: profile.user_id,
+        });
+        if (error) throw error;
+        toast.success("Natural Gas add-on enabled");
+      } else {
+        const addonId = gasAddonLicenseMap[license.user_id];
+        if (addonId) {
+          const { error } = await supabase.from("addon_licenses").delete().eq("id", addonId);
+          if (error) throw error;
+        }
+        toast.success("Natural Gas add-on removed");
+      }
+      await fetchGasAddonLicenses();
+    } catch (err) {
+      toast.error("Failed to update gas add-on");
+    } finally {
+      setTogglingGas(null);
+    }
+  };
+
   const handleRefreshSubscription = async () => {
     setIsRefreshing(true);
     try {
@@ -219,9 +281,25 @@ export function OrganisationLicensesTab() {
     // Assign license to existing user
     const success = await assignLicense(selectedUserId, assignType, true);
     if (success) {
+      // If gas addon checkbox was ticked, also assign gas addon license
+      if (includeGasAddon && companyHasAddon) {
+        try {
+          await supabase.from("addon_licenses").insert({
+            company_id: profile.company_id,
+            addon_type: "natural_gas" as any,
+            user_id: selectedUserId,
+            status: "active",
+            assigned_by: profile.user_id,
+          });
+          await fetchGasAddonLicenses();
+        } catch (err) {
+          console.error("Failed to assign gas addon:", err);
+        }
+      }
       setAssignDialogOpen(false);
       setSelectedUserId("");
       setAssignType("engineer");
+      setIncludeGasAddon(false);
     }
     setIsSubmitting(false);
   };
