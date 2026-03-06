@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Search, AlertCircle, Info } from "lucide-react";
+import { MapPin, Search, AlertCircle, Info, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,6 +10,7 @@ import { SiteCard } from "@/components/sites/SiteCard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LiveClock } from "@/components/ui/live-clock";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
@@ -36,6 +37,7 @@ export default function Sites() {
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [clientFilter, setClientFilter] = useState("all");
 
   const hasCompany = !!profile?.company_id;
 
@@ -70,14 +72,24 @@ export default function Sites() {
     fetchSites();
   }, [profile?.company_id]);
 
-  const filteredSites = sites.filter(
-    (site) =>
+  const uniqueClients = useMemo(() => {
+    const clientMap = new Map<string, string>();
+    sites.forEach((site) => {
+      if (site.client) clientMap.set(site.client.id, site.client.name);
+    });
+    return Array.from(clientMap, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [sites]);
+
+  const filteredSites = sites.filter((site) => {
+    const matchesSearch =
       site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       site.postcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      site.client?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      site.client?.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesClient = clientFilter === "all" || site.client?.id === clientFilter;
+    return matchesSearch && matchesClient;
+  });
 
   return (
     <AppLayout>
@@ -138,8 +150,8 @@ export default function Sites() {
         </Alert>
 
         {/* Search */}
-        <div className="mb-6 animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
-          <div className="relative max-w-md">
+        <div className="mb-6 animate-slide-up opacity-0 flex flex-col sm:flex-row gap-3" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
+          <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search sites by name, address, or client..."
@@ -148,6 +160,20 @@ export default function Sites() {
               className="pl-10"
             />
           </div>
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="All Clients" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Clients</SelectItem>
+              {uniqueClients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Sites Grid */}
