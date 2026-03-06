@@ -552,6 +552,7 @@ export function OrganisationLicensesTab() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Type</TableHead>
+                  {companyHasAddon && <TableHead>Gas Add-on</TableHead>}
                   <TableHead>Status</TableHead>
                   <TableHead>Assigned</TableHead>
                   {canManage && <TableHead className="text-right">Actions</TableHead>}
@@ -573,6 +574,25 @@ export function OrganisationLicensesTab() {
                         {license.license_type}
                       </Badge>
                     </TableCell>
+                    {companyHasAddon && (
+                      <TableCell>
+                        {license.user_id && license.status === "active" ? (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={gasAddonUserIds.has(license.user_id)}
+                              onCheckedChange={(checked) => handleToggleGasAddon(license, !!checked)}
+                              disabled={!canManage || togglingGas === license.id}
+                            />
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Flame className="h-3 w-3" />
+                              +£15/mo
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell>{getStatusBadge(license.status)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(license.created_at), "dd MMM yyyy")}
@@ -663,6 +683,22 @@ export function OrganisationLicensesTab() {
                     </SelectContent>
                   </Select>
                 </div>
+                {companyHasAddon && (
+                  <div className="flex items-center space-x-2 rounded-lg border p-4">
+                    <Checkbox
+                      id="include-gas"
+                      checked={includeGasAddon}
+                      onCheckedChange={(checked) => setIncludeGasAddon(!!checked)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="include-gas" className="flex items-center gap-2 cursor-pointer">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        Include Natural Gas Compliance
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">+£15/user/month</p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
