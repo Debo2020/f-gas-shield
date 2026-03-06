@@ -70,10 +70,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-interface UnlicensedMember {
+interface TeamMemberWithLicense {
   user_id: string;
   full_name: string;
   email: string;
+  hasLicense: boolean;
+  licenseId?: string;
+  licenseType?: string;
+  licenseStatus?: string;
+  hasGasAddon: boolean;
 }
 
 export function OrganisationLicensesTab() {
@@ -127,9 +132,11 @@ export function OrganisationLicensesTab() {
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("premium");
   const [isAnnual, setIsAnnual] = useState(true);
 
-  // Unlicensed team members
-  const [unlicensedMembers, setUnlicensedMembers] = useState<UnlicensedMember[]>([]);
+  // All team members with license info
+  const [allMembers, setAllMembers] = useState<TeamMemberWithLicense[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [assigningUserId, setAssigningUserId] = useState<string | null>(null);
+  const [inlineAssignType, setInlineAssignType] = useState<Record<string, "manager" | "engineer">>({});
 
   const tierConfig = useMemo(() => SUBSCRIPTION_TIERS[selectedTier], [selectedTier]);
 
