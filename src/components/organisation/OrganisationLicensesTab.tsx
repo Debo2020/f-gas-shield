@@ -70,10 +70,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-interface UnlicensedMember {
+interface TeamMemberWithLicense {
   user_id: string;
   full_name: string;
   email: string;
+  hasLicense: boolean;
+  licenseId?: string;
+  licenseType?: string;
+  licenseStatus?: string;
+  hasGasAddon: boolean;
 }
 
 export function OrganisationLicensesTab() {
@@ -121,74 +126,94 @@ export function OrganisationLicensesTab() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Form states
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [assignType, setAssignType] = useState<"manager" | "engineer">("engineer");
   const [addCount, setAddCount] = useState(1);
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("premium");
   const [isAnnual, setIsAnnual] = useState(true);
 
-  // Unlicensed team members
-  const [unlicensedMembers, setUnlicensedMembers] = useState<UnlicensedMember[]>([]);
+  // All team members with license info
+  const [allMembers, setAllMembers] = useState<TeamMemberWithLicense[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [assigningUserId, setAssigningUserId] = useState<string | null>(null);
+  const [inlineAssignType, setInlineAssignType] = useState<Record<string, "manager" | "engineer">>({});
 
   const tierConfig = useMemo(() => SUBSCRIPTION_TIERS[selectedTier], [selectedTier]);
 
-  // Fetch unlicensed team members
-  const fetchUnlicensedMembers = useCallback(async () => {
+  // Fetch all team members with license and gas addon status
+  const fetchAllMembers = useCallback(async () => {
     if (!profile?.company_id) return;
     setLoadingMembers(true);
 
     try {
-      // Get all profiles in company
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .eq("company_id", profile.company_id);
+      // Fetch profiles, licenses, owner roles, and gas addon licenses in parallel
+      const [profilesRes, licensesRes, ownerRolesRes, addonRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .eq("company_id", profile.company_id),
+        supabase
+          .from("user_licenses")
+          .select("id, user_id, license_type, status")
+          .eq("company_id", profile.company_id),
+        supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "owner"),
+        supabase
+          .from("addon_licenses")
+          .select("user_id")
+          .eq("company_id", profile.company_id)
+          .eq("addon_type", "natural_gas")
+          .eq("status", "active"),
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesRes.error) throw profilesRes.error;
+      if (licensesRes.error) throw licensesRes.error;
 
-      // Get existing licenses
-      const { data: existingLicenses, error: licensesError } = await supabase
-        .from("user_licenses")
-        .select("user_id")
-        .eq("company_id", profile.company_id);
+      const ownerIds = new Set(ownerRolesRes.data?.map((r) => r.user_id) || []);
+      const licenseMap = new Map(
+        licensesRes.data?.filter((l) => l.user_id).map((l) => [l.user_id!, l]) || []
+      );
+      const gasAddonSet = new Set(addonRes.data?.map((a) => a.user_id).filter(Boolean) || []);
 
-      if (licensesError) throw licensesError;
+      const members: TeamMemberWithLicense[] = (profilesRes.data || [])
+        .filter((p) => !ownerIds.has(p.user_id))
+        .map((p) => {
+          const license = licenseMap.get(p.user_id);
+          return {
+            user_id: p.user_id,
+            full_name: p.full_name,
+            email: p.email,
+            hasLicense: !!license,
+            licenseId: license?.id,
+            licenseType: license?.license_type,
+            licenseStatus: license?.status,
+            hasGasAddon: gasAddonSet.has(p.user_id),
+          };
+        })
+        .sort((a, b) => {
+          // Licensed first, then by name
+          if (a.hasLicense !== b.hasLicense) return a.hasLicense ? -1 : 1;
+          return a.full_name.localeCompare(b.full_name);
+        });
 
-      const licensedUserIds = new Set(existingLicenses?.map((l) => l.user_id).filter(Boolean) || []);
-
-      // Get owners (they don't need licenses)
-      const { data: ownerRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner");
-
-      if (rolesError) throw rolesError;
-
-      const ownerIds = new Set(ownerRoles?.map((r) => r.user_id) || []);
-
-      // Filter to unlicensed members (excluding owners)
-      const unlicensed =
-        profiles?.filter((p) => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id)) || [];
-
-      setUnlicensedMembers(unlicensed);
+      setAllMembers(members);
     } catch (error) {
-      console.error("Error fetching unlicensed members:", error);
+      console.error("Error fetching team members:", error);
     } finally {
       setLoadingMembers(false);
     }
   }, [profile?.company_id]);
 
   useEffect(() => {
-    fetchUnlicensedMembers();
-  }, [fetchUnlicensedMembers, licenses]);
+    fetchAllMembers();
+  }, [fetchAllMembers, licenses]);
 
   // Re-fetch when assign dialog opens to ensure fresh data
   useEffect(() => {
     if (assignDialogOpen) {
-      fetchUnlicensedMembers();
+      fetchAllMembers();
     }
-  }, [assignDialogOpen, fetchUnlicensedMembers]);
+  }, [assignDialogOpen, fetchAllMembers]);
 
   // Fetch gas addon licenses for company
   const fetchGasAddonLicenses = useCallback(async () => {
@@ -245,6 +270,7 @@ export function OrganisationLicensesTab() {
         toast.success("Natural Gas add-on removed");
       }
       await fetchGasAddonLicenses();
+      await fetchAllMembers();
       // Sync quantity to Stripe
       const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
       if (syncError) {
@@ -285,18 +311,13 @@ export function OrganisationLicensesTab() {
     }
   };
 
-  const handleAssignToMember = async () => {
-    if (!selectedUserId || !profile?.company_id) return;
+  const handleAssignInline = async (userId: string) => {
+    if (!profile?.company_id) return;
     setIsSubmitting(true);
+    setAssigningUserId(userId);
 
-    const member = unlicensedMembers.find((m) => m.user_id === selectedUserId);
-    if (!member) {
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Assign license to existing user
-    const success = await assignLicense(selectedUserId, assignType, true);
+    const type = inlineAssignType[userId] || "engineer";
+    const success = await assignLicense(userId, type, true);
     if (success) {
       // If gas addon checkbox was ticked, also assign gas addon license
       if (includeGasAddon && companyHasAddon) {
@@ -304,12 +325,11 @@ export function OrganisationLicensesTab() {
           await supabase.from("addon_licenses").insert({
             company_id: profile.company_id,
             addon_type: "natural_gas" as any,
-            user_id: selectedUserId,
+            user_id: userId,
             status: "active",
             assigned_by: profile.user_id,
           });
           await fetchGasAddonLicenses();
-          // Sync quantity to Stripe
           const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
           if (syncError) {
             console.error("Failed to sync addon license count to Stripe:", syncError);
@@ -318,12 +338,12 @@ export function OrganisationLicensesTab() {
           console.error("Failed to assign gas addon:", err);
         }
       }
-      setAssignDialogOpen(false);
-      setSelectedUserId("");
-      setAssignType("engineer");
       setIncludeGasAddon(false);
+      // Refresh members list in-place
+      await fetchAllMembers();
     }
     setIsSubmitting(false);
+    setAssigningUserId(null);
   };
 
   const handleAddLicenses = async () => {
@@ -426,10 +446,10 @@ export function OrganisationLicensesTab() {
               Billing
             </Button>
           )}
-          {canManage && stats.available > 0 && (
+          {canManage && (
             <Button size="sm" onClick={() => setAssignDialogOpen(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Assign License
+              Manage Licenses
             </Button>
           )}
         </div>
@@ -700,87 +720,143 @@ export function OrganisationLicensesTab() {
         })()
       )}
 
-      {/* Assign License Dialog - Now with dropdown */}
+      {/* Manage Team Licenses Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Assign License</DialogTitle>
-            <DialogDescription>Assign a license to an existing team member</DialogDescription>
+            <DialogTitle>Manage Team Licenses</DialogTitle>
+            <DialogDescription>View all team members and manage their license and gas add-on status</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="flex-1 overflow-auto py-2">
             {loadingMembers ? (
-              <div className="flex items-center justify-center py-4">
+              <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : unlicensedMembers.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
+            ) : allMembers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No team members without licenses</p>
+                <p>No team members found</p>
                 <Button variant="link" asChild className="mt-2">
                   <Link to="/organisation?tab=team">Add team members first</Link>
                 </Button>
               </div>
             ) : (
-              <>
-                <div className="space-y-2">
-                  <Label>Team Member</Label>
-                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a team member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unlicensedMembers.map((member) => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          <div className="flex flex-col">
-                            <span>{member.full_name}</span>
-                            <span className="text-xs text-muted-foreground">{member.email}</span>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Member</TableHead>
+                    <TableHead>License</TableHead>
+                    {companyHasAddon && <TableHead>Gas Add-on</TableHead>}
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allMembers.map((member) => (
+                    <TableRow key={member.user_id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{member.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{member.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {member.hasLicense ? (
+                          <Badge className={cn(
+                            member.licenseStatus === "active"
+                              ? "bg-green-500/10 text-green-600 border-green-500/20"
+                              : "bg-muted text-muted-foreground"
+                          )}>
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {member.licenseStatus === "active" ? "Active" : member.licenseStatus}
+                            {member.licenseType && ` (${member.licenseType})`}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Not Assigned
+                          </Badge>
+                        )}
+                      </TableCell>
+                      {companyHasAddon && (
+                        <TableCell>
+                          {member.hasLicense && member.licenseStatus === "active" ? (
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                checked={member.hasGasAddon}
+                                onCheckedChange={(checked) => {
+                                  // Find the matching license to use existing toggle handler
+                                  const lic = licenses.find((l) => l.user_id === member.user_id);
+                                  if (lic) handleToggleGasAddon(lic, !!checked);
+                                }}
+                                disabled={!canManage || togglingGas !== null}
+                              />
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Flame className="h-3 w-3" />
+                                +£15/mo
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right">
+                        {!member.hasLicense ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <Select
+                              value={inlineAssignType[member.user_id] || "engineer"}
+                              onValueChange={(v) =>
+                                setInlineAssignType((prev) => ({ ...prev, [member.user_id]: v as "manager" | "engineer" }))
+                              }
+                            >
+                              <SelectTrigger className="w-[110px] h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="engineer">Engineer</SelectItem>
+                                <SelectItem value="manager">Manager</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAssignInline(member.user_id)}
+                              disabled={isSubmitting || stats.available <= 0}
+                            >
+                              {assigningUserId === member.user_id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <UserPlus className="h-3 w-3 mr-1" />
+                                  Assign
+                                </>
+                              )}
+                            </Button>
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>License Type</Label>
-                  <Select value={assignType} onValueChange={(v) => setAssignType(v as "manager" | "engineer")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="engineer">Engineer</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {companyHasAddon && (
-                  <div className="flex items-center space-x-2 rounded-lg border p-4">
-                    <Checkbox
-                      id="include-gas"
-                      checked={includeGasAddon}
-                      onCheckedChange={(checked) => setIncludeGasAddon(!!checked)}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor="include-gas" className="flex items-center gap-2 cursor-pointer">
-                        <Flame className="h-4 w-4 text-orange-500" />
-                        Include Natural Gas Compliance
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">+£15/user/month</p>
-                    </div>
-                  </div>
-                )}
-              </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </div>
+          {companyHasAddon && allMembers.some((m) => !m.hasLicense) && (
+            <div className="flex items-center space-x-2 rounded-lg border p-3 mt-2">
+              <Checkbox
+                id="include-gas-dialog"
+                checked={includeGasAddon}
+                onCheckedChange={(checked) => setIncludeGasAddon(!!checked)}
+              />
+              <Label htmlFor="include-gas-dialog" className="flex items-center gap-2 cursor-pointer text-sm">
+                <Flame className="h-4 w-4 text-orange-500" />
+                Include Gas Add-on when assigning (+£15/user/mo)
+              </Label>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAssignToMember}
-              disabled={isSubmitting || !selectedUserId || unlicensedMembers.length === 0}
-            >
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Assign License
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
