@@ -242,6 +242,7 @@ export default function SiteDetail() {
               </div>
             </CardContent>
           </Card>
+          {canEdit && (
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -257,6 +258,7 @@ export default function SiteDetail() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
         {/* Tabs */}
@@ -301,7 +303,8 @@ export default function SiteDetail() {
                 </CardContent>
               </Card>
 
-              {/* Contact Information */}
+              {/* Contact Information - only visible to owners and managers */}
+              {canEdit && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -337,6 +340,7 @@ export default function SiteDetail() {
                   )}
                 </CardContent>
               </Card>
+              )}
             </div>
           </TabsContent>
 
