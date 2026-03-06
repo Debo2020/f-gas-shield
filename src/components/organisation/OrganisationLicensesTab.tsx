@@ -158,6 +158,26 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
       });
   }, [sharedMembers]);
 
+  // Pending invitations without a license pre-assigned (exclude owners, cross-ref by email)
+  const pendingInvitations = useMemo(() => {
+    const licensedEmails = new Set(licenses.filter((l) => l.email).map((l) => l.email!.toLowerCase()));
+    return invitations
+      .filter((inv) => inv.role !== "owner" && !licensedEmails.has(inv.email.toLowerCase()))
+      .sort((a, b) => a.email.localeCompare(b.email));
+  }, [invitations, licenses]);
+
+  const pendingWithLicense = useMemo(() => {
+    return invitations
+      .filter((inv) => {
+        const lic = licenses.find((l) => l.email?.toLowerCase() === inv.email.toLowerCase());
+        return !!lic && inv.role !== "owner";
+      })
+      .map((inv) => {
+        const lic = licenses.find((l) => l.email?.toLowerCase() === inv.email.toLowerCase())!;
+        return { ...inv, license: lic };
+      });
+  }, [invitations, licenses]);
+
   // Fetch gas addon licenses for company
   const fetchGasAddonLicenses = useCallback(async () => {
     if (!profile?.company_id) return;
