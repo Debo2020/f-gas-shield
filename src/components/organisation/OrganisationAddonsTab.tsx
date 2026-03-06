@@ -10,6 +10,9 @@ import {
   Users,
   Trash2,
   AlertCircle,
+  KeyRound,
+  ExternalLink,
+  CreditCard,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,10 +53,14 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useGasAddon } from "@/hooks/useGasAddon";
+import { useSubscription } from "@/hooks/useSubscription";
 import { ADDON_MODULES } from "@/lib/gas-addons";
+import { SUBSCRIPTION_TIERS } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 
 interface TeamMember {
@@ -78,12 +85,14 @@ interface AddonLicense {
 export function OrganisationAddonsTab() {
   const { hasRole, profile, user } = useAuth();
   const { companyHasAddon, addon } = useGasAddon();
+  const { tier, subscribed, licenseCount, licensesUsed, subscriptionEnd, loading: subLoading, openCustomerPortal } = useSubscription();
   const queryClient = useQueryClient();
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
   const canManage = isOwner || isManager;
   const companyId = profile?.company_id;
+  const [portalLoading, setPortalLoading] = useState(false);
 
   // Auto-sync addon status from Stripe when tab loads and addon appears inactive
   useEffect(() => {
@@ -258,18 +267,110 @@ export function OrganisationAddonsTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" />
-            Add-on Modules
+            <KeyRound className="h-5 w-5 text-primary" />
+            Licenses &amp; Subscriptions
           </h2>
           <p className="text-sm text-muted-foreground">
-            Manage optional modules and assign licenses to team members
+            Manage your subscription plan, licenses and add-on modules
           </p>
         </div>
+      </div>
+
+      {/* Main Subscription Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <CreditCard className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">
+                  {tier ? SUBSCRIPTION_TIERS[tier]?.name || "Subscription" : "No Active Plan"}
+                </CardTitle>
+                <CardDescription>
+                  {subscribed ? "Your current subscription plan" : "Subscribe to get started"}
+                </CardDescription>
+              </div>
+            </div>
+            <Badge variant={subscribed ? "default" : "secondary"}>
+              {subscribed ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {subLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Loading subscription…</span>
+            </div>
+          ) : subscribed && tier ? (
+            <>
+              {/* License usage */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Application Licenses</span>
+                  <span className="font-medium">
+                    {licensesUsed} / {licenseCount} used
+                  </span>
+                </div>
+                <Progress value={licenseCount > 0 ? (licensesUsed / licenseCount) * 100 : 0} className="h-2" />
+              </div>
+
+              {/* Renewal date */}
+              {subscriptionEnd && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>Renews {format(new Date(subscriptionEnd), "dd MMM yyyy")}</span>
+                </div>
+              )}
+
+              {/* Manage button */}
+              {canManage && (
+                <Button
+                  variant="outline"
+                  className="mt-2"
+                  disabled={portalLoading}
+                  onClick={async () => {
+                    setPortalLoading(true);
+                    try {
+                      await openCustomerPortal();
+                    } catch {
+                      toast.error("Failed to open subscription portal");
+                    } finally {
+                      setPortalLoading(false);
+                    }
+                  }}
+                >
+                  {portalLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+                  Manage Subscription
+                </Button>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No active subscription found. Contact your account owner.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Add-on Modules Sub-heading */}
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Flame className="h-4 w-4 text-primary" />
+          Add-on Modules
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Optional modules that can be added to your monthly subscription
+        </p>
       </div>
 
       {/* Natural Gas Add-on Card */}
