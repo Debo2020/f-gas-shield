@@ -18,6 +18,9 @@ import {
   Flame,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ADDON_MODULES } from "@/lib/gas-addons";
+import { formatPrice } from "@/lib/subscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -89,6 +92,7 @@ export function OrganisationLicensesTab() {
   } = useLicenses();
   const {
     subscribed,
+    tier,
     loading: subscriptionLoading,
     checkSubscription,
     createCheckout,
@@ -641,6 +645,53 @@ export function OrganisationLicensesTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Cost Summary Footer */}
+      {subscribed && tier && stats.active > 0 && (
+        (() => {
+          const currentTier = SUBSCRIPTION_TIERS[tier];
+          const basePrice = currentTier.price ?? 0;
+          const baseLicenseCount = stats.active;
+          const baseCost = baseLicenseCount * basePrice;
+          const gasAddonCount = companyHasAddon ? gasAddonUserIds.size : 0;
+          const gasAddonPrice = ADDON_MODULES.natural_gas.price;
+          const gasAddonCost = gasAddonCount * gasAddonPrice;
+          const totalCost = baseCost + gasAddonCost;
+
+          return (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Monthly Cost Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Base Licenses ({baseLicenseCount} × {formatPrice(basePrice, currentTier.currency)}/user)
+                  </span>
+                  <span className="font-medium">{formatPrice(baseCost, currentTier.currency)}</span>
+                </div>
+                {companyHasAddon && gasAddonCount > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Flame className="h-3 w-3" />
+                      Gas Add-on ({gasAddonCount} × {formatPrice(gasAddonPrice, "GBP")}/user)
+                    </span>
+                    <span className="font-medium">{formatPrice(gasAddonCost, "GBP")}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">Total Monthly</span>
+                  <span className="text-lg font-bold text-primary">{formatPrice(totalCost, currentTier.currency)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()
+      )}
 
       {/* Assign License Dialog - Now with dropdown */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
