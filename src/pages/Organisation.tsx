@@ -145,6 +145,7 @@ export default function Organisation() {
             <TabsContent value="settings">
               <OrganisationSettingsTab
                 members={teamData.members}
+                invitations={teamData.invitations}
                 refetch={teamData.refetch}
               />
             </TabsContent>
