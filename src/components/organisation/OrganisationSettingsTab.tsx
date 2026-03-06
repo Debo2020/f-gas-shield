@@ -30,9 +30,14 @@ export function OrganisationSettingsTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = hasRole("owner");
+  const isManager = hasRole("manager");
+  const canManage = isOwner || isManager;
+
+  const { tier, subscribed, licenseCount, licensesUsed, subscriptionEnd, loading: subLoading, openCustomerPortal } = useSubscription();
 
   useEffect(() => {
     const fetchCompany = async () => {
