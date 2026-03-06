@@ -134,54 +134,61 @@ export function OrganisationLicensesTab() {
   const tierConfig = useMemo(() => SUBSCRIPTION_TIERS[selectedTier], [selectedTier]);
 
   // Fetch unlicensed team members
+  const fetchUnlicensedMembers = useCallback(async () => {
+    if (!profile?.company_id) return;
+    setLoadingMembers(true);
+
+    try {
+      // Get all profiles in company
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .eq("company_id", profile.company_id);
+
+      if (profilesError) throw profilesError;
+
+      // Get existing licenses
+      const { data: existingLicenses, error: licensesError } = await supabase
+        .from("user_licenses")
+        .select("user_id")
+        .eq("company_id", profile.company_id);
+
+      if (licensesError) throw licensesError;
+
+      const licensedUserIds = new Set(existingLicenses?.map((l) => l.user_id).filter(Boolean) || []);
+
+      // Get owners (they don't need licenses)
+      const { data: ownerRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "owner");
+
+      if (rolesError) throw rolesError;
+
+      const ownerIds = new Set(ownerRoles?.map((r) => r.user_id) || []);
+
+      // Filter to unlicensed members (excluding owners)
+      const unlicensed =
+        profiles?.filter((p) => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id)) || [];
+
+      setUnlicensedMembers(unlicensed);
+    } catch (error) {
+      console.error("Error fetching unlicensed members:", error);
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [profile?.company_id]);
+
   useEffect(() => {
-    const fetchUnlicensedMembers = async () => {
-      if (!profile?.company_id) return;
-      setLoadingMembers(true);
-
-      try {
-        // Get all profiles in company
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, email")
-          .eq("company_id", profile.company_id);
-
-        if (profilesError) throw profilesError;
-
-        // Get existing licenses
-        const { data: existingLicenses, error: licensesError } = await supabase
-          .from("user_licenses")
-          .select("user_id")
-          .eq("company_id", profile.company_id);
-
-        if (licensesError) throw licensesError;
-
-        const licensedUserIds = new Set(existingLicenses?.map((l) => l.user_id).filter(Boolean) || []);
-
-        // Get owners (they don't need licenses)
-        const { data: ownerRoles, error: rolesError } = await supabase
-          .from("user_roles")
-          .select("user_id")
-          .eq("role", "owner");
-
-        if (rolesError) throw rolesError;
-
-        const ownerIds = new Set(ownerRoles?.map((r) => r.user_id) || []);
-
-        // Filter to unlicensed members (excluding owners)
-        const unlicensed =
-          profiles?.filter((p) => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id)) || [];
-
-        setUnlicensedMembers(unlicensed);
-      } catch (error) {
-        console.error("Error fetching unlicensed members:", error);
-      } finally {
-        setLoadingMembers(false);
-      }
-    };
-
     fetchUnlicensedMembers();
-  }, [profile?.company_id, licenses]);
+  }, [fetchUnlicensedMembers, licenses]);
+
+  // Re-fetch when assign dialog opens to ensure fresh data
+  useEffect(() => {
+    if (assignDialogOpen) {
+      fetchUnlicensedMembers();
+    }
+  }, [assignDialogOpen, fetchUnlicensedMembers]);
 
   // Fetch gas addon licenses for company
   const fetchGasAddonLicenses = useCallback(async () => {
