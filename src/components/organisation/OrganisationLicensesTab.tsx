@@ -140,62 +140,82 @@ export function OrganisationLicensesTab() {
 
   const tierConfig = useMemo(() => SUBSCRIPTION_TIERS[selectedTier], [selectedTier]);
 
-  // Fetch unlicensed team members
-  const fetchUnlicensedMembers = useCallback(async () => {
+  // Fetch all team members with license and gas addon status
+  const fetchAllMembers = useCallback(async () => {
     if (!profile?.company_id) return;
     setLoadingMembers(true);
 
     try {
-      // Get all profiles in company
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, email")
-        .eq("company_id", profile.company_id);
+      // Fetch profiles, licenses, owner roles, and gas addon licenses in parallel
+      const [profilesRes, licensesRes, ownerRolesRes, addonRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .eq("company_id", profile.company_id),
+        supabase
+          .from("user_licenses")
+          .select("id, user_id, license_type, status")
+          .eq("company_id", profile.company_id),
+        supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "owner"),
+        supabase
+          .from("addon_licenses")
+          .select("user_id")
+          .eq("company_id", profile.company_id)
+          .eq("addon_type", "natural_gas")
+          .eq("status", "active"),
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesRes.error) throw profilesRes.error;
+      if (licensesRes.error) throw licensesRes.error;
 
-      // Get existing licenses
-      const { data: existingLicenses, error: licensesError } = await supabase
-        .from("user_licenses")
-        .select("user_id")
-        .eq("company_id", profile.company_id);
+      const ownerIds = new Set(ownerRolesRes.data?.map((r) => r.user_id) || []);
+      const licenseMap = new Map(
+        licensesRes.data?.filter((l) => l.user_id).map((l) => [l.user_id!, l]) || []
+      );
+      const gasAddonSet = new Set(addonRes.data?.map((a) => a.user_id).filter(Boolean) || []);
 
-      if (licensesError) throw licensesError;
+      const members: TeamMemberWithLicense[] = (profilesRes.data || [])
+        .filter((p) => !ownerIds.has(p.user_id))
+        .map((p) => {
+          const license = licenseMap.get(p.user_id);
+          return {
+            user_id: p.user_id,
+            full_name: p.full_name,
+            email: p.email,
+            hasLicense: !!license,
+            licenseId: license?.id,
+            licenseType: license?.license_type,
+            licenseStatus: license?.status,
+            hasGasAddon: gasAddonSet.has(p.user_id),
+          };
+        })
+        .sort((a, b) => {
+          // Licensed first, then by name
+          if (a.hasLicense !== b.hasLicense) return a.hasLicense ? -1 : 1;
+          return a.full_name.localeCompare(b.full_name);
+        });
 
-      const licensedUserIds = new Set(existingLicenses?.map((l) => l.user_id).filter(Boolean) || []);
-
-      // Get owners (they don't need licenses)
-      const { data: ownerRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner");
-
-      if (rolesError) throw rolesError;
-
-      const ownerIds = new Set(ownerRoles?.map((r) => r.user_id) || []);
-
-      // Filter to unlicensed members (excluding owners)
-      const unlicensed =
-        profiles?.filter((p) => !licensedUserIds.has(p.user_id) && !ownerIds.has(p.user_id)) || [];
-
-      setUnlicensedMembers(unlicensed);
+      setAllMembers(members);
     } catch (error) {
-      console.error("Error fetching unlicensed members:", error);
+      console.error("Error fetching team members:", error);
     } finally {
       setLoadingMembers(false);
     }
   }, [profile?.company_id]);
 
   useEffect(() => {
-    fetchUnlicensedMembers();
-  }, [fetchUnlicensedMembers, licenses]);
+    fetchAllMembers();
+  }, [fetchAllMembers, licenses]);
 
   // Re-fetch when assign dialog opens to ensure fresh data
   useEffect(() => {
     if (assignDialogOpen) {
-      fetchUnlicensedMembers();
+      fetchAllMembers();
     }
-  }, [assignDialogOpen, fetchUnlicensedMembers]);
+  }, [assignDialogOpen, fetchAllMembers]);
 
   // Fetch gas addon licenses for company
   const fetchGasAddonLicenses = useCallback(async () => {
