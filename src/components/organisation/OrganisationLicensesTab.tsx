@@ -126,8 +126,6 @@ export function OrganisationLicensesTab() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Form states
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [assignType, setAssignType] = useState<"manager" | "engineer">("engineer");
   const [addCount, setAddCount] = useState(1);
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("premium");
   const [isAnnual, setIsAnnual] = useState(true);
