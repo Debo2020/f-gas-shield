@@ -212,7 +212,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, refetch: share
         toast.success("Natural Gas add-on removed");
       }
       await fetchGasAddonLicenses();
-      await fetchAllMembers();
+      await sharedRefetch();
       // Sync quantity to Stripe
       const { error: syncError } = await supabase.functions.invoke("update-addon-license-count");
       if (syncError) {
@@ -282,7 +282,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, refetch: share
       }
       setIncludeGasAddon(false);
       // Refresh members list in-place
-      await fetchAllMembers();
+      await sharedRefetch();
     }
     setIsSubmitting(false);
     setAssigningUserId(null);
@@ -670,7 +670,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, refetch: share
             <DialogDescription>View all team members and manage their license and gas add-on status</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto py-2">
-            {loadingMembers ? (
+            {sharedMembers.length === 0 && allMembers.length === 0 ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
