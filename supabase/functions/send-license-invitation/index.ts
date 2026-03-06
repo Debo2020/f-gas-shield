@@ -128,7 +128,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!license.email) {
+    // Verify the license belongs to the caller's company
+    if (license.company_id !== callerProfile.company_id) {
+      logStep("License does not belong to caller's company", { licenseCompany: license.company_id, callerCompany: callerProfile.company_id });
+      return new Response(
+        JSON.stringify({ error: "Forbidden: license belongs to another company" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
       return new Response(
         JSON.stringify({ error: "License has no email address" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
