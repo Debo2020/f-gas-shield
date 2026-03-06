@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Send,
   Building,
+  Flame,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useLicenses, type License } from "@/hooks/useLicenses";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useGasAddon } from "@/hooks/useGasAddon";
 import { SUBSCRIPTION_TIERS, type SubscriptionTier } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
