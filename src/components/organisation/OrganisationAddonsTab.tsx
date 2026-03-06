@@ -79,7 +79,6 @@ export function OrganisationAddonsTab() {
   const { hasRole, profile, user } = useAuth();
   const { companyHasAddon, addon } = useGasAddon();
   const queryClient = useQueryClient();
-  const queryClient = useQueryClient();
 
   const isOwner = hasRole("owner");
   const isManager = hasRole("manager");
