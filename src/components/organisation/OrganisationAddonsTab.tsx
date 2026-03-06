@@ -78,7 +78,7 @@ interface AddonLicense {
 export function OrganisationAddonsTab() {
   const { hasRole, profile, user } = useAuth();
   const { companyHasAddon, addon } = useGasAddon();
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
 
   const isOwner = hasRole("owner");
