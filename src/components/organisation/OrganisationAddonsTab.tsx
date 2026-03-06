@@ -176,17 +176,22 @@ export function OrganisationAddonsTab() {
     if (!selectedUserId || !companyId || !user?.id) return;
     setIsSubmitting(true);
     try {
-      const member = unlicensedMembers.find(m => m.user_id === selectedUserId);
-      const { error } = await supabase.from("addon_licenses").insert({
+      const selected = selectableMembers.find(m => m.id === selectedUserId);
+      const insertData: any = {
         company_id: companyId,
         addon_type: "natural_gas" as any,
-        user_id: selectedUserId,
-        email: member?.email || null,
         status: "active",
         assigned_by: user.id,
-      });
+      };
+      if (selected?.type === "member") {
+        insertData.user_id = selected.id;
+        insertData.email = selected.email;
+      } else {
+        insertData.email = selected?.email || null;
+      }
+      const { error } = await supabase.from("addon_licenses").insert(insertData);
       if (error) throw error;
-      toast.success(`Gas add-on license assigned to ${member?.full_name || "member"}`);
+      toast.success(`Gas add-on license assigned to ${selected?.label || "member"}`);
       setAssignDialogOpen(false);
       setSelectedUserId("");
       refetch();
