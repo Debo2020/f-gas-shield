@@ -1,12 +1,19 @@
 import { useEffect, useState, useRef } from "react";
-import { Building2, Upload, X, ImageIcon, Settings } from "lucide-react";
+import { Building2, Upload, X, ImageIcon, Settings, CreditCard, Clock, ExternalLink, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { CompanyDetailsForm, type CompanyFormValues } from "@/components/company/CompanyDetailsForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { SUBSCRIPTION_TIERS } from "@/lib/subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OrganisationAddonsTab } from "./OrganisationAddonsTab";
+import { format } from "date-fns";
 
 interface CompanyData {
   id: string;
