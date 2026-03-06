@@ -712,6 +712,20 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {/* Section: Registered Members */}
+                  {allMembers.length > 0 && (
+                    <TableRow className="hover:bg-transparent border-b-0">
+                      <TableCell colSpan={companyHasAddon ? 4 : 3} className="pt-4 pb-2 px-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-primary" />
+                          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                            Registered Members
+                          </span>
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{allMembers.length}</Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {allMembers.map((member) => (
                     <TableRow key={member.user_id}>
                       <TableCell>
@@ -798,9 +812,26 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
                     </TableRow>
                   ))}
 
+                  {/* Section: Pending Invitations */}
+                  {(pendingWithLicense.length > 0 || pendingInvitations.length > 0) && (
+                    <TableRow className="hover:bg-transparent border-b-0">
+                      <TableCell colSpan={companyHasAddon ? 4 : 3} className="pt-6 pb-2 px-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-amber-500" />
+                          <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                            Pending Invitations
+                          </span>
+                          <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-amber-500/30 text-amber-600">
+                            {pendingWithLicense.length + pendingInvitations.length}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+
                   {/* Pending Invitations with pre-assigned license */}
                   {pendingWithLicense.map((inv) => (
-                    <TableRow key={`inv-lic-${inv.id}`} className="bg-muted/30">
+                    <TableRow key={`inv-lic-${inv.id}`} className="bg-amber-50/50 dark:bg-amber-950/10 border-l-2 border-l-amber-400/50">
                       <TableCell>
                         <div>
                           <p className="font-medium">{inv.email}</p>
@@ -829,7 +860,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
 
                   {/* Pending Invitations without license */}
                   {pendingInvitations.map((inv) => (
-                    <TableRow key={`inv-${inv.id}`} className="bg-muted/30">
+                    <TableRow key={`inv-${inv.id}`} className="bg-amber-50/50 dark:bg-amber-950/10 border-l-2 border-l-amber-400/50">
                       <TableCell>
                         <div>
                           <p className="font-medium">{inv.email}</p>
