@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Users, UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,94 +6,24 @@ import { InviteMemberDialog, InviteMemberData } from "@/components/team/InviteMe
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState } from "react";
+import type { EnrichedTeamMember, PendingInvitation } from "@/hooks/useTeamMembers";
 
-interface TeamMember {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-  roles: string[];
-  licenseStatus: "active" | "disabled" | "pending" | null;
+interface OrganisationTeamTabProps {
+  members: EnrichedTeamMember[];
+  invitations: PendingInvitation[];
+  isLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
-interface PendingInvitation {
-  id: string;
-  email: string;
-  role: string;
-  expires_at: string;
-  created_at: string;
-}
-
-export function OrganisationTeamTab() {
+export function OrganisationTeamTab({ members, invitations, isLoading, refetch }: OrganisationTeamTabProps) {
   const { user, profile, hasRole, hasActiveLicense } = useAuth();
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   const isOwner = hasRole("owner");
   const canInvite = isOwner || hasRole("manager");
   const canInviteWithLicense = canInvite && (isOwner || hasActiveLicense);
   const canManage = isOwner || hasRole("manager");
-
-  const fetchTeamData = async () => {
-    if (!profile?.company_id) return;
-
-    try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, user_id, full_name, email, avatar_url")
-        .eq("company_id", profile.company_id);
-
-      if (profilesError) throw profilesError;
-
-      const memberIds = profilesData?.map((p) => p.user_id) || [];
-      
-      // Fetch roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("user_id", memberIds);
-
-      if (rolesError) throw rolesError;
-
-      // Fetch license status for each member
-      const { data: licensesData, error: licensesError } = await supabase
-        .from("user_licenses")
-        .select("user_id, status")
-        .eq("company_id", profile.company_id);
-
-      if (licensesError) throw licensesError;
-
-      const membersWithRolesAndLicenses = profilesData?.map((p) => ({
-        ...p,
-        roles: rolesData?.filter((r) => r.user_id === p.user_id).map((r) => r.role) || [],
-        licenseStatus: (licensesData?.find((l) => l.user_id === p.user_id)?.status as "active" | "disabled" | "pending") || null,
-      })) || [];
-
-      setMembers(membersWithRolesAndLicenses);
-
-      const { data: invitationsData, error: invitationsError } = await supabase
-        .from("team_invitations")
-        .select("id, email, role, expires_at, created_at")
-        .eq("company_id", profile.company_id)
-        .is("accepted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (invitationsError) throw invitationsError;
-      setInvitations(invitationsData || []);
-    } catch (error: any) {
-      console.error("Error fetching team data:", error);
-      toast.error("Failed to load team data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTeamData();
-  }, [profile?.company_id]);
 
   const handleInvite = async (data: InviteMemberData) => {
     if (!profile?.company_id || !user) return;
@@ -120,7 +49,7 @@ export function OrganisationTeamTab() {
         ? `Invitation sent to ${data.email}` 
         : `${data.fullName} added as inactive. You can send them a login link later.`
     );
-    fetchTeamData();
+    refetch();
   };
 
   const handleDeleteInvitation = async (id: string) => {
@@ -130,7 +59,7 @@ export function OrganisationTeamTab() {
       return;
     }
     toast.success("Invitation deleted");
-    fetchTeamData();
+    refetch();
   };
 
   const handleResendInvitation = async (invitation: { id: string; email: string; role: string }) => {
@@ -151,7 +80,7 @@ export function OrganisationTeamTab() {
     }
 
     toast.success(`Invitation resent to ${invitation.email}`);
-    fetchTeamData();
+    refetch();
   };
 
   const handleToggleAccess = async (userId: string, enable: boolean) => {
@@ -172,49 +101,42 @@ export function OrganisationTeamTab() {
     }
 
     toast.success(enable ? "Access enabled" : "Access disabled");
-    fetchTeamData();
+    refetch();
   };
 
   const handleDeleteMember = async (userId: string) => {
     if (!profile?.company_id) return;
 
     try {
-      // 1. Delete user roles
       const { error: rolesError } = await supabase
         .from("user_roles")
         .delete()
         .eq("user_id", userId);
-
       if (rolesError) throw rolesError;
 
-      // 2. Delete user license
       const { error: licenseError } = await supabase
         .from("user_licenses")
         .delete()
         .eq("user_id", userId)
         .eq("company_id", profile.company_id);
-
       if (licenseError) throw licenseError;
 
-      // 3. Unlink from company
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ company_id: null })
         .eq("user_id", userId);
-
       if (profileError) throw profileError;
 
       toast.success("Team member removed");
-      fetchTeamData();
+      refetch();
     } catch (error: any) {
       console.error("Error removing team member:", error);
       toast.error("Failed to remove team member");
     }
   };
 
-  // Create unified list of members and pending invitations
+  // Create unified list
   const unifiedMembers: UnifiedTeamMember[] = [
-    // Active team members
     ...members.map((m) => ({
       id: m.id,
       type: "member" as const,
@@ -225,7 +147,6 @@ export function OrganisationTeamTab() {
       status: m.licenseStatus,
       user_id: m.user_id,
     })),
-    // Pending invitations
     ...invitations.map((inv) => ({
       id: inv.id,
       type: "pending" as const,
