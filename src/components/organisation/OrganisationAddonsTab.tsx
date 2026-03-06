@@ -55,10 +55,11 @@ import { format } from "date-fns";
 
 
 
-interface TeamMember {
-  user_id: string;
-  full_name: string;
+interface SelectableMember {
+  id: string; // user_id for members, email for invitations
+  label: string;
   email: string;
+  type: "member" | "invitation";
 }
 
 interface AddonLicense {
