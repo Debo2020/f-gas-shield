@@ -691,7 +691,7 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
             <DialogDescription>View all team members and manage their license and gas add-on status</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto py-2">
-            {allMembers.length === 0 ? (
+            {allMembers.length === 0 && pendingInvitations.length === 0 && pendingWithLicense.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No team members found</p>
@@ -742,7 +742,6 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
                               <Checkbox
                                 checked={member.hasGasAddon}
                                 onCheckedChange={(checked) => {
-                                  // Find the matching license to use existing toggle handler
                                   const lic = licenses.find((l) => l.user_id === member.user_id);
                                   if (lic) handleToggleGasAddon(lic, !!checked);
                                 }}
@@ -793,6 +792,95 @@ export function OrganisationLicensesTab({ members: sharedMembers, invitations, r
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* Pending Invitations with pre-assigned license */}
+                  {pendingWithLicense.map((inv) => (
+                    <TableRow key={`inv-lic-${inv.id}`} className="bg-muted/30">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{inv.email}</p>
+                          <Badge variant="outline" className="text-amber-600 border-amber-500/30 mt-1 text-[10px]">
+                            <Clock className="h-2.5 w-2.5 mr-1" />
+                            Invited as {inv.role}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pre-assigned ({inv.license.license_type})
+                        </Badge>
+                      </TableCell>
+                      {companyHasAddon && (
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">—</span>
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right">
+                        <span className="text-xs text-muted-foreground">Awaiting acceptance</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* Pending Invitations without license */}
+                  {pendingInvitations.map((inv) => (
+                    <TableRow key={`inv-${inv.id}`} className="bg-muted/30">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{inv.email}</p>
+                          <Badge variant="outline" className="text-amber-600 border-amber-500/30 mt-1 text-[10px]">
+                            <Clock className="h-2.5 w-2.5 mr-1" />
+                            Invited as {inv.role}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Not Assigned
+                        </Badge>
+                      </TableCell>
+                      {companyHasAddon && (
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground">—</span>
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Select
+                            value={inlineAssignType[inv.email] || "engineer"}
+                            onValueChange={(v) =>
+                              setInlineAssignType((prev) => ({ ...prev, [inv.email]: v as "manager" | "engineer" }))
+                            }
+                          >
+                            <SelectTrigger className="w-[110px] h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="engineer">Engineer</SelectItem>
+                              <SelectItem value="manager">Manager</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              setIsSubmitting(true);
+                              const type = inlineAssignType[inv.email] || "engineer";
+                              const success = await assignLicense(inv.email, type as "manager" | "engineer", false);
+                              if (success) {
+                                await sharedRefetch();
+                              }
+                              setIsSubmitting(false);
+                            }}
+                            disabled={isSubmitting || stats.available <= 0}
+                          >
+                            <UserPlus className="h-3 w-3 mr-1" />
+                            Pre-assign
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
