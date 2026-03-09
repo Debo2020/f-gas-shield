@@ -46,6 +46,23 @@ interface CertificatePreviewProps {
 
 const yn = (v: boolean) => (v ? "Yes" : "No");
 
+const ITEMS_PER_PAGE = 6;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+const TABLE_HEADERS = [
+  "#", "Location", "Type", "Make", "Model", "Flue", "L/L",
+  "Insp.", "Press", "Heat", "H CO", "H CO₂", "H Ratio",
+  "L CO", "L CO₂", "L Ratio", "Safety", "Vent.", "Visual",
+  "Flue P.", "Srv'd", "Safe",
+];
+
 export function CertificatePreview({
   companyInfo,
   jobDetails,
@@ -56,8 +73,116 @@ export function CertificatePreview({
   issuedByName,
   receivedByName,
 }: CertificatePreviewProps) {
-  return (
-    <div className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[1100px] aspect-[1.414/1] p-6 space-y-4 text-foreground text-[11px] leading-tight overflow-y-auto">
+  const applianceChunks = chunk(appliances, ITEMS_PER_PAGE);
+  const defectChunks = chunk(defects, ITEMS_PER_PAGE);
+  const hasApplianceOverflow = applianceChunks.length > 1;
+  const hasDefectOverflow = defectChunks.length > 1;
+
+  let totalPages = 1;
+  if (hasApplianceOverflow) totalPages += applianceChunks.length - 1;
+  if (hasDefectOverflow) totalPages += defectChunks.length - 1;
+
+  const jobAddressSummary = [jobDetails.job_address_name, jobDetails.job_address, jobDetails.job_postcode].filter(Boolean).join(", ");
+
+  const renderApplianceTable = (items: ApplianceData[], startIndex: number) => (
+    <div className="overflow-x-auto border border-border rounded">
+      <table className="w-full text-[8px] border-collapse">
+        <thead>
+          <tr className="bg-muted text-muted-foreground">
+            {TABLE_HEADERS.map((h) => (
+              <th key={h} className="border border-border px-0.5 py-1 font-medium whitespace-pre-line text-center">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((a, i) => (
+            <tr key={i} className="text-center">
+              <td className="border border-border px-0.5 py-0.5">{startIndex + i + 1}</td>
+              <td className="border border-border px-0.5 py-0.5 text-left">{a.location}</td>
+              <td className="border border-border px-0.5 py-0.5 text-left">{a.appliance_type}</td>
+              <td className="border border-border px-0.5 py-0.5 text-left">{a.make}</td>
+              <td className="border border-border px-0.5 py-0.5 text-left">{a.model}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.flue_type}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.landlord_appliance)}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_inspected)}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.operating_pressure_mbar || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.heat_input_kw || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.high_co_ppm || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.high_co2_percent || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.high_co_ratio || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.low_co_ppm || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.low_co2_percent || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.low_co_ratio || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.safety_devices_correct)}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.ventilation_satisfactory)}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.visual_condition_satisfactory)}</td>
+              <td className="border border-border px-0.5 py-0.5">{a.flue_performance_test || "—"}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_serviced)}</td>
+              <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_safe_to_use)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderDefectTable = (items: DefectRow[], startIndex: number) => (
+    <div className="border border-border rounded overflow-hidden">
+      <table className="w-full text-[9px] border-collapse">
+        <thead>
+          <tr className="bg-muted text-muted-foreground">
+            <th className="border border-border px-1 py-1 w-8 font-medium">#</th>
+            <th className="border border-border px-1 py-1 font-medium text-left">Description</th>
+            <th className="border border-border px-1 py-1 w-24 font-medium">Warning Notice</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.length === 0 ? (
+            <tr>
+              <td colSpan={3} className="border border-border px-1 py-2 text-center text-muted-foreground">
+                No defects recorded
+              </td>
+            </tr>
+          ) : (
+            items.map((d, i) => (
+              <tr key={i}>
+                <td className="border border-border px-1 py-0.5 text-center">{startIndex + i + 1}</td>
+                <td className="border border-border px-1 py-0.5">{d.description}</td>
+                <td className="border border-border px-1 py-0.5 text-center">{yn(d.warning_labels_issued)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderPageFooter = (pageNum: number) => (
+    <div className="flex justify-between text-[7px] text-muted-foreground pt-1 border-t border-border mt-auto">
+      <span>Generated by FTrack Gas Compliance</span>
+      <span>Page {pageNum} of {totalPages}</span>
+    </div>
+  );
+
+  const renderContinuationHeader = (sectionLabel: string) => (
+    <div className="space-y-1 border-b border-border pb-2">
+      <div className="flex justify-between items-center">
+        <h2 className="text-base font-bold tracking-tight">Non Domestic Gas Safety Record</h2>
+      </div>
+      <p className="text-[8px] text-muted-foreground">Property: {jobAddressSummary || "—"}</p>
+      <p className="text-[9px] font-semibold text-primary">Continuation Page — {sectionLabel}</p>
+    </div>
+  );
+
+  const pages: React.ReactNode[] = [];
+  let pageCounter = 0;
+
+  // ── PAGE 1 ──
+  pageCounter++;
+  pages.push(
+    <div key="page1" className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[1100px] aspect-[1.414/1] p-6 flex flex-col space-y-3 text-foreground text-[11px] leading-tight overflow-hidden">
       {/* Header */}
       <div className="text-center space-y-1 border-b border-border pb-3">
         <h2 className="text-base font-bold tracking-tight">Non Domestic Gas Safety Record</h2>
@@ -98,88 +223,16 @@ export function CertificatePreview({
         </FieldCard>
       </div>
 
-      {/* Appliance Inspection Table */}
+      {/* Appliance table — first 6 */}
       <div>
         <h3 className="text-xs font-semibold mb-1">Appliance Inspection</h3>
-        <div className="overflow-x-auto border border-border rounded">
-          <table className="w-full text-[8px] border-collapse">
-            <thead>
-              <tr className="bg-muted text-muted-foreground">
-                {[
-                  "#", "Location", "Type", "Make", "Model", "Flue", "L/L",
-                  "Insp.", "Press", "Heat", "H CO", "H CO₂", "H Ratio",
-                  "L CO", "L CO₂", "L Ratio", "Safety", "Vent.", "Visual",
-                  "Flue P.", "Srv'd", "Safe",
-                ].map((h) => (
-                  <th key={h} className="border border-border px-0.5 py-1 font-medium whitespace-pre-line text-center">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {appliances.map((a, i) => (
-                <tr key={i} className="text-center">
-                  <td className="border border-border px-0.5 py-0.5">{i + 1}</td>
-                  <td className="border border-border px-0.5 py-0.5 text-left">{a.location}</td>
-                  <td className="border border-border px-0.5 py-0.5 text-left">{a.appliance_type}</td>
-                  <td className="border border-border px-0.5 py-0.5 text-left">{a.make}</td>
-                  <td className="border border-border px-0.5 py-0.5 text-left">{a.model}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.flue_type}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.landlord_appliance)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_inspected)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.operating_pressure_mbar || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.heat_input_kw || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.high_co_ppm || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.high_co2_percent || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.high_co_ratio || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.low_co_ppm || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.low_co2_percent || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.low_co_ratio || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.safety_devices_correct)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.ventilation_satisfactory)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.visual_condition_satisfactory)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{a.flue_performance_test || "—"}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_serviced)}</td>
-                  <td className="border border-border px-0.5 py-0.5">{yn(a.appliance_safe_to_use)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {renderApplianceTable(applianceChunks[0] || [], 0)}
       </div>
 
-      {/* Defects */}
+      {/* Defects — first 6 */}
       <div>
         <h3 className="text-xs font-semibold mb-1">Defects Identified</h3>
-        <div className="border border-border rounded overflow-hidden">
-          <table className="w-full text-[9px] border-collapse">
-            <thead>
-              <tr className="bg-muted text-muted-foreground">
-                <th className="border border-border px-1 py-1 w-8 font-medium">#</th>
-                <th className="border border-border px-1 py-1 font-medium text-left">Description</th>
-                <th className="border border-border px-1 py-1 w-24 font-medium">Warning Notice</th>
-              </tr>
-            </thead>
-            <tbody>
-              {defects.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="border border-border px-1 py-2 text-center text-muted-foreground">
-                    No defects recorded
-                  </td>
-                </tr>
-              ) : (
-                defects.map((d, i) => (
-                  <tr key={i}>
-                    <td className="border border-border px-1 py-0.5 text-center">{d.number}</td>
-                    <td className="border border-border px-1 py-0.5">{d.description}</td>
-                    <td className="border border-border px-1 py-0.5 text-center">{yn(d.warning_labels_issued)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {renderDefectTable(defectChunks[0] || [], 0)}
       </div>
 
       {/* Gas Installation Safety Checks */}
@@ -197,7 +250,7 @@ export function CertificatePreview({
       {comments && (
         <div>
           <h3 className="text-xs font-semibold mb-1">Comments</h3>
-          <p className="border border-border rounded p-2 text-[10px] whitespace-pre-wrap min-h-[40px]">
+          <p className="border border-border rounded p-2 text-[10px] whitespace-pre-wrap min-h-[30px]">
             {comments}
           </p>
         </div>
@@ -207,21 +260,55 @@ export function CertificatePreview({
       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
         <div className="space-y-1">
           <h4 className="text-[10px] font-semibold">Engineer</h4>
-          <div className="border border-border rounded p-2 h-12 flex items-end">
+          <div className="border border-border rounded p-2 h-10 flex items-end">
             <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
           </div>
           <p className="text-[10px]"><strong>Name:</strong> {issuedByName || "—"}</p>
         </div>
         <div className="space-y-1">
           <h4 className="text-[10px] font-semibold">Customer / Representative</h4>
-          <div className="border border-border rounded p-2 h-12 flex items-end">
+          <div className="border border-border rounded p-2 h-10 flex items-end">
             <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
           </div>
           <p className="text-[10px]"><strong>Name:</strong> {receivedByName || "—"}</p>
         </div>
       </div>
+
+      {renderPageFooter(1)}
     </div>
   );
+
+  // ── CONTINUATION PAGES — Appliances ──
+  for (let c = 1; c < applianceChunks.length; c++) {
+    pageCounter++;
+    pages.push(
+      <div key={`app-${c}`} className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[1100px] aspect-[1.414/1] p-6 flex flex-col text-foreground text-[11px] leading-tight overflow-hidden mt-4">
+        {renderContinuationHeader("Appliances")}
+        <div className="mt-3">
+          {renderApplianceTable(applianceChunks[c], c * ITEMS_PER_PAGE)}
+        </div>
+        <div className="flex-1" />
+        {renderPageFooter(pageCounter)}
+      </div>
+    );
+  }
+
+  // ── CONTINUATION PAGES — Defects ──
+  for (let c = 1; c < defectChunks.length; c++) {
+    pageCounter++;
+    pages.push(
+      <div key={`def-${c}`} className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[1100px] aspect-[1.414/1] p-6 flex flex-col text-foreground text-[11px] leading-tight overflow-hidden mt-4">
+        {renderContinuationHeader("Defects")}
+        <div className="mt-3">
+          {renderDefectTable(defectChunks[c], c * ITEMS_PER_PAGE)}
+        </div>
+        <div className="flex-1" />
+        {renderPageFooter(pageCounter)}
+      </div>
+    );
+  }
+
+  return <>{pages}</>;
 }
 
 function FieldCard({ title, children }: { title: string; children: React.ReactNode }) {
