@@ -835,3 +835,248 @@ function generateLandlordGasSafetyPDF(doc: jsPDF, data: CertificateData, title: 
 
   return doc;
 }
+
+// ---- Gas Warning Notice — Landscape A4 ----
+function generateWarningNoticePDF(doc: jsPDF, data: CertificateData, title: string): jsPDF {
+  const navy: [number, number, number] = [26, 54, 93];
+  const red: [number, number, number] = [192, 57, 43];
+  const pageWidth = 297;
+  const pageHeight = 210;
+  const marginL = 14;
+  const marginR = 14;
+  const contentWidth = pageWidth - marginL - marginR;
+  const colWidth = (contentWidth - 6) / 3;
+
+  let y = 12;
+
+  // Header
+  if (data.company_logo_base64) {
+    try { doc.addImage(data.company_logo_base64, "PNG", marginL, y - 2, 24, 14); } catch {}
+  }
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.text(title, pageWidth / 2, y + 5, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.text(`Cert. No. ${data.certificate_number}`, pageWidth - marginR, y + 5, { align: "right" });
+
+  y += 16;
+
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(100, 100, 100);
+  doc.text("This form should be completed in accordance with the requirements of the current Gas Industry Unsafe Situations Procedure.", pageWidth / 2, y, { align: "center", maxWidth: contentWidth });
+  y += 5;
+  doc.setTextColor(0, 0, 0);
+
+  // Three column info
+  const infoY = y;
+  const col1X = marginL;
+  const col2X = marginL + colWidth + 3;
+  const col3X = marginL + (colWidth + 3) * 2;
+
+  autoTable(doc, {
+    startY: infoY, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Company / Installer", ""]],
+    body: [
+      ["Engineer", data.issued_by_name || "-"],
+      ["Company", data.company_name || "-"],
+      ["Address", data.company_address || "-"],
+      ["Telephone", data.company_phone || "-"],
+      ["Gas Safe Reg.", data.gas_safe_reg_no || "-"],
+      ["ID Card No.", data.engineer_gas_safe_id || "-"],
+    ],
+    styles: { fontSize: 6, cellPadding: 1.2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 22 } },
+    margin: { left: col1X, right: pageWidth - col1X - colWidth },
+  });
+  const c1Y = (doc as any).lastAutoTable.finalY;
+
+  autoTable(doc, {
+    startY: infoY, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Job Address", ""]],
+    body: [
+      ["Name", data.job_address_name || "-"],
+      ["Address", data.job_address || "-"],
+      ["Post Code", data.job_postcode || "-"],
+      ["Telephone", data.job_phone || "-"],
+      ["Date", data.inspection_date],
+    ],
+    styles: { fontSize: 6, cellPadding: 1.2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 20 } },
+    margin: { left: col2X, right: pageWidth - col2X - colWidth },
+  });
+  const c2Y = (doc as any).lastAutoTable.finalY;
+
+  autoTable(doc, {
+    startY: infoY, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Client / Landlord", ""]],
+    body: [
+      ["Name", data.customer_name || "-"],
+      ["Company", data.customer_company || "-"],
+      ["Address", data.customer_address || "-"],
+      ["Post Code", data.customer_postcode || "-"],
+      ["Telephone", data.customer_phone || "-"],
+      ["Mobile", data.customer_mobile || "-"],
+    ],
+    styles: { fontSize: 6, cellPadding: 1.2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 20 } },
+    margin: { left: col3X, right: pageWidth - col3X - colWidth },
+  });
+  const c3Y = (doc as any).lastAutoTable.finalY;
+
+  y = Math.max(c1Y, c2Y, c3Y) + 3;
+
+  // Appliance details + Issue types side by side
+  const halfW = (contentWidth - 4) / 2;
+
+  autoTable(doc, {
+    startY: y, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Gas Appliance / Installation Details", ""]],
+    body: [
+      ["Location", data.warning_location || "-"],
+      ["Make", data.warning_make || "-"],
+      ["Type", data.warning_type || "-"],
+      ["Model", data.warning_model || "-"],
+      ["Serial No.", data.warning_serial_no || "-"],
+      ["Classification", classificationLabel(data.classification)],
+    ],
+    styles: { fontSize: 6, cellPadding: 1.2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 25 } },
+    margin: { left: marginL, right: pageWidth - marginL - halfW },
+  });
+  const appY = (doc as any).lastAutoTable.finalY;
+
+  const ynStatus = (v?: string | null) => v === "yes" ? "Yes" : v === "no" ? "No" : "N/A";
+  autoTable(doc, {
+    startY: y, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Issue Type", "Status"]],
+    body: [
+      ["Gas Escape", ynStatus(data.issue_gas_escape)],
+      ["Pipework", ynStatus(data.issue_pipework)],
+      ["Ventilation", ynStatus(data.issue_ventilation)],
+      ["Meter", ynStatus(data.issue_meter)],
+      ["Chimney / Flue", ynStatus(data.issue_chimney_flue)],
+      ["Other", ynStatus(data.issue_other)],
+      ...(data.issue_other === "yes" && data.issue_other_description ? [["Other Detail", data.issue_other_description]] : []),
+    ],
+    styles: { fontSize: 6, cellPadding: 1.2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 }, 1: { halign: "center" as const } },
+    margin: { left: marginL + halfW + 4, right: marginR },
+  });
+  const issueY = (doc as any).lastAutoTable.finalY;
+
+  y = Math.max(appY, issueY) + 2;
+
+  // ID Warning banner
+  if (data.classification === "immediately_dangerous") {
+    doc.setFillColor(255, 230, 230);
+    doc.rect(marginL, y, contentWidth, 10, "F");
+    doc.setDrawColor(red[0], red[1], red[2]);
+    doc.rect(marginL, y, contentWidth, 10, "S");
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(red[0], red[1], red[2]);
+    doc.text("⚠ IMMEDIATELY DANGEROUS – The appliance(s) / installation has been classified as IMMEDIATELY DANGEROUS, disconnected from the gas supply and a 'DANGER DO NOT USE' label attached.", marginL + 3, y + 5, { maxWidth: contentWidth - 6 });
+    doc.setTextColor(0, 0, 0);
+    y += 13;
+  }
+
+  // Faults, Actions Taken, Actions Required - three columns
+  const thirdW = (contentWidth - 8) / 3;
+  const faultSections = [
+    { title: "Details of Faults", text: data.fault_details },
+    { title: "Actions Taken", text: data.actions_taken },
+    { title: "Actions Required", text: data.actions_required },
+  ];
+
+  faultSections.forEach((sec, i) => {
+    autoTable(doc, {
+      startY: y, theme: "grid",
+      headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+      head: [[sec.title]],
+      body: [[sec.text || "-"]],
+      styles: { fontSize: 6, cellPadding: 2, minCellHeight: 18 },
+      margin: { left: marginL + i * (thirdW + 4), right: pageWidth - marginL - (i + 1) * thirdW - i * 4 },
+    });
+  });
+
+  // Get max Y from the three tables
+  y = (doc as any).lastAutoTable.finalY + 2;
+
+  // RIDDOR + Comments side by side
+  autoTable(doc, {
+    startY: y, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["RIDDOR Reporting", ""]],
+    body: [
+      ["RIDDOR Reg 11(1) – Gas Incident", ynStatus(data.riddor_11_1_status)],
+      ["RIDDOR Reg 11(2) – Dangerous Gas Fitting", ynStatus(data.riddor_11_2_status)],
+    ],
+    styles: { fontSize: 6, cellPadding: 1.5 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 }, 1: { halign: "center" as const } },
+    margin: { left: marginL, right: pageWidth - marginL - halfW },
+  });
+  const riddorY = (doc as any).lastAutoTable.finalY;
+
+  autoTable(doc, {
+    startY: y, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Engineer Comments"]],
+    body: [[data.comments || "-"]],
+    styles: { fontSize: 6, cellPadding: 2, minCellHeight: 10 },
+    margin: { left: marginL + halfW + 4, right: marginR },
+  });
+  const commentsY = (doc as any).lastAutoTable.finalY;
+
+  y = Math.max(riddorY, commentsY) + 2;
+
+  // Legal declaration
+  doc.setFontSize(5);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(80, 80, 80);
+  doc.text("I confirm that I have received this Warning / Advice Notice concerning the safety of the gas installation and understand that use of an IMMEDIATELY DANGEROUS or AT RISK installation may present a hazard and could breach Gas Safety regulations.", marginL, y + 3, { maxWidth: contentWidth });
+  doc.setTextColor(0, 0, 0);
+  y += 10;
+
+  // Signatures
+  autoTable(doc, {
+    startY: y, theme: "grid",
+    headStyles: { fillColor: navy, fontSize: 6, fontStyle: "bold", halign: "left" },
+    head: [["Issued By (Engineer)", "", "Received By (Client)", ""]],
+    body: [
+      ["Signature", "", "Signature", ""],
+      ["Print Name", data.issued_by_name || "-", "Print Name", data.received_by_name || "-"],
+      ["Date", data.inspection_date, "Date", data.inspection_date],
+    ],
+    styles: { fontSize: 6, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", cellWidth: 25 }, 2: { fontStyle: "bold", cellWidth: 25 } },
+    margin: { left: marginL, right: marginR },
+  });
+
+  // Emergency contacts footer
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(80, 80, 80);
+  doc.text("Gas Safe Register: 0800 408 5500  |  Gas Emergency Services: 0800 111 999", pageWidth / 2, pageHeight - 10, { align: "center" });
+
+  addPageFooter(doc, pageWidth, pageHeight, 1, 1);
+
+  return doc;
+}
+
+function classificationLabel(c?: string | null): string {
+  const labels: Record<string, string> = {
+    immediately_dangerous: "ID – Immediately Dangerous",
+    at_risk: "AR – At Risk",
+    not_to_current_standards: "NCS – Not to Current Standards",
+  };
+  return labels[c || ""] || "-";
+}
