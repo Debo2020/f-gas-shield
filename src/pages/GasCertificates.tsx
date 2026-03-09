@@ -97,7 +97,7 @@ export default function GasCertificates() {
 
       // For ND Gas Safety, fetch company + engineer info + logo
       let companyData: any = {};
-      if (["nd_gas_safety", "landlord_gas_safety"].includes(cert.certificate_type) && companyId) {
+      if (["nd_gas_safety", "landlord_gas_safety", "homeowner_gas_safety"].includes(cert.certificate_type) && companyId) {
         const { data: company } = await supabase
           .from("companies")
           .select("name, address, phone, gas_safe_reg_no, logo_url")

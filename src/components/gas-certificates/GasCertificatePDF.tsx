@@ -91,7 +91,7 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
     return generateNDGasSafetyPDF(landscapeDoc, data, title);
   }
 
-  if (data.certificate_type === "landlord_gas_safety") {
+  if (data.certificate_type === "landlord_gas_safety" || data.certificate_type === "homeowner_gas_safety") {
     return generateLandlordGasSafetyPDF(doc, data, title);
   }
 
@@ -128,44 +128,6 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // Type-specific sections
-  if (["homeowner_gas_safety"].includes(data.certificate_type)) {
-    autoTable(doc, {
-      startY: y,
-      theme: "grid",
-      headStyles: { fillColor: [39, 174, 96] },
-      head: [["Gas Installation Checks", "Result"]],
-      body: [
-        ["Emergency Control Accessible", yn(data.emergency_control_accessible)],
-        ["Gas Tightness Satisfactory", yn(data.gas_tightness_satisfactory)],
-        ["Pipework Visual Inspection", yn(data.pipework_visual_satisfactory)],
-        ["Equipotential Bonding", yn(data.equipotential_bonding)],
-        ["CO Alarm Present", yn(data.co_alarm_present)],
-      ],
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
-
-    if (data.appliances && data.appliances.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        theme: "grid",
-        headStyles: { fillColor: [142, 68, 173] },
-        head: [["#", "Location", "Type", "Make", "Model", "Pressure", "CO (ppm)", "Safe"]],
-        body: data.appliances.map((a, i) => [
-          String(i + 1),
-          a.location || "-",
-          a.appliance_type || "-",
-          a.make || "-",
-          a.model || "-",
-          a.operating_pressure_mbar?.toString() || "-",
-          a.high_co_ppm?.toString() || "-",
-          yn(a.appliance_safe_to_use),
-        ]),
-        styles: { fontSize: 8 },
-      });
-      y = (doc as any).lastAutoTable.finalY + 6;
-    }
-  }
-
   if (data.certificate_type === "gas_warning_notice") {
     const classLabels: Record<string, string> = {
       immediately_dangerous: "Immediately Dangerous (ID)",
