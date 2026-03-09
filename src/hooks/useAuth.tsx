@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineDb, hashCredentials, CachedProfile } from "@/lib/offline-db";
+import { encryptData, decryptData } from "@/lib/offline-crypto";
 import { cacheCompanyData } from "@/lib/sync-service";
 
 type AppRole = "owner" | "manager" | "engineer" | "stores_manager" | "admin" | "auditor" | "read_only";
@@ -81,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles(rolesData.map((r) => r.role as AppRole));
     }
 
-    // Cache profile for offline use
+    // Cache profile for offline use (encrypted)
     if (profileData) {
       try {
         const credentialHash = await hashCredentials(profileData.email);
@@ -92,9 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const existing = await offlineDb.cachedProfile.get(userId);
         const passwordHash = pendingHash || existing?.password_hash || "";
 
+        // Encrypt profile data with the password hash
+        const encryptedProfile = passwordHash
+          ? await encryptData(profileData, passwordHash)
+          : JSON.stringify(profileData);
+
         await offlineDb.cachedProfile.put({
           user_id: userId,
-          profile: profileData as Profile,
+          profile: encryptedProfile,
           roles: rolesData?.map((r) => r.role) || [],
           license_status: licenseStatus,
           cached_at: new Date().toISOString(),
@@ -266,9 +272,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error("Cached credentials expired. Please sign in online.") };
       }
 
+      // Decrypt the cached profile data
+      let profileData: Profile;
+      try {
+        profileData = await decryptData<Profile>(cached.profile, passwordHash);
+      } catch {
+        return { error: new Error("Failed to decrypt cached data. Please sign in online.") };
+      }
+
       // Set offline mode and load cached data
       setIsOfflineMode(true);
-      setProfile(cached.profile);
+      setProfile(profileData);
       setRoles(cached.roles as AppRole[]);
       setLicenseStatus(cached.license_status as LicenseStatus);
       
