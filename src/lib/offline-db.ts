@@ -3,18 +3,7 @@ import Dexie, { Table } from 'dexie';
 // Types for offline storage
 export interface CachedProfile {
   user_id: string;
-  profile: {
-    id: string;
-    user_id: string;
-    company_id: string | null;
-    full_name: string;
-    email: string;
-    phone: string | null;
-    avatar_url: string | null;
-    f_gas_certificate_number: string | null;
-    f_gas_certificate_expiry: string | null;
-    f_gas_certificate_url: string | null;
-  };
+  profile: string; // AES-GCM encrypted JSON of profile data
   roles: string[];
   license_status: string | null;
   cached_at: string;
