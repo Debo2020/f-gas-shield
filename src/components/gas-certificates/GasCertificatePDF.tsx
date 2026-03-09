@@ -119,6 +119,23 @@ interface CertificateData {
   work_tightness_test?: boolean | null;
   work_purge?: boolean | null;
   declaration_type?: string | null;
+  // Warning notice fields
+  warning_location?: string | null;
+  warning_make?: string | null;
+  warning_type?: string | null;
+  warning_model?: string | null;
+  warning_serial_no?: string | null;
+  fault_details?: string | null;
+  customer_mobile?: string | null;
+  issue_gas_escape?: string | null;
+  issue_pipework?: string | null;
+  issue_ventilation?: string | null;
+  issue_meter?: string | null;
+  issue_chimney_flue?: string | null;
+  issue_other?: string | null;
+  issue_other_description?: string | null;
+  riddor_11_1_status?: string | null;
+  riddor_11_2_status?: string | null;
 }
 
 const TYPE_TITLES: Record<string, string> = {
