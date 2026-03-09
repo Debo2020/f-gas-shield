@@ -643,6 +643,53 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          company_id: string | null
+          component_name: string | null
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          id: string
+          metadata: Json | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          component_name?: string | null
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          metadata?: Json | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          component_name?: string | null
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          metadata?: Json | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gas_certificate_appliances: {
         Row: {
           appliance_inspected: boolean | null
