@@ -1,4 +1,4 @@
-// Natural Gas Compliance Add-on configuration
+// Add-on module configuration
 export const ADDON_MODULES = {
   natural_gas: {
     name: "Natural Gas Compliance",
@@ -23,6 +23,20 @@ export const ADDON_MODULES = {
       { value: "nd_gas_safety", label: "ND Gas Safety Record" },
       { value: "nd_gas_testing_purging", label: "ND Gas Testing & Purging" },
       { value: "gas_warning_notice", label: "Gas Warning Notice" },
+    ],
+  },
+  client_portal: {
+    name: "Client Portal Access",
+    description: "Read-only portal access for client users to view their sites and compliance data",
+    product_id: "prod_U7FoTWg9bH1Tr8",
+    price_id: "price_1T91J5F9KjzL48NkDhPKittG",
+    price: 20,
+    currency: "GBP",
+    features: [
+      "Read-only site access",
+      "Compliance data viewing",
+      "Equipment inspection history",
+      "Document access",
     ],
   },
 } as const;

@@ -8,7 +8,10 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[UPDATE-ADDON-LICENSE-COUNT] ${step}${detailsStr}`);
 };
 
-const GAS_PRODUCT_ID = "prod_U66CcCxINGyl6y";
+const ADDON_PRODUCTS: Record<string, string> = {
+  natural_gas: "prod_U66CcCxINGyl6y",
+  client_portal: "prod_U7FoTWg9bH1Tr8",
+};
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -68,91 +71,100 @@ serve(async (req) => {
     const companyId = profileData.company_id;
     logStep("Company found", { companyId });
 
-    // Count active gas addon licenses
-    const { count: addonLicenseCount } = await supabaseAdmin
-      .from("addon_licenses")
-      .select("*", { count: "exact", head: true })
-      .eq("company_id", companyId)
-      .eq("addon_type", "natural_gas")
-      .eq("status", "active");
-
-    const newQuantity = addonLicenseCount || 0;
-    logStep("Active gas addon licenses counted", { newQuantity });
-
-    // Get addon record for Stripe subscription ID
-    const { data: addonRecord } = await supabaseAdmin
-      .from("company_addons")
-      .select("stripe_subscription_id")
-      .eq("company_id", companyId)
-      .eq("addon_type", "natural_gas")
-      .single();
-
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    let stripeSubscriptionId = addonRecord?.stripe_subscription_id;
+    const results: Record<string, number> = {};
 
-    // If no subscription ID in DB, find it from Stripe
-    if (!stripeSubscriptionId) {
-      logStep("No addon subscription in DB, searching Stripe", { email: userEmail });
+    // Process each addon type
+    for (const [addonType, productId] of Object.entries(ADDON_PRODUCTS)) {
+      // Count active addon licenses for this type
+      const { count: addonLicenseCount } = await supabaseAdmin
+        .from("addon_licenses")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("addon_type", addonType)
+        .eq("status", "active");
 
-      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-      if (customers.data.length === 0) {
-        throw new Error("No Stripe customer found");
+      const newQuantity = addonLicenseCount || 0;
+      results[addonType] = newQuantity;
+      logStep(`Active ${addonType} addon licenses counted`, { newQuantity });
+
+      // Get addon record for Stripe subscription ID
+      const { data: addonRecord } = await supabaseAdmin
+        .from("company_addons")
+        .select("stripe_subscription_id")
+        .eq("company_id", companyId)
+        .eq("addon_type", addonType)
+        .single();
+
+      let stripeSubscriptionId = addonRecord?.stripe_subscription_id;
+
+      // If no subscription ID in DB, find it from Stripe
+      if (!stripeSubscriptionId) {
+        logStep(`No ${addonType} addon subscription in DB, searching Stripe`, { email: userEmail });
+
+        const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+        if (customers.data.length === 0) {
+          logStep(`No Stripe customer found, skipping ${addonType}`);
+          continue;
+        }
+
+        const customerId = customers.data[0].id;
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "active",
+          limit: 10,
+        });
+
+        for (const sub of subscriptions.data) {
+          for (const item of sub.items.data) {
+            if (item.price.product === productId) {
+              stripeSubscriptionId = sub.id;
+              break;
+            }
+          }
+          if (stripeSubscriptionId) break;
+        }
+
+        if (!stripeSubscriptionId) {
+          logStep(`No active ${addonType} addon subscription found in Stripe, skipping`);
+          continue;
+        }
+        logStep(`Found ${addonType} addon subscription in Stripe`, { subscriptionId: stripeSubscriptionId });
       }
 
-      const customerId = customers.data[0].id;
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 10,
+      // Get subscription item for the product
+      const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+      let subscriptionItemId: string | null = null;
+
+      for (const item of stripeSubscription.items.data) {
+        if (item.price.product === productId) {
+          subscriptionItemId = item.id;
+          break;
+        }
+      }
+
+      if (!subscriptionItemId) {
+        logStep(`${addonType} product not found in subscription items, skipping`);
+        continue;
+      }
+
+      logStep(`Updating Stripe quantity for ${addonType}`, { subscriptionItemId, newQuantity: Math.max(newQuantity, 1) });
+
+      // Update quantity (minimum 1 to keep subscription active)
+      await stripe.subscriptions.update(stripeSubscriptionId, {
+        items: [{
+          id: subscriptionItemId,
+          quantity: Math.max(newQuantity, 1),
+        }],
+        proration_behavior: "always_invoice",
       });
 
-      for (const sub of subscriptions.data) {
-        for (const item of sub.items.data) {
-          if (item.price.product === GAS_PRODUCT_ID) {
-            stripeSubscriptionId = sub.id;
-            break;
-          }
-        }
-        if (stripeSubscriptionId) break;
-      }
-
-      if (!stripeSubscriptionId) {
-        throw new Error("No active gas addon subscription found in Stripe");
-      }
-      logStep("Found gas addon subscription in Stripe", { subscriptionId: stripeSubscriptionId });
+      logStep(`Stripe subscription updated for ${addonType}`);
     }
-
-    // Get subscription item for the gas product
-    const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    let subscriptionItemId: string | null = null;
-
-    for (const item of stripeSubscription.items.data) {
-      if (item.price.product === GAS_PRODUCT_ID) {
-        subscriptionItemId = item.id;
-        break;
-      }
-    }
-
-    if (!subscriptionItemId) {
-      throw new Error("Gas product not found in subscription items");
-    }
-
-    logStep("Updating Stripe quantity", { subscriptionItemId, newQuantity: Math.max(newQuantity, 1) });
-
-    // Update quantity (minimum 1 to keep subscription active)
-    await stripe.subscriptions.update(stripeSubscriptionId, {
-      items: [{
-        id: subscriptionItemId,
-        quantity: Math.max(newQuantity, 1),
-      }],
-      proration_behavior: "always_invoice",
-    });
-
-    logStep("Stripe subscription updated successfully");
 
     return new Response(JSON.stringify({
       success: true,
-      addon_license_count: newQuantity,
+      addon_license_counts: results,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
