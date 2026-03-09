@@ -85,6 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (profileData) {
       try {
         const credentialHash = await hashCredentials(profileData.email);
+        const pendingHash = (window as unknown as Record<string, string>).__pendingPasswordHash || "";
+        delete (window as unknown as Record<string, string>).__pendingPasswordHash;
+        
+        // Preserve existing password_hash if we don't have a new one
+        const existing = await offlineDb.cachedProfile.get(userId);
+        const passwordHash = pendingHash || existing?.password_hash || "";
+
         await offlineDb.cachedProfile.put({
           user_id: userId,
           profile: profileData as Profile,
@@ -92,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           license_status: licenseStatus,
           cached_at: new Date().toISOString(),
           credential_hash: credentialHash,
+          password_hash: passwordHash,
         });
 
         // Cache company data for offline access
@@ -198,6 +206,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
+
+    // Cache password hash for offline login after successful online login
+    if (!error) {
+      try {
+        const passwordHash = await hashCredentials(email + ":" + password);
+        const credentialHash = await hashCredentials(email);
+        const existing = await offlineDb.cachedProfile.get(credentialHash);
+        if (existing) {
+          await offlineDb.cachedProfile.update(existing.user_id, { password_hash: passwordHash });
+        }
+        // If profile hasn't been cached yet, fetchProfile will handle caching
+        // We store the password hash temporarily so fetchProfile can use it
+        (window as unknown as Record<string, string>).__pendingPasswordHash = passwordHash;
+      } catch (err) {
+        console.error("Failed to cache password hash:", err);
+      }
+    }
 
     return { error: error as Error | null };
   };
