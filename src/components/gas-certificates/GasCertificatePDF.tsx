@@ -20,6 +20,8 @@ interface CertificateData {
   pipework_visual_satisfactory?: boolean | null;
   equipotential_bonding?: boolean | null;
   co_alarm_present?: boolean | null;
+  co_alarm_fitted?: boolean | null;
+  co_alarm_satisfactory?: boolean | null;
   comments?: string | null;
   issued_by_name?: string | null;
   received_by_name?: string | null;
@@ -85,9 +87,12 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   const title = TYPE_TITLES[data.certificate_type] || "Gas Certificate";
 
   if (data.certificate_type === "nd_gas_safety") {
-    // ND Gas Safety uses landscape orientation — create a new landscape doc
     const landscapeDoc = new jsPDF({ orientation: "landscape" });
     return generateNDGasSafetyPDF(landscapeDoc, data, title);
+  }
+
+  if (data.certificate_type === "landlord_gas_safety") {
+    return generateLandlordGasSafetyPDF(doc, data, title);
   }
 
   // ---- Original layout for other types ----
@@ -123,7 +128,7 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // Type-specific sections
-  if (["landlord_gas_safety", "homeowner_gas_safety"].includes(data.certificate_type)) {
+  if (["homeowner_gas_safety"].includes(data.certificate_type)) {
     autoTable(doc, {
       startY: y,
       theme: "grid",
