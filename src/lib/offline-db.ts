@@ -158,6 +158,16 @@ class FTrackOfflineDatabase extends Dexie {
       cylinders: 'id, company_id, cylinder_code, status',
       syncQueue: '++id, table, local_id, synced, created_at'
     });
+
+    this.version(2).stores({
+      cachedProfile: 'user_id',
+      sites: 'id, company_id, name',
+      equipment: 'id, site_id, company_id, name',
+      inspections: 'id, equipment_id, company_id, inspection_date, local_id',
+      gasMovements: 'id, engineer_id, company_id, movement_date, local_id',
+      cylinders: 'id, company_id, cylinder_code, status',
+      syncQueue: '++id, table, local_id, synced, created_at'
+    });
   }
 }
 

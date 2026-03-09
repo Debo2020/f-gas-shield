@@ -199,9 +199,12 @@ serve(async (req) => {
     const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
     const acceptUrl = `${appUrl}/set-password?token=${invitation.token}`;
 
-    // Create user in auth system (without sending default email)
-    const { data: existingUser } = await adminClient.auth.admin.listUsers();
-    const userExists = existingUser?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
+    // Check if user already exists using generateLink (avoids listUsers)
+    const { data: linkCheck, error: linkCheckError } = await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: email.toLowerCase(),
+    });
+    const userExists = !linkCheckError && !!linkCheck?.user?.id;
 
     if (!userExists) {
       // Create new user with a random password (they'll set their own via magic link)
