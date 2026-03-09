@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApplianceFields, ApplianceData, emptyAppliance } from "./ApplianceFields";
-import { WarningNoticeFields } from "./WarningNoticeFields";
+import { WarningNoticeFields, WarningNoticeData, emptyWarningData } from "./WarningNoticeFields";
+import { WarningNoticePreview } from "./WarningNoticePreview";
 import { TestingPurgingFields, TestingPurgingData, emptyTestingPurgingData } from "./TestingPurgingFields";
 import { TestingPurgingPreview } from "./TestingPurgingPreview";
 import { toast } from "sonner";
@@ -34,7 +35,7 @@ const STEPS: Record<string, string[]> = {
   homeowner_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign", "Preview"],
   nd_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign", "Preview"],
   nd_gas_testing_purging: ["Company / Installer", "Job Details", "Strength Test", "Tightness Test", "Purge & Declaration", "Comments & Sign", "Preview"],
-  gas_warning_notice: ["Job Details", "Warning Details", "Comments & Sign"],
+  gas_warning_notice: ["Company / Installer", "Job Details", "Appliance / Installation", "Warning Details", "Comments & Sign", "Preview"],
 };
 
 export function GasCertificateForm({ certificateType, onComplete, onCancel }: GasCertificateFormProps) {
@@ -51,7 +52,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   });
 
   useEffect(() => {
-    if (!["nd_gas_safety", "landlord_gas_safety", "homeowner_gas_safety", "nd_gas_testing_purging"].includes(certificateType) || !profile?.company_id) return;
+    if (!["nd_gas_safety", "landlord_gas_safety", "homeowner_gas_safety", "nd_gas_testing_purging", "gas_warning_notice"].includes(certificateType) || !profile?.company_id) return;
     const fetchCompanyInfo = async () => {
       const { data: company } = await supabase
         .from("companies")
@@ -94,11 +95,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const [appliances, setAppliances] = useState<ApplianceData[]>([{ ...emptyAppliance }]);
   const [defects, setDefects] = useState<DefectRow[]>([]);
 
-  const [warningData, setWarningData] = useState({
-    classification: "", issue_type: "",
-    actions_taken: "", actions_required: "",
-    riddor_reported_11_1: false, riddor_reported_11_2: false,
-  });
+  const [warningData, setWarningData] = useState<WarningNoticeData>({ ...emptyWarningData });
 
   const [testingData, setTestingData] = useState<TestingPurgingData>({ ...emptyTestingPurgingData });
 
@@ -140,7 +137,26 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
       }
 
       if (certificateType === "gas_warning_notice") {
-        Object.assign(certData, warningData);
+        certData.classification = warningData.classification || null;
+        certData.warning_location = warningData.warning_location || null;
+        certData.warning_make = warningData.warning_make || null;
+        certData.warning_type = warningData.warning_type || null;
+        certData.warning_model = warningData.warning_model || null;
+        certData.warning_serial_no = warningData.warning_serial_no || null;
+        certData.fault_details = warningData.fault_details || null;
+        certData.actions_taken = warningData.actions_taken || null;
+        certData.actions_required = warningData.actions_required || null;
+        certData.issue_gas_escape = warningData.issue_gas_escape || "n/a";
+        certData.issue_pipework = warningData.issue_pipework || "n/a";
+        certData.issue_ventilation = warningData.issue_ventilation || "n/a";
+        certData.issue_meter = warningData.issue_meter || "n/a";
+        certData.issue_chimney_flue = warningData.issue_chimney_flue || "n/a";
+        certData.issue_other = warningData.issue_other || "n/a";
+        certData.issue_other_description = warningData.issue_other_description || null;
+        certData.riddor_11_1_status = warningData.riddor_11_1_status || "n/a";
+        certData.riddor_11_2_status = warningData.riddor_11_2_status || "n/a";
+        certData.customer_mobile = (jobDetails as any).customer_mobile || null;
+        certData.received_by_name = receivedByName || null;
         certData.comments = comments;
       }
 
@@ -412,14 +428,15 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
       );
     }
 
+    if (currentStepName === "Appliance / Installation") {
+      return (
+        <WarningNoticeFields data={warningData} onChange={(f, v) => setWarningData(d => ({ ...d, [f]: v as any }))} section="appliance" />
+      );
+    }
+
     if (currentStepName === "Warning Details") {
       return (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Warning Notice Details</CardTitle></CardHeader>
-          <CardContent>
-            <WarningNoticeFields data={warningData} onChange={(f, v) => setWarningData(d => ({ ...d, [f]: v }))} />
-          </CardContent>
-        </Card>
+        <WarningNoticeFields data={warningData} onChange={(f, v) => setWarningData(d => ({ ...d, [f]: v as any }))} section="details" />
       );
     }
 
@@ -477,7 +494,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
                 <Label>Engineer Name (Issued By)</Label>
                 <Input value={issuedByName} onChange={e => setIssuedByName(e.target.value)} />
               </div>
-              {["nd_gas_safety", "landlord_gas_safety", "homeowner_gas_safety", "nd_gas_testing_purging"].includes(certificateType) && (
+              {["nd_gas_safety", "landlord_gas_safety", "homeowner_gas_safety", "nd_gas_testing_purging", "gas_warning_notice"].includes(certificateType) && (
                 <div>
                   <Label>Client / Representative Name (Received By)</Label>
                   <Input value={receivedByName} onChange={e => setReceivedByName(e.target.value)} placeholder="Name of person receiving certificate" />
@@ -490,6 +507,25 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
 
     if (currentStepName === "Preview") {
+      if (certificateType === "gas_warning_notice") {
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Eye className="h-4 w-4" />
+              Review the warning notice below before issuing. Go back to make changes.
+            </div>
+            <WarningNoticePreview
+              companyInfo={companyInfo}
+              jobDetails={jobDetails}
+              warningData={warningData}
+              comments={comments}
+              issuedByName={issuedByName}
+              receivedByName={receivedByName}
+            />
+          </div>
+        );
+      }
+
       if (certificateType === "nd_gas_testing_purging") {
         return (
           <div className="space-y-4">
