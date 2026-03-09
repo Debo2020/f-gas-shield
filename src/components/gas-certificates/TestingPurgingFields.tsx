@@ -144,9 +144,14 @@ function YesNoSelect({ label, value, onChange }: { label: string; value: boolean
   );
 }
 
-export function TestingPurgingFields({ data, onChange }: TestingPurgingFieldsProps) {
+export function TestingPurgingFields({ data, onChange, section = "all" }: TestingPurgingFieldsProps) {
+  const showStrength = section === "all" || section === "strength";
+  const showTightness = section === "all" || section === "tightness";
+  const showPurge = section === "all" || section === "purge";
+
   return (
     <div className="space-y-6">
+      {showStrength && (<>
       {/* ── STRENGTH TEST ── */}
       <Card>
         <CardHeader><CardTitle className="text-sm">Strength Test Details</CardTitle></CardHeader>
