@@ -272,10 +272,7 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
 
   y = (doc as any).lastAutoTable.finalY + 6;
 
-  if (data.certificate_type === "gas_warning_notice") {
-    const doc = new jsPDF({ orientation: "landscape" });
-    return generateWarningNoticePDF(doc, data, title);
-  }
+
 
   if (data.certificate_type === "nd_gas_testing_purging") {
     autoTable(doc, {
