@@ -31,6 +31,7 @@ import { useExpiryAlerts } from "@/hooks/useExpiryAlerts";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { ComplianceAssistantButton } from "@/components/compliance/ComplianceAssistantButton";
+import { SystemStatusWidget } from "@/components/dashboard/SystemStatusWidget";
 
 type ScannedEquipment = Tables<"equipment"> & {
   sites?: { name: string } | null;
@@ -394,6 +395,11 @@ export default function Dashboard() {
 
           {/* License Widget & Compliance Status */}
           <div className="space-y-6">
+            {(isOwner || isManager) && (
+              <div className="animate-slide-up opacity-0" style={{ animationDelay: '520ms', animationFillMode: 'forwards' }}>
+                <SystemStatusWidget />
+              </div>
+            )}
             <div className="animate-slide-up opacity-0" style={{ animationDelay: '550ms', animationFillMode: 'forwards' }}>
               <LicenseWidget />
             </div>
