@@ -83,6 +83,86 @@ interface TeamMemberWithLicense {
   hasGasAddon: boolean;
 }
 
+function CostSummaryCard({
+  tier,
+  activeCount,
+  companyHasAddon,
+  gasAddonCount,
+  companyId,
+}: {
+  tier: string;
+  activeCount: number;
+  companyHasAddon: boolean;
+  gasAddonCount: number;
+  companyId?: string;
+}) {
+  const [clientPortalCount, setClientPortalCount] = useState(0);
+
+  useEffect(() => {
+    if (!companyId) return;
+    supabase
+      .from("addon_licenses")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("addon_type", "client_portal")
+      .eq("status", "active")
+      .then(({ count }) => setClientPortalCount(count || 0));
+  }, [companyId]);
+
+  const currentTier = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
+  if (!currentTier) return null;
+
+  const basePrice = currentTier.price ?? 0;
+  const baseCost = activeCount * basePrice;
+  const gasPrice = ADDON_MODULES.natural_gas.price;
+  const gasCost = companyHasAddon && gasAddonCount > 0 ? gasAddonCount * gasPrice : 0;
+  const portalPrice = ADDON_MODULES.client_portal.price;
+  const portalCost = clientPortalCount * portalPrice;
+  const totalCost = baseCost + gasCost + portalCost;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-primary" />
+          Monthly Cost Summary
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            Base Licenses ({activeCount} × {formatPrice(basePrice, currentTier.currency)}/user)
+          </span>
+          <span className="font-medium">{formatPrice(baseCost, currentTier.currency)}</span>
+        </div>
+        {companyHasAddon && gasAddonCount > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Flame className="h-3 w-3" />
+              Gas Add-on ({gasAddonCount} × {formatPrice(gasPrice, "GBP")}/user)
+            </span>
+            <span className="font-medium">{formatPrice(gasCost, "GBP")}</span>
+          </div>
+        )}
+        {clientPortalCount > 0 && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              Client Portal ({clientPortalCount} × {formatPrice(portalPrice, "GBP")}/user)
+            </span>
+            <span className="font-medium">{formatPrice(portalCost, "GBP")}</span>
+          </div>
+        )}
+        <Separator />
+        <div className="flex items-center justify-between">
+          <span className="font-semibold">Total Monthly</span>
+          <span className="text-lg font-bold text-primary">{formatPrice(totalCost, currentTier.currency)}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface OrganisationLicensesTabProps {
   members: EnrichedTeamMember[];
   invitations: PendingInvitation[];
