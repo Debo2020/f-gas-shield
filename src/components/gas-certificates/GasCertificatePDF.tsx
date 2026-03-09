@@ -235,6 +235,11 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
     return generateLandlordGasSafetyPDF(doc, data, title);
   }
 
+  if (data.certificate_type === "gas_warning_notice") {
+    const doc = new jsPDF({ orientation: "landscape" });
+    return generateWarningNoticePDF(doc, data, title);
+  }
+
   // ---- Original layout for other types (portrait) ----
   const doc = new jsPDF();
   doc.setFontSize(16);
