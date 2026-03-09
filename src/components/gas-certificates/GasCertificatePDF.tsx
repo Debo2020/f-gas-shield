@@ -24,7 +24,9 @@ interface CertificateData {
   co_alarm_satisfactory?: boolean | null;
   comments?: string | null;
   issued_by_name?: string | null;
+  issued_by_signature?: string | null;
   received_by_name?: string | null;
+  received_by_signature?: string | null;
   classification?: string | null;
   issue_type?: string | null;
   actions_taken?: string | null;
@@ -519,6 +521,15 @@ function generateNDGasSafetyPDF(doc: jsPDF, data: CertificateData, title: string
     margin: { left: marginL, right: marginR },
   });
 
+  // Embed signature images into the signature table
+  const sigTableY = y;
+  if (data.issued_by_signature) {
+    try { doc.addImage(data.issued_by_signature, "PNG", marginL + 58, sigTableY + 11, 40, 8); } catch {}
+  }
+  if (data.received_by_signature) {
+    try { doc.addImage(data.received_by_signature, "PNG", marginL + 58, sigTableY + 23, 40, 8); } catch {}
+  }
+
   addPageFooter(doc, pageWidth, pageHeight, 1, totalPages);
 
   // ── CONTINUATION PAGES — Appliances ──
@@ -784,6 +795,15 @@ function generateLandlordGasSafetyPDF(doc: jsPDF, data: CertificateData, title: 
     columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
     margin: { left: marginL, right: marginR },
   });
+
+  // Embed signature images
+  const sigY = y;
+  if (data.issued_by_signature) {
+    try { doc.addImage(data.issued_by_signature, "PNG", marginL + 52, sigY + 8, 35, 6); } catch {}
+  }
+  if (data.received_by_signature) {
+    try { doc.addImage(data.received_by_signature, "PNG", marginL + 52, sigY + 18, 35, 6); } catch {}
+  }
 
   addPageFooter(doc, pageWidth, pageHeight, 1, totalPages);
 
@@ -1060,6 +1080,15 @@ function generateWarningNoticePDF(doc: jsPDF, data: CertificateData, title: stri
     columnStyles: { 0: { fontStyle: "bold", cellWidth: 25 }, 2: { fontStyle: "bold", cellWidth: 25 } },
     margin: { left: marginL, right: marginR },
   });
+
+  // Embed signature images
+  const warnSigY = y;
+  if (data.issued_by_signature) {
+    try { doc.addImage(data.issued_by_signature, "PNG", marginL + 27, warnSigY + 8, 35, 6); } catch {}
+  }
+  if (data.received_by_signature) {
+    try { doc.addImage(data.received_by_signature, "PNG", marginL + (contentWidth / 2) + 27, warnSigY + 8, 35, 6); } catch {}
+  }
 
   // Emergency contacts footer
   doc.setFontSize(6);
