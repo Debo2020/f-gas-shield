@@ -766,6 +766,7 @@ export type Database = {
           created_at: string
           customer_address: string | null
           customer_company: string | null
+          customer_mobile: string | null
           customer_name: string | null
           customer_phone: string | null
           customer_postcode: string | null
@@ -774,10 +775,18 @@ export type Database = {
           emergency_control_accessible: boolean | null
           engineer_id: string
           equipotential_bonding: boolean | null
+          fault_details: string | null
           gas_tightness_satisfactory: boolean | null
           id: string
           inspection_date: string
+          issue_chimney_flue: string | null
+          issue_gas_escape: string | null
+          issue_meter: string | null
+          issue_other: string | null
+          issue_other_description: string | null
+          issue_pipework: string | null
           issue_type: string | null
+          issue_ventilation: string | null
           issued_by_name: string | null
           issued_by_signature: string | null
           job_address: string | null
@@ -805,6 +814,8 @@ export type Database = {
           purge_written_procedure: string | null
           received_by_name: string | null
           received_by_signature: string | null
+          riddor_11_1_status: string | null
+          riddor_11_2_status: string | null
           riddor_reported_11_1: boolean | null
           riddor_reported_11_2: boolean | null
           site_id: string | null
@@ -847,6 +858,11 @@ export type Database = {
           tightness_ventilation_checked: boolean | null
           tightness_weather_affect: boolean | null
           updated_at: string
+          warning_location: string | null
+          warning_make: string | null
+          warning_model: string | null
+          warning_serial_no: string | null
+          warning_type: string | null
           work_purge: boolean | null
           work_strength_test: boolean | null
           work_tightness_test: boolean | null
@@ -869,6 +885,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_company?: string | null
+          customer_mobile?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           customer_postcode?: string | null
@@ -877,10 +894,18 @@ export type Database = {
           emergency_control_accessible?: boolean | null
           engineer_id: string
           equipotential_bonding?: boolean | null
+          fault_details?: string | null
           gas_tightness_satisfactory?: boolean | null
           id?: string
           inspection_date?: string
+          issue_chimney_flue?: string | null
+          issue_gas_escape?: string | null
+          issue_meter?: string | null
+          issue_other?: string | null
+          issue_other_description?: string | null
+          issue_pipework?: string | null
           issue_type?: string | null
+          issue_ventilation?: string | null
           issued_by_name?: string | null
           issued_by_signature?: string | null
           job_address?: string | null
@@ -908,6 +933,8 @@ export type Database = {
           purge_written_procedure?: string | null
           received_by_name?: string | null
           received_by_signature?: string | null
+          riddor_11_1_status?: string | null
+          riddor_11_2_status?: string | null
           riddor_reported_11_1?: boolean | null
           riddor_reported_11_2?: boolean | null
           site_id?: string | null
@@ -950,6 +977,11 @@ export type Database = {
           tightness_ventilation_checked?: boolean | null
           tightness_weather_affect?: boolean | null
           updated_at?: string
+          warning_location?: string | null
+          warning_make?: string | null
+          warning_model?: string | null
+          warning_serial_no?: string | null
+          warning_type?: string | null
           work_purge?: boolean | null
           work_strength_test?: boolean | null
           work_tightness_test?: boolean | null
@@ -972,6 +1004,7 @@ export type Database = {
           created_at?: string
           customer_address?: string | null
           customer_company?: string | null
+          customer_mobile?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           customer_postcode?: string | null
@@ -980,10 +1013,18 @@ export type Database = {
           emergency_control_accessible?: boolean | null
           engineer_id?: string
           equipotential_bonding?: boolean | null
+          fault_details?: string | null
           gas_tightness_satisfactory?: boolean | null
           id?: string
           inspection_date?: string
+          issue_chimney_flue?: string | null
+          issue_gas_escape?: string | null
+          issue_meter?: string | null
+          issue_other?: string | null
+          issue_other_description?: string | null
+          issue_pipework?: string | null
           issue_type?: string | null
+          issue_ventilation?: string | null
           issued_by_name?: string | null
           issued_by_signature?: string | null
           job_address?: string | null
@@ -1011,6 +1052,8 @@ export type Database = {
           purge_written_procedure?: string | null
           received_by_name?: string | null
           received_by_signature?: string | null
+          riddor_11_1_status?: string | null
+          riddor_11_2_status?: string | null
           riddor_reported_11_1?: boolean | null
           riddor_reported_11_2?: boolean | null
           site_id?: string | null
@@ -1053,6 +1096,11 @@ export type Database = {
           tightness_ventilation_checked?: boolean | null
           tightness_weather_affect?: boolean | null
           updated_at?: string
+          warning_location?: string | null
+          warning_make?: string | null
+          warning_model?: string | null
+          warning_serial_no?: string | null
+          warning_type?: string | null
           work_purge?: boolean | null
           work_strength_test?: boolean | null
           work_tightness_test?: boolean | null
