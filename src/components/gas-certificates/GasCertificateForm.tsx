@@ -404,7 +404,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
                 <Label>Engineer Name (Issued By)</Label>
                 <Input value={issuedByName} onChange={e => setIssuedByName(e.target.value)} />
               </div>
-              {certificateType === "nd_gas_safety" && (
+              {["nd_gas_safety", "landlord_gas_safety"].includes(certificateType) && (
                 <div>
                   <Label>Customer / Representative Name (Received By)</Label>
                   <Input value={receivedByName} onChange={e => setReceivedByName(e.target.value)} placeholder="Name of person receiving certificate" />
