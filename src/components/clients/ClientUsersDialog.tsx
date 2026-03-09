@@ -77,11 +77,70 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
     setLoading(false);
   };
 
+  const syncAddonLicenseCount = async () => {
+    try {
+      const { error } = await supabase.functions.invoke("update-addon-license-count");
+      if (error) console.error("Failed to sync addon license count:", error);
+    } catch (err) {
+      console.error("Addon sync error:", err);
+    }
+  };
+
+  const createAddonLicense = async (email: string) => {
+    if (!profile?.company_id) return;
+    try {
+      await supabase.from("addon_licenses").insert({
+        company_id: profile.company_id,
+        addon_type: "client_portal" as any,
+        email: email.toLowerCase(),
+        status: "active",
+        assigned_by: user?.id || null,
+      });
+      await syncAddonLicenseCount();
+    } catch (err) {
+      console.error("Failed to create addon license:", err);
+    }
+  };
+
+  const removeAddonLicense = async (email: string) => {
+    if (!profile?.company_id) return;
+    try {
+      const { data } = await supabase
+        .from("addon_licenses")
+        .select("id")
+        .eq("company_id", profile.company_id)
+        .eq("addon_type", "client_portal")
+        .eq("email", email.toLowerCase())
+        .single();
+
+      if (data) {
+        await supabase.from("addon_licenses").delete().eq("id", data.id);
+        await syncAddonLicenseCount();
+      }
+    } catch (err) {
+      console.error("Failed to remove addon license:", err);
+    }
+  };
+
+  const updateAddonLicenseStatus = async (email: string, status: string) => {
+    if (!profile?.company_id) return;
+    try {
+      await supabase
+        .from("addon_licenses")
+        .update({ status })
+        .eq("company_id", profile.company_id)
+        .eq("addon_type", "client_portal")
+        .eq("email", email.toLowerCase());
+      await syncAddonLicenseCount();
+    } catch (err) {
+      console.error("Failed to update addon license status:", err);
+    }
+  };
+
   const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim() || !user?.id) return;
 
-    // Check if email already exists
     const existingUser = users.find(u => u.email.toLowerCase() === inviteEmail.toLowerCase());
     if (existingUser) {
       toast.error("This email has already been invited");
@@ -91,16 +150,21 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
     setInviting(true);
 
     try {
-      const { error } = await supabase.from("client_users").insert({
-        client_id: client.id,
-        email: inviteEmail.toLowerCase(),
-        status: "pending",
-        invited_by: user.id,
+      const { data, error } = await supabase.functions.invoke("invite-client-user", {
+        body: { clientId: client.id, email: inviteEmail.toLowerCase() },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      toast.success("User invited successfully");
+      // Create addon license for billing
+      await createAddonLicense(inviteEmail);
+
+      toast.success(
+        data?.email_sent 
+          ? "Invitation sent successfully" 
+          : "User invited (email delivery pending)"
+      );
       setInviteEmail("");
       setShowInviteForm(false);
       fetchUsers();
@@ -123,15 +187,25 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
     if (error) {
       toast.error("Failed to update user status");
     } else {
+      await updateAddonLicenseStatus(clientUser.email, newStatus);
       toast.success(`User ${newStatus === "active" ? "enabled" : "disabled"}`);
       fetchUsers();
     }
   };
 
   const handleResendInvite = async (clientUser: ClientUser) => {
-    // For now, just show a toast - in a full implementation, 
-    // you would call an edge function to resend the email
-    toast.success("Invitation resent (email functionality coming soon)");
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-client-user", {
+        body: { clientId: client.id, email: clientUser.email },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(data?.email_sent ? "Invitation resent" : "Invitation resent (email delivery pending)");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to resend invitation");
+    }
   };
 
   const handleDeleteUser = async (clientUser: ClientUser) => {
@@ -145,6 +219,7 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
     if (error) {
       toast.error("Failed to remove user");
     } else {
+      await removeAddonLicense(clientUser.email);
       toast.success("User removed");
       fetchUsers();
       onSuccess();
@@ -171,6 +246,7 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
           <DialogTitle>Portal Users for {client.name}</DialogTitle>
           <DialogDescription>
             Manage users who can access this client's portal to view their sites and compliance data.
+            Each portal user is billed at £20/month.
           </DialogDescription>
         </DialogHeader>
 
@@ -262,6 +338,7 @@ export function ClientUsersDialog({ open, onOpenChange, client, onSuccess }: Cli
                     required
                     autoFocus
                   />
+                  <p className="text-xs text-muted-foreground">This user will be billed at £20/month</p>
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button
