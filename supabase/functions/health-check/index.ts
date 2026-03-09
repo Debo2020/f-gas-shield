@@ -19,11 +19,11 @@ serve(async (req) => {
     const { error } = await supabaseAdmin.from("profile_type_config").select("id").limit(1);
 
     if (error) {
+      console.error(JSON.stringify({ context: "health-check", detail: error.message }));
       return new Response(JSON.stringify({
         status: "degraded",
         timestamp: new Date().toISOString(),
         db: "error",
-        detail: error.message,
       }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
