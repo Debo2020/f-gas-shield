@@ -126,6 +126,7 @@ export const emptyTestingPurgingData: TestingPurgingData = {
 interface TestingPurgingFieldsProps {
   data: TestingPurgingData;
   onChange: (field: string, value: string | boolean) => void;
+  section?: "strength" | "tightness" | "purge" | "all";
 }
 
 function YesNoSelect({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
