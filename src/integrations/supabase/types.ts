@@ -2130,7 +2130,7 @@ export type Database = {
       }
     }
     Enums: {
-      addon_type: "natural_gas"
+      addon_type: "natural_gas" | "client_portal"
       app_role:
         | "owner"
         | "manager"
@@ -2342,7 +2342,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      addon_type: ["natural_gas"],
+      addon_type: ["natural_gas", "client_portal"],
       app_role: [
         "owner",
         "manager",

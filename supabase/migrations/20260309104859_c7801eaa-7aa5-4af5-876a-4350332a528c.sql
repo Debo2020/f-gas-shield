@@ -1,0 +1,1 @@
+ALTER TYPE public.addon_type ADD VALUE IF NOT EXISTS 'client_portal';
