@@ -14,6 +14,7 @@ import { TestingPurgingFields } from "./TestingPurgingFields";
 import { toast } from "sonner";
 import { Loader2, Plus, ArrowLeft, ArrowRight, Save, Trash2, Eye } from "lucide-react";
 import { CertificatePreview } from "./CertificatePreview";
+import { LandlordCertificatePreview } from "./LandlordCertificatePreview";
 
 interface GasCertificateFormProps {
   certificateType: GasCertificateType;
@@ -28,7 +29,7 @@ interface DefectRow {
 }
 
 const STEPS = {
-  landlord_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
+  landlord_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign", "Preview"],
   homeowner_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
   nd_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign", "Preview"],
   nd_gas_testing_purging: ["Job Details", "Testing & Purging", "Comments & Sign"],
@@ -50,7 +51,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
 
   // Fetch company & profile details for ND Gas Safety
   useEffect(() => {
-    if (certificateType !== "nd_gas_safety" || !profile?.company_id) return;
+    if (!["nd_gas_safety", "landlord_gas_safety"].includes(certificateType) || !profile?.company_id) return;
     const fetchCompanyInfo = async () => {
       const { data: company } = await supabase
         .from("companies")
@@ -139,8 +140,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
         Object.assign(certData, gasChecks);
       }
 
-      // ND Gas Safety specific: defects + received_by
-      if (certificateType === "nd_gas_safety") {
+      // ND + Landlord: defects + received_by
+      if (["nd_gas_safety", "landlord_gas_safety"].includes(certificateType)) {
         certData.defects = defects.length > 0 ? defects : [];
         certData.received_by_name = receivedByName || null;
       }
@@ -403,7 +404,7 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
                 <Label>Engineer Name (Issued By)</Label>
                 <Input value={issuedByName} onChange={e => setIssuedByName(e.target.value)} />
               </div>
-              {certificateType === "nd_gas_safety" && (
+              {["nd_gas_safety", "landlord_gas_safety"].includes(certificateType) && (
                 <div>
                   <Label>Customer / Representative Name (Received By)</Label>
                   <Input value={receivedByName} onChange={e => setReceivedByName(e.target.value)} placeholder="Name of person receiving certificate" />
@@ -416,13 +417,14 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
 
     if (currentStepName === "Preview") {
+      const PreviewComponent = certificateType === "landlord_gas_safety" ? LandlordCertificatePreview : CertificatePreview;
       return (
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Eye className="h-4 w-4" />
             Review the certificate below before issuing. Go back to make changes.
           </div>
-          <CertificatePreview
+          <PreviewComponent
             companyInfo={companyInfo}
             jobDetails={jobDetails}
             gasChecks={gasChecks}
