@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Loader2, Plus, ArrowLeft, ArrowRight, Save, Trash2, Eye } from "lucide-react";
 import { CertificatePreview } from "./CertificatePreview";
 import { LandlordCertificatePreview } from "./LandlordCertificatePreview";
+import { SignaturePad } from "./SignaturePad";
 
 interface GasCertificateFormProps {
   certificateType: GasCertificateType;
@@ -102,6 +103,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const [comments, setComments] = useState("");
   const [issuedByName, setIssuedByName] = useState(profile?.full_name || "");
   const [receivedByName, setReceivedByName] = useState("");
+  const [issuedBySignature, setIssuedBySignature] = useState("");
+  const [receivedBySignature, setReceivedBySignature] = useState("");
 
   const handleApplianceChange = (index: number, data: ApplianceData) => {
     const updated = [...appliances];
@@ -124,6 +127,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
         inspection_date: jobDetails.inspection_date || new Date().toISOString().split("T")[0],
         next_inspection_due: jobDetails.next_inspection_due || null,
         issued_by_name: issuedByName,
+        issued_by_signature: issuedBySignature || null,
+        received_by_signature: receivedBySignature || null,
       };
 
       if (["landlord_gas_safety", "homeowner_gas_safety", "nd_gas_safety"].includes(certificateType)) {
@@ -501,6 +506,10 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
                 </div>
               )}
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <SignaturePad label="Engineer Signature" value={issuedBySignature} onChange={setIssuedBySignature} />
+              <SignaturePad label="Client / Recipient Signature" value={receivedBySignature} onChange={setReceivedBySignature} />
+            </div>
           </CardContent>
         </Card>
       );
@@ -521,6 +530,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
               comments={comments}
               issuedByName={issuedByName}
               receivedByName={receivedByName}
+              issuedBySignature={issuedBySignature}
+              receivedBySignature={receivedBySignature}
             />
           </div>
         );
@@ -539,6 +550,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
               testingData={testingData}
               issuedByName={issuedByName}
               receivedByName={receivedByName}
+              issuedBySignature={issuedBySignature}
+              receivedBySignature={receivedBySignature}
             />
           </div>
         );
@@ -561,6 +574,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
             comments={comments}
             issuedByName={issuedByName}
             receivedByName={receivedByName}
+            issuedBySignature={issuedBySignature}
+            receivedBySignature={receivedBySignature}
             {...(previewTitle ? { title: previewTitle } : {})}
           />
         </div>

@@ -28,6 +28,8 @@ interface TPPreviewProps {
   testingData: TestingPurgingData;
   issuedByName: string;
   receivedByName: string;
+  issuedBySignature?: string;
+  receivedBySignature?: string;
 }
 
 export function TestingPurgingPreview({
@@ -36,6 +38,8 @@ export function TestingPurgingPreview({
   testingData: d,
   issuedByName,
   receivedByName,
+  issuedBySignature,
+  receivedBySignature,
 }: TPPreviewProps) {
   const installLabel = (v: string) => v === "new" ? "New" : v === "new_extension" ? "New Extension" : v === "existing" ? "Existing" : "—";
 
@@ -156,14 +160,22 @@ export function TestingPurgingPreview({
         <div className="space-y-0.5">
           <h4 className="text-[8px] font-semibold">Engineer</h4>
           <div className="border border-border rounded p-1 h-6 flex items-end">
-            <span className="text-[6px] text-muted-foreground italic">Signature captured on issue</span>
+            {issuedBySignature ? (
+              <img src={issuedBySignature} alt="Engineer signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[6px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[7px]"><strong>Name:</strong> {issuedByName || "—"}</p>
         </div>
         <div className="space-y-0.5">
           <h4 className="text-[8px] font-semibold">Client / Recipient</h4>
           <div className="border border-border rounded p-1 h-6 flex items-end">
-            <span className="text-[6px] text-muted-foreground italic">Signature captured on issue</span>
+            {receivedBySignature ? (
+              <img src={receivedBySignature} alt="Client signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[6px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[7px]"><strong>Name:</strong> {receivedByName || "—"}</p>
           <p className="text-[7px]"><strong>Date:</strong> {jobDetails.inspection_date || "—"}</p>
