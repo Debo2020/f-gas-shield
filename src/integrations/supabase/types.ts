@@ -769,6 +769,7 @@ export type Database = {
           customer_name: string | null
           customer_phone: string | null
           customer_postcode: string | null
+          declaration_type: string | null
           defects: Json | null
           emergency_control_accessible: boolean | null
           engineer_id: string
@@ -788,6 +789,20 @@ export type Database = {
           permitted_pressure_drop: number | null
           pipework_visual_satisfactory: boolean | null
           purge_completed: boolean | null
+          purge_detector_safe: boolean | null
+          purge_electrical_bonds: boolean | null
+          purge_final_o2_percent: string | null
+          purge_gas_meter_volume: string | null
+          purge_nitrogen_verified: boolean | null
+          purge_no_smoking_signs: boolean | null
+          purge_persons_advised: boolean | null
+          purge_pipework_volume: string | null
+          purge_result: string | null
+          purge_risk_assessment: boolean | null
+          purge_total_volume: string | null
+          purge_two_way_radios: boolean | null
+          purge_valves_labelled: boolean | null
+          purge_written_procedure: string | null
           received_by_name: string | null
           received_by_signature: string | null
           riddor_reported_11_1: boolean | null
@@ -795,12 +810,46 @@ export type Database = {
           site_id: string | null
           stabilisation_period: string | null
           status: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_actual_drop_mbar: number | null
+          strength_calculated_drop_mbar: number | null
+          strength_calculated_stp_mbar: number | null
+          strength_components_isolated: boolean | null
+          strength_installation_type: string | null
+          strength_permitted_drop_percent: string | null
+          strength_stabilisation_minutes: string | null
+          strength_test_duration_minutes: string | null
+          strength_test_medium: string | null
+          strength_test_method: string | null
           strength_test_result: string | null
           test_duration: string | null
           test_method: string | null
           test_pressure_mbar: number | null
+          tightness_actual_leak_rate: string | null
+          tightness_actual_pressure_drop_mbar: number | null
+          tightness_barometric_correction: boolean | null
+          tightness_gas_meter_volume: string | null
+          tightness_gas_type: string | null
+          tightness_gauge_type: string | null
+          tightness_inadequate_ventilation: boolean | null
+          tightness_installation_type: string | null
+          tightness_letby_period: string | null
+          tightness_meter_bypass: boolean | null
+          tightness_meter_model: string | null
+          tightness_meter_type: string | null
+          tightness_mplr_or_mapd: string | null
+          tightness_pipework_volume: string | null
+          tightness_stabilisation_minutes: string | null
+          tightness_test_duration_minutes: string | null
+          tightness_test_medium: string | null
+          tightness_test_pressure_mbar: number | null
           tightness_test_result: string | null
+          tightness_total_volume: string | null
+          tightness_ventilation_checked: boolean | null
+          tightness_weather_affect: boolean | null
           updated_at: string
+          work_purge: boolean | null
+          work_strength_test: boolean | null
+          work_tightness_test: boolean | null
         }
         Insert: {
           actions_required?: string | null
@@ -823,6 +872,7 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           customer_postcode?: string | null
+          declaration_type?: string | null
           defects?: Json | null
           emergency_control_accessible?: boolean | null
           engineer_id: string
@@ -842,6 +892,20 @@ export type Database = {
           permitted_pressure_drop?: number | null
           pipework_visual_satisfactory?: boolean | null
           purge_completed?: boolean | null
+          purge_detector_safe?: boolean | null
+          purge_electrical_bonds?: boolean | null
+          purge_final_o2_percent?: string | null
+          purge_gas_meter_volume?: string | null
+          purge_nitrogen_verified?: boolean | null
+          purge_no_smoking_signs?: boolean | null
+          purge_persons_advised?: boolean | null
+          purge_pipework_volume?: string | null
+          purge_result?: string | null
+          purge_risk_assessment?: boolean | null
+          purge_total_volume?: string | null
+          purge_two_way_radios?: boolean | null
+          purge_valves_labelled?: boolean | null
+          purge_written_procedure?: string | null
           received_by_name?: string | null
           received_by_signature?: string | null
           riddor_reported_11_1?: boolean | null
@@ -849,12 +913,46 @@ export type Database = {
           site_id?: string | null
           stabilisation_period?: string | null
           status?: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_actual_drop_mbar?: number | null
+          strength_calculated_drop_mbar?: number | null
+          strength_calculated_stp_mbar?: number | null
+          strength_components_isolated?: boolean | null
+          strength_installation_type?: string | null
+          strength_permitted_drop_percent?: string | null
+          strength_stabilisation_minutes?: string | null
+          strength_test_duration_minutes?: string | null
+          strength_test_medium?: string | null
+          strength_test_method?: string | null
           strength_test_result?: string | null
           test_duration?: string | null
           test_method?: string | null
           test_pressure_mbar?: number | null
+          tightness_actual_leak_rate?: string | null
+          tightness_actual_pressure_drop_mbar?: number | null
+          tightness_barometric_correction?: boolean | null
+          tightness_gas_meter_volume?: string | null
+          tightness_gas_type?: string | null
+          tightness_gauge_type?: string | null
+          tightness_inadequate_ventilation?: boolean | null
+          tightness_installation_type?: string | null
+          tightness_letby_period?: string | null
+          tightness_meter_bypass?: boolean | null
+          tightness_meter_model?: string | null
+          tightness_meter_type?: string | null
+          tightness_mplr_or_mapd?: string | null
+          tightness_pipework_volume?: string | null
+          tightness_stabilisation_minutes?: string | null
+          tightness_test_duration_minutes?: string | null
+          tightness_test_medium?: string | null
+          tightness_test_pressure_mbar?: number | null
           tightness_test_result?: string | null
+          tightness_total_volume?: string | null
+          tightness_ventilation_checked?: boolean | null
+          tightness_weather_affect?: boolean | null
           updated_at?: string
+          work_purge?: boolean | null
+          work_strength_test?: boolean | null
+          work_tightness_test?: boolean | null
         }
         Update: {
           actions_required?: string | null
@@ -877,6 +975,7 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           customer_postcode?: string | null
+          declaration_type?: string | null
           defects?: Json | null
           emergency_control_accessible?: boolean | null
           engineer_id?: string
@@ -896,6 +995,20 @@ export type Database = {
           permitted_pressure_drop?: number | null
           pipework_visual_satisfactory?: boolean | null
           purge_completed?: boolean | null
+          purge_detector_safe?: boolean | null
+          purge_electrical_bonds?: boolean | null
+          purge_final_o2_percent?: string | null
+          purge_gas_meter_volume?: string | null
+          purge_nitrogen_verified?: boolean | null
+          purge_no_smoking_signs?: boolean | null
+          purge_persons_advised?: boolean | null
+          purge_pipework_volume?: string | null
+          purge_result?: string | null
+          purge_risk_assessment?: boolean | null
+          purge_total_volume?: string | null
+          purge_two_way_radios?: boolean | null
+          purge_valves_labelled?: boolean | null
+          purge_written_procedure?: string | null
           received_by_name?: string | null
           received_by_signature?: string | null
           riddor_reported_11_1?: boolean | null
@@ -903,12 +1016,46 @@ export type Database = {
           site_id?: string | null
           stabilisation_period?: string | null
           status?: Database["public"]["Enums"]["gas_certificate_status"]
+          strength_actual_drop_mbar?: number | null
+          strength_calculated_drop_mbar?: number | null
+          strength_calculated_stp_mbar?: number | null
+          strength_components_isolated?: boolean | null
+          strength_installation_type?: string | null
+          strength_permitted_drop_percent?: string | null
+          strength_stabilisation_minutes?: string | null
+          strength_test_duration_minutes?: string | null
+          strength_test_medium?: string | null
+          strength_test_method?: string | null
           strength_test_result?: string | null
           test_duration?: string | null
           test_method?: string | null
           test_pressure_mbar?: number | null
+          tightness_actual_leak_rate?: string | null
+          tightness_actual_pressure_drop_mbar?: number | null
+          tightness_barometric_correction?: boolean | null
+          tightness_gas_meter_volume?: string | null
+          tightness_gas_type?: string | null
+          tightness_gauge_type?: string | null
+          tightness_inadequate_ventilation?: boolean | null
+          tightness_installation_type?: string | null
+          tightness_letby_period?: string | null
+          tightness_meter_bypass?: boolean | null
+          tightness_meter_model?: string | null
+          tightness_meter_type?: string | null
+          tightness_mplr_or_mapd?: string | null
+          tightness_pipework_volume?: string | null
+          tightness_stabilisation_minutes?: string | null
+          tightness_test_duration_minutes?: string | null
+          tightness_test_medium?: string | null
+          tightness_test_pressure_mbar?: number | null
           tightness_test_result?: string | null
+          tightness_total_volume?: string | null
+          tightness_ventilation_checked?: boolean | null
+          tightness_weather_affect?: boolean | null
           updated_at?: string
+          work_purge?: boolean | null
+          work_strength_test?: boolean | null
+          work_tightness_test?: boolean | null
         }
         Relationships: [
           {
