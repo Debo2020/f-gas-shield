@@ -42,6 +42,8 @@ interface CertificatePreviewProps {
   comments: string;
   issuedByName: string;
   receivedByName: string;
+  issuedBySignature?: string;
+  receivedBySignature?: string;
 }
 
 const yn = (v: boolean) => (v ? "Yes" : "No");
@@ -72,6 +74,8 @@ export function CertificatePreview({
   comments,
   issuedByName,
   receivedByName,
+  issuedBySignature,
+  receivedBySignature,
 }: CertificatePreviewProps) {
   const applianceChunks = chunk(appliances, ITEMS_PER_PAGE);
   const defectChunks = chunk(defects, ITEMS_PER_PAGE);
@@ -261,14 +265,22 @@ export function CertificatePreview({
         <div className="space-y-1">
           <h4 className="text-[10px] font-semibold">Engineer</h4>
           <div className="border border-border rounded p-2 h-10 flex items-end">
-            <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
+            {issuedBySignature ? (
+              <img src={issuedBySignature} alt="Engineer signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[10px]"><strong>Name:</strong> {issuedByName || "—"}</p>
         </div>
         <div className="space-y-1">
           <h4 className="text-[10px] font-semibold">Customer / Representative</h4>
           <div className="border border-border rounded p-2 h-10 flex items-end">
-            <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
+            {receivedBySignature ? (
+              <img src={receivedBySignature} alt="Client signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[9px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[10px]"><strong>Name:</strong> {receivedByName || "—"}</p>
         </div>

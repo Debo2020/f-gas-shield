@@ -42,6 +42,8 @@ interface LandlordCertificatePreviewProps {
   comments: string;
   issuedByName: string;
   receivedByName: string;
+  issuedBySignature?: string;
+  receivedBySignature?: string;
   title?: string;
 }
 
@@ -66,6 +68,8 @@ export function LandlordCertificatePreview({
   comments,
   issuedByName,
   receivedByName,
+  issuedBySignature,
+  receivedBySignature,
   title = "Landlord Gas Safety Record",
 }: LandlordCertificatePreviewProps) {
   const applianceChunks = chunk(appliances, ITEMS_PER_PAGE);
@@ -275,14 +279,22 @@ export function LandlordCertificatePreview({
         <div className="space-y-0.5">
           <h4 className="text-[9px] font-semibold">Engineer</h4>
           <div className="border border-border rounded p-1 h-8 flex items-end">
-            <span className="text-[7px] text-muted-foreground italic">Signature captured on issue</span>
+            {issuedBySignature ? (
+              <img src={issuedBySignature} alt="Engineer signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[7px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[8px]"><strong>Name:</strong> {issuedByName || "—"}</p>
         </div>
         <div className="space-y-0.5">
           <h4 className="text-[9px] font-semibold">Customer / Recipient</h4>
           <div className="border border-border rounded p-1 h-8 flex items-end">
-            <span className="text-[7px] text-muted-foreground italic">Signature captured on issue</span>
+            {receivedBySignature ? (
+              <img src={receivedBySignature} alt="Client signature" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[7px] text-muted-foreground italic">Signature captured on issue</span>
+            )}
           </div>
           <p className="text-[8px]"><strong>Name:</strong> {receivedByName || "—"}</p>
           <p className="text-[8px]"><strong>Date:</strong> {jobDetails.inspection_date || "—"}</p>

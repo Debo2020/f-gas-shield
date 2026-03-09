@@ -27,6 +27,8 @@ interface WarningNoticePreviewProps {
   comments: string;
   issuedByName: string;
   receivedByName: string;
+  issuedBySignature?: string;
+  receivedBySignature?: string;
 }
 
 const classLabels: Record<string, string> = {
@@ -46,7 +48,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function WarningNoticePreview({ companyInfo, jobDetails, warningData, comments, issuedByName, receivedByName }: WarningNoticePreviewProps) {
+export function WarningNoticePreview({ companyInfo, jobDetails, warningData, comments, issuedByName, receivedByName, issuedBySignature, receivedBySignature }: WarningNoticePreviewProps) {
   return (
     <div className="w-full max-w-[1100px] mx-auto">
       <div className="bg-white text-black border rounded-lg shadow-lg aspect-[1.414/1] p-6 overflow-hidden flex flex-col" style={{ fontSize: "10px" }}>
@@ -183,12 +185,20 @@ export function WarningNoticePreview({ companyInfo, jobDetails, warningData, com
         <div className="grid grid-cols-2 gap-4 mb-2">
           <div className="border rounded p-1.5">
             <div className="bg-[#1a365d] text-white text-[8px] font-bold px-1 py-0.5 -mx-1.5 -mt-1.5 mb-1 rounded-t">Issued By (Engineer)</div>
-            <div className="h-6 border-b border-dashed mb-1" />
+            <div className="h-6 border-b border-dashed mb-1 flex items-end">
+              {issuedBySignature ? (
+                <img src={issuedBySignature} alt="Engineer signature" className="max-h-full max-w-full object-contain" />
+              ) : null}
+            </div>
             <InfoRow label="Print Name" value={issuedByName} />
           </div>
           <div className="border rounded p-1.5">
             <div className="bg-[#1a365d] text-white text-[8px] font-bold px-1 py-0.5 -mx-1.5 -mt-1.5 mb-1 rounded-t">Received By (Client)</div>
-            <div className="h-6 border-b border-dashed mb-1" />
+            <div className="h-6 border-b border-dashed mb-1 flex items-end">
+              {receivedBySignature ? (
+                <img src={receivedBySignature} alt="Client signature" className="max-h-full max-w-full object-contain" />
+              ) : null}
+            </div>
             <InfoRow label="Print Name" value={receivedByName} />
             <InfoRow label="Date" value={jobDetails.inspection_date} />
           </div>
