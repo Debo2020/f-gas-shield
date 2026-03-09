@@ -157,11 +157,12 @@ const handler = async (req: Request): Promise<Response> => {
     const redirectUrl = `${appUrl}/accept-license?token=${token}`;
     logStep("Using redirect URL", { appUrl, redirectUrl });
 
-    // Check if user already exists
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === email
-    );
+    // Check if user already exists using generateLink (avoids fetching all users)
+    const { data: linkCheck, error: linkCheckError } = await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: email,
+    });
+    const existingUser = (!linkCheckError && linkCheck?.user?.id) ? linkCheck.user : null;
 
     let magicLinkUrl: string;
 

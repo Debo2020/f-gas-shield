@@ -42,7 +42,15 @@ import SetupCompany from "./pages/SetupCompany";
 import EnterpriseContact from "./pages/EnterpriseContact";
 import GasCertificates from "./pages/GasCertificates";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -179,7 +187,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/settings/licenses"
               element={

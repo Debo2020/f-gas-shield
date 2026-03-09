@@ -98,7 +98,7 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
     if (!userEmail) throw new Error("User email not available in claims");
-    logStep("User authenticated via getClaims", { userId, email: userEmail });
+    logStep("User authenticated via getClaims", { userId });
 
     // Create service role client for database operations
     const supabaseClient = createClient(

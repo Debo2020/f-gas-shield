@@ -31,7 +31,7 @@ interface AuthContextType {
   isOfflineMode: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInOffline: (email: string) => Promise<{ error: Error | null }>;
+  signInOffline: (email: string, password?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   refreshProfile: () => Promise<void>;
@@ -210,9 +210,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsOfflineMode(false);
   };
 
-  // Offline login using cached credentials
-  const signInOffline = async (email: string): Promise<{ error: Error | null }> => {
+  // Offline login using cached credentials + password verification
+  const signInOffline = async (email: string, password?: string): Promise<{ error: Error | null }> => {
     try {
+      if (!password) {
+        return { error: new Error("Password is required for offline login.") };
+      }
+
       const credentialHash = await hashCredentials(email);
       
       // Find cached profile matching the email hash
@@ -221,6 +225,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!cached) {
         return { error: new Error("No cached credentials found. Please sign in online first.") };
+      }
+
+      // Verify password hash matches what was cached during online login
+      const passwordHash = await hashCredentials(email + ":" + password);
+      if (cached.password_hash !== passwordHash) {
+        return { error: new Error("Invalid password. Please try again or sign in online.") };
       }
 
       // Check if cache is not too old (7 days)

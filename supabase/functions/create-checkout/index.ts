@@ -49,7 +49,7 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
     const userEmail = claimsData.claims.email as string;
     if (!userEmail) throw new Error("User email not available in claims");
-    logStep("User authenticated via getClaims", { userId, email: userEmail });
+    logStep("User authenticated via getClaims", { userId });
     
     const { priceId, quantity = 1, companyName, tier } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
