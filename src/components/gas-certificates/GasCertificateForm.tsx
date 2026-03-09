@@ -12,7 +12,8 @@ import { ApplianceFields, ApplianceData, emptyAppliance } from "./ApplianceField
 import { WarningNoticeFields } from "./WarningNoticeFields";
 import { TestingPurgingFields } from "./TestingPurgingFields";
 import { toast } from "sonner";
-import { Loader2, Plus, ArrowLeft, ArrowRight, Save, Trash2 } from "lucide-react";
+import { Loader2, Plus, ArrowLeft, ArrowRight, Save, Trash2, Eye } from "lucide-react";
+import { CertificatePreview } from "./CertificatePreview";
 
 interface GasCertificateFormProps {
   certificateType: GasCertificateType;
@@ -29,7 +30,7 @@ interface DefectRow {
 const STEPS = {
   landlord_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
   homeowner_gas_safety: ["Job Details", "Gas Checks", "Appliances", "Comments & Sign"],
-  nd_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign"],
+  nd_gas_safety: ["Company / Installer", "Job Details", "Gas Checks", "Appliances", "Defects", "Comments & Sign", "Preview"],
   nd_gas_testing_purging: ["Job Details", "Testing & Purging", "Comments & Sign"],
   gas_warning_notice: ["Job Details", "Warning Details", "Comments & Sign"],
 };
@@ -411,6 +412,27 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
             </div>
           </CardContent>
         </Card>
+      );
+    }
+
+    if (currentStepName === "Preview") {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Eye className="h-4 w-4" />
+            Review the certificate below before issuing. Go back to make changes.
+          </div>
+          <CertificatePreview
+            companyInfo={companyInfo}
+            jobDetails={jobDetails}
+            gasChecks={gasChecks}
+            appliances={appliances}
+            defects={defects}
+            comments={comments}
+            issuedByName={issuedByName}
+            receivedByName={receivedByName}
+          />
+        </div>
       );
     }
 
