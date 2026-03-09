@@ -57,7 +57,7 @@ export function CertificatePreview({
   receivedByName,
 }: CertificatePreviewProps) {
   return (
-    <div className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[800px] p-6 space-y-4 text-foreground text-[11px] leading-tight">
+    <div className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[1100px] aspect-[1.414/1] p-6 space-y-4 text-foreground text-[11px] leading-tight overflow-y-auto">
       {/* Header */}
       <div className="text-center space-y-1 border-b border-border pb-3">
         <h2 className="text-base font-bold tracking-tight">Non Domestic Gas Safety Record</h2>
