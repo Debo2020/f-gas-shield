@@ -69,6 +69,56 @@ interface CertificateData {
   gas_safe_reg_no?: string;
   engineer_gas_safe_id?: string;
   company_logo_base64?: string;
+  // T&P fields
+  strength_test_method?: string | null;
+  strength_installation_type?: string | null;
+  strength_components_isolated?: boolean | null;
+  strength_calculated_stp_mbar?: number | null;
+  strength_test_medium?: string | null;
+  strength_stabilisation_minutes?: string | null;
+  strength_test_duration_minutes?: string | null;
+  strength_permitted_drop_percent?: string | null;
+  strength_calculated_drop_mbar?: number | null;
+  strength_actual_drop_mbar?: number | null;
+  tightness_gas_type?: string | null;
+  tightness_installation_type?: string | null;
+  tightness_weather_affect?: boolean | null;
+  tightness_meter_type?: string | null;
+  tightness_meter_model?: string | null;
+  tightness_meter_bypass?: boolean | null;
+  tightness_gas_meter_volume?: string | null;
+  tightness_pipework_volume?: string | null;
+  tightness_total_volume?: string | null;
+  tightness_test_medium?: string | null;
+  tightness_test_pressure_mbar?: number | null;
+  tightness_gauge_type?: string | null;
+  tightness_mplr_or_mapd?: string | null;
+  tightness_letby_period?: string | null;
+  tightness_stabilisation_minutes?: string | null;
+  tightness_test_duration_minutes?: string | null;
+  tightness_inadequate_ventilation?: boolean | null;
+  tightness_barometric_correction?: boolean | null;
+  tightness_actual_leak_rate?: string | null;
+  tightness_actual_pressure_drop_mbar?: number | null;
+  tightness_ventilation_checked?: boolean | null;
+  purge_risk_assessment?: boolean | null;
+  purge_written_procedure?: string | null;
+  purge_no_smoking_signs?: boolean | null;
+  purge_persons_advised?: boolean | null;
+  purge_valves_labelled?: boolean | null;
+  purge_nitrogen_verified?: boolean | null;
+  purge_two_way_radios?: boolean | null;
+  purge_electrical_bonds?: boolean | null;
+  purge_gas_meter_volume?: string | null;
+  purge_pipework_volume?: string | null;
+  purge_total_volume?: string | null;
+  purge_detector_safe?: boolean | null;
+  purge_final_o2_percent?: string | null;
+  purge_result?: string | null;
+  work_strength_test?: boolean | null;
+  work_tightness_test?: boolean | null;
+  work_purge?: boolean | null;
+  declaration_type?: string | null;
 }
 
 const TYPE_TITLES: Record<string, string> = {
