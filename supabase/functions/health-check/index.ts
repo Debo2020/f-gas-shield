@@ -38,10 +38,10 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error(JSON.stringify({ context: "health-check", detail: error instanceof Error ? error.message : String(error) }));
     return new Response(JSON.stringify({
       status: "error",
       timestamp: new Date().toISOString(),
-      detail: error instanceof Error ? error.message : String(error),
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
