@@ -129,8 +129,24 @@ export default function SetPassword() {
   }, [token]);
 
   const validatePassword = (): boolean => {
-    if (password.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
+    if (password.length < 12) {
+      setPasswordError("Password must be at least 12 characters");
+      return false;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setPasswordError("Must contain at least one uppercase letter");
+      return false;
+    }
+    if (!/[a-z]/.test(password)) {
+      setPasswordError("Must contain at least one lowercase letter");
+      return false;
+    }
+    if (!/[0-9]/.test(password)) {
+      setPasswordError("Must contain at least one number");
+      return false;
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      setPasswordError("Must contain at least one special character");
       return false;
     }
     if (password !== confirmPassword) {
@@ -211,8 +227,13 @@ export default function SetPassword() {
 
   const getPasswordStrength = () => {
     if (password.length === 0) return null;
-    if (password.length < 8) return { label: "Too short", color: "bg-destructive" };
-    if (password.length < 12) return { label: "Fair", color: "bg-yellow-500" };
+    if (password.length < 12) return { label: "Too short", color: "bg-destructive" };
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNum = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    const score = [hasUpper, hasLower, hasNum, hasSpecial].filter(Boolean).length;
+    if (score < 4) return { label: "Fair", color: "bg-yellow-500" };
     return { label: "Strong", color: "bg-success" };
   };
 

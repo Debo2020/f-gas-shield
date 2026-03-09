@@ -13,7 +13,12 @@ import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff } from "lu
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
+const passwordSchema = z.string()
+  .min(12, "Password must be at least 12 characters")
+  .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Must contain at least one special character");
 const nameSchema = z.string().min(2, "Name must be at least 2 characters");
 
 export default function Auth() {
@@ -88,9 +93,13 @@ export default function Auth() {
         setError(emailResult.error.errors[0].message);
         return;
       }
+      if (!password) {
+        setError("Password is required for offline login.");
+        return;
+      }
       
       setIsSubmitting(true);
-      const { error } = await signInOffline(email);
+      const { error } = await signInOffline(email, password);
       setIsSubmitting(false);
       
       if (error) {
@@ -318,7 +327,7 @@ export default function Auth() {
               <Alert className="mb-4 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
                 <WifiOff className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-700 dark:text-amber-400">
-                  You're offline. Enter your email to access cached data (read-only mode).
+                  You're offline. Enter your email and password to access cached data (read-only mode).
                 </AlertDescription>
               </Alert>
             )}
@@ -355,7 +364,7 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isSubmitting || isOffline}
+                    disabled={isSubmitting}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -411,7 +420,7 @@ export default function Auth() {
                     disabled={isSubmitting}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Must be at least 8 characters
+                    Min 12 characters with uppercase, lowercase, number &amp; special character
                   </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
