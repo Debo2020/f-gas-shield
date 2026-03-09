@@ -244,7 +244,9 @@ export function TestingPurgingFields({ data, onChange, section = "all" }: Testin
           </div>
         </CardContent>
       </Card>
+      </>)}
 
+      {showTightness && (<>
       {/* ── TIGHTNESS TEST ── */}
       <Card>
         <CardHeader><CardTitle className="text-sm">Tightness Test Details</CardTitle></CardHeader>
@@ -398,7 +400,9 @@ export function TestingPurgingFields({ data, onChange, section = "all" }: Testin
           </div>
         </CardContent>
       </Card>
+      </>)}
 
+      {showPurge && (<>
       {/* ── PURGING PROCEDURE ── */}
       <Card>
         <CardHeader><CardTitle className="text-sm">Purging Procedure Details</CardTitle></CardHeader>
@@ -518,6 +522,7 @@ export function TestingPurgingFields({ data, onChange, section = "all" }: Testin
           />
         </CardContent>
       </Card>
+      </>)}
     </div>
   );
 }
