@@ -42,6 +42,7 @@ interface LandlordCertificatePreviewProps {
   comments: string;
   issuedByName: string;
   receivedByName: string;
+  title?: string;
 }
 
 const yn = (v: boolean) => (v ? "Yes" : "No");
@@ -55,12 +56,13 @@ export function LandlordCertificatePreview({
   comments,
   issuedByName,
   receivedByName,
+  title = "Landlord Gas Safety Record",
 }: LandlordCertificatePreviewProps) {
   return (
     <div className="bg-background border border-border rounded-lg shadow-lg mx-auto max-w-[850px] aspect-[1/1.414] p-6 space-y-3 text-foreground text-[10px] leading-tight overflow-y-auto">
       {/* Header */}
       <div className="text-center space-y-1 border-b border-border pb-2">
-        <h2 className="text-sm font-bold tracking-tight">Landlord Gas Safety Record</h2>
+        <h2 className="text-sm font-bold tracking-tight">{title}</h2>
         <p className="text-[8px] text-muted-foreground italic max-w-[550px] mx-auto">
           Safety Inspection and reporting carried out in accordance with the Gas Safety
           (Installation and Use) Regulations 1998 section 26(9) and the Gas Industry Unsafe Situations Procedure.

@@ -91,7 +91,7 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
     return generateNDGasSafetyPDF(landscapeDoc, data, title);
   }
 
-  if (data.certificate_type === "landlord_gas_safety") {
+  if (data.certificate_type === "landlord_gas_safety" || data.certificate_type === "homeowner_gas_safety") {
     return generateLandlordGasSafetyPDF(doc, data, title);
   }
 
