@@ -79,7 +79,7 @@ serve(async (req) => {
       });
     }
 
-    logStep("Request params", { email, role, send_invite });
+    logStep("Request params", { role, send_invite });
 
     // Use service role for privileged operations
     const adminClient = createClient(
@@ -302,7 +302,6 @@ serve(async (req) => {
         email: invitation.email,
         role: invitation.role,
         expires_at: invitation.expires_at,
-        token: invitation.token,
         email_sent: send_invite,
       }
     }), {

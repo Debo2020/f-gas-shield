@@ -19,6 +19,7 @@ export interface CachedProfile {
   license_status: string | null;
   cached_at: string;
   credential_hash: string;
+  password_hash: string;
 }
 
 export interface CachedSite {
