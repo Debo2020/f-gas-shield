@@ -251,24 +251,8 @@ export function generateGasCertificatePDF(data: CertificateData): jsPDF {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   if (data.certificate_type === "gas_warning_notice") {
-    const classLabels: Record<string, string> = {
-      immediately_dangerous: "Immediately Dangerous (ID)",
-      at_risk: "At Risk (AR)",
-      not_to_current_standards: "Not to Current Standards (NCS)",
-    };
-    autoTable(doc, {
-      startY: y,
-      theme: "grid",
-      headStyles: { fillColor: [192, 57, 43] },
-      head: [["Warning Details", ""]],
-      body: [
-        ["Classification", classLabels[data.classification || ""] || "-"],
-        ["Issue Type", data.issue_type || "-"],
-        ["Actions Taken", data.actions_taken || "-"],
-        ["Actions Required", data.actions_required || "-"],
-      ],
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    const doc = new jsPDF({ orientation: "landscape" });
+    return generateWarningNoticePDF(doc, data, title);
   }
 
   if (data.certificate_type === "nd_gas_testing_purging") {

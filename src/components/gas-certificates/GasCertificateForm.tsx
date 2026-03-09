@@ -507,6 +507,25 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
 
     if (currentStepName === "Preview") {
+      if (certificateType === "gas_warning_notice") {
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Eye className="h-4 w-4" />
+              Review the warning notice below before issuing. Go back to make changes.
+            </div>
+            <WarningNoticePreview
+              companyInfo={companyInfo}
+              jobDetails={jobDetails}
+              warningData={warningData}
+              comments={comments}
+              issuedByName={issuedByName}
+              receivedByName={receivedByName}
+            />
+          </div>
+        );
+      }
+
       if (certificateType === "nd_gas_testing_purging") {
         return (
           <div className="space-y-4">
