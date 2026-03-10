@@ -42,6 +42,7 @@ import CheckoutRedirect from "./pages/CheckoutRedirect";
 import SetupCompany from "./pages/SetupCompany";
 import EnterpriseContact from "./pages/EnterpriseContact";
 import GasCertificates from "./pages/GasCertificates";
+import GetStarted from "./pages/GetStarted";
 
 const queryClient = new QueryClient({
   defaultOptions: {
