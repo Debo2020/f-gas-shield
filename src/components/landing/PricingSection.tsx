@@ -42,9 +42,9 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
       return;
     }
 
-    // If not authenticated, redirect to auth with checkout params
+    // If not authenticated, redirect to get-started flow
     if (!user) {
-      navigate(`/auth?redirect=checkout&tier=${tier}&annual=${isAnnual}`);
+      navigate("/get-started");
       return;
     }
 

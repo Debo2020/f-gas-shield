@@ -60,7 +60,7 @@ export function LandingHeader() {
           <Button variant="ghost" onClick={() => navigate("/auth")}>
             Sign In
           </Button>
-          <Button onClick={() => navigate("/onboarding")}>
+          <Button onClick={() => navigate("/get-started")}>
             Get Started
           </Button>
         </div>
