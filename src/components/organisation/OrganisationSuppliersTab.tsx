@@ -31,7 +31,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Pencil, Trash2, Truck } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Truck, Upload, Download } from "lucide-react";
+import { CSVBatchUploadDialog } from "@/components/batch-upload/CSVBatchUploadDialog";
+import { downloadSupplierTemplate } from "@/lib/csv-templates";
 
 interface Supplier {
   id: string;
@@ -53,6 +55,7 @@ export function OrganisationSuppliersTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -206,10 +209,20 @@ export function OrganisationSuppliersTab() {
           </p>
         </div>
         {canManageSuppliers && (
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Supplier
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={downloadSupplierTemplate}>
+              <Download className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setBatchUploadOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Batch Upload
+            </Button>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Supplier
+            </Button>
+          </div>
         )}
       </div>
 
@@ -395,6 +408,16 @@ export function OrganisationSuppliersTab() {
           </form>
         </DialogContent>
       </Dialog>
+      {profile?.company_id && (
+        <CSVBatchUploadDialog
+          open={batchUploadOpen}
+          onOpenChange={setBatchUploadOpen}
+          type="suppliers"
+          companyId={profile.company_id}
+          onSuccess={fetchSuppliers}
+          existingNames={suppliers.map((s) => s.name)}
+        />
+      )}
     </div>
   );
 }

@@ -21,7 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Pencil, Trash2, Building2, MapPin, Users, Power, PowerOff } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Building2, MapPin, Users, Power, PowerOff, Upload, Download } from "lucide-react";
+import { CSVBatchUploadDialog } from "@/components/batch-upload/CSVBatchUploadDialog";
+import { downloadClientTemplate } from "@/lib/csv-templates";
 import { ClientDialog } from "@/components/clients/ClientDialog";
 import { ClientSitesDialog } from "@/components/clients/ClientSitesDialog";
 import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
@@ -50,6 +52,7 @@ export function OrganisationClientsTab() {
   const [selectedClientForSites, setSelectedClientForSites] = useState<Client | null>(null);
   const [usersDialogOpen, setUsersDialogOpen] = useState(false);
   const [selectedClientForUsers, setSelectedClientForUsers] = useState<Client | null>(null);
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
 
   const canManageClients = hasRole("owner") || hasRole("manager");
   const canDelete = hasRole("owner");
@@ -172,10 +175,20 @@ export function OrganisationClientsTab() {
           </p>
         </div>
         {canManageClients && (
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={downloadClientTemplate}>
+              <Download className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setBatchUploadOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Batch Upload
+            </Button>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
         )}
       </div>
 
@@ -334,6 +347,16 @@ export function OrganisationClientsTab() {
           onOpenChange={setUsersDialogOpen}
           client={selectedClientForUsers}
           onSuccess={fetchClients}
+        />
+      )}
+      {profile?.company_id && (
+        <CSVBatchUploadDialog
+          open={batchUploadOpen}
+          onOpenChange={setBatchUploadOpen}
+          type="clients"
+          companyId={profile.company_id}
+          onSuccess={fetchClients}
+          existingNames={clients.map((c) => c.name)}
         />
       )}
     </div>
