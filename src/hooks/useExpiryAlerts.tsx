@@ -41,9 +41,11 @@ export function useExpiryAlerts() {
       try {
         const allAlerts: ExpiryAlert[] = [];
 
-        // Fetch expiring documents (next 90 days)
+        // Fetch expiring documents (expired up to 30 days ago → expiring within 90 days)
         const ninetyDaysFromNow = new Date();
         ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         const { data: documents } = await supabase
           .from("documents")
@@ -54,6 +56,7 @@ export function useExpiryAlerts() {
           `)
           .eq("company_id", profile.company_id)
           .not("expiry_date", "is", null)
+          .gte("expiry_date", thirtyDaysAgo.toISOString().split("T")[0])
           .lte("expiry_date", ninetyDaysFromNow.toISOString().split("T")[0])
           .order("expiry_date");
 
@@ -87,6 +90,7 @@ export function useExpiryAlerts() {
           .select("id, full_name, f_gas_certificate_expiry")
           .eq("company_id", profile.company_id)
           .not("f_gas_certificate_expiry", "is", null)
+          .gte("f_gas_certificate_expiry", thirtyDaysAgo.toISOString().split("T")[0])
           .lte("f_gas_certificate_expiry", ninetyDaysFromNow.toISOString().split("T")[0]);
 
         if (profiles) {
