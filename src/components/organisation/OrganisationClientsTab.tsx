@@ -175,10 +175,20 @@ export function OrganisationClientsTab() {
           </p>
         </div>
         {canManageClients && (
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={downloadClientTemplate}>
+              <Download className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setBatchUploadOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Batch Upload
+            </Button>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
         )}
       </div>
 
