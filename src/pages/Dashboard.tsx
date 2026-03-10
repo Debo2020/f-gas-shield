@@ -32,6 +32,9 @@ import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { ComplianceAssistantButton } from "@/components/compliance/ComplianceAssistantButton";
 import { SystemStatusWidget } from "@/components/dashboard/SystemStatusWidget";
+import { SetupWizard } from "@/components/onboarding/SetupWizard";
+import { InAppNudge } from "@/components/onboarding/InAppNudge";
+import { useActivationScore } from "@/hooks/useActivationScore";
 
 type ScannedEquipment = Tables<"equipment"> & {
   sites?: { name: string } | null;
