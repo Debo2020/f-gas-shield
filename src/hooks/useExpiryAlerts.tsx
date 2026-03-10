@@ -126,12 +126,16 @@ export function useExpiryAlerts() {
     fetchExpiryData();
   }, [profile?.company_id]);
 
+  const documentAlerts = alerts.filter((a) => a.type === "document");
+  const certificateAlerts = alerts.filter((a) => a.type === "certificate");
   const criticalAlerts = alerts.filter((a) => a.severity === "critical");
   const warningAlerts = alerts.filter((a) => a.severity === "warning");
   const infoAlerts = alerts.filter((a) => a.severity === "info");
 
   return {
     alerts,
+    documentAlerts,
+    certificateAlerts,
     criticalAlerts,
     warningAlerts,
     infoAlerts,

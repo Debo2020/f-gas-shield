@@ -97,6 +97,14 @@ export function ExpiryAlertBanner({
 
     if (visibleAlerts.length === 0) return null;
 
+    const docCount = visibleAlerts.filter((a) => a.type === "document").length;
+    const certCount = visibleAlerts.filter((a) => a.type === "certificate").length;
+
+    const labelParts: string[] = [];
+    if (docCount > 0) labelParts.push(`${docCount} expiring document${docCount !== 1 ? "s" : ""}`);
+    if (certCount > 0) labelParts.push(`${certCount} expiring certificate${certCount !== 1 ? "s" : ""}`);
+    const label = labelParts.join(", ");
+
     return (
       <Card className={`border-amber-500/30 bg-amber-500/5 ${className}`}>
         <CardContent className="py-3 px-4">
@@ -105,7 +113,7 @@ export function ExpiryAlertBanner({
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               <div>
                 <p className="text-sm font-medium">
-                  {visibleAlerts.length} expiring document{visibleAlerts.length !== 1 && "s"}
+                  {label}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {criticalCount > 0 && (
