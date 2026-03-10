@@ -247,12 +247,19 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
+    // If trialing sub, also get trial_end
+    if (isTrialing && hasActiveSub && !trialEnd) {
+      trialEnd = safeTimestampToISO(subscriptions.data[0].trial_end);
+    }
+
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       product_id: productId,
       subscription_end: subscriptionEnd,
       license_count: licenseCount,
       licenses_used: licensesUsed,
+      is_trialing: isTrialing,
+      trial_end: trialEnd,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
