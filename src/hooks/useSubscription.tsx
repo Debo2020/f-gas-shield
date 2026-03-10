@@ -62,6 +62,9 @@ export function useSubscription() {
         licensesUsed: 0,
         loading: false,
         error: null,
+        isTrialing: false,
+        trialEnd: null,
+        trialDaysRemaining: 0,
       };
       globalCache = { data: emptyState, timestamp: Date.now(), pendingPromise: null };
       setState(emptyState);
