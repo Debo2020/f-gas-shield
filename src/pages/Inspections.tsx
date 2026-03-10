@@ -441,9 +441,9 @@ export default function Inspections() {
         </div>
       </div>
 
-      {/* Add Inspection Dialog */}
+      {/* Add Inspection Wizard */}
       {profile?.company_id && (
-        <InspectionDialog
+        <InspectionWizard
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           onSubmit={handleAddInspection}
