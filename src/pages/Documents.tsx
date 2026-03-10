@@ -63,7 +63,7 @@ export default function Documents() {
   const navigate = useNavigate();
   const companyId = profile?.company_id;
   const [searchParams, setSearchParams] = useSearchParams();
-  const { alerts, criticalAlerts, warningAlerts } = useExpiryAlerts();
+  const { documentAlerts } = useExpiryAlerts();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -182,8 +182,8 @@ export default function Documents() {
     certificates: documents.filter((d) => d.document_type === "certificate").length,
     photos: documents.filter((d) => d.document_type === "photo" || d.mime_type?.startsWith("image/")).length,
     compliance: documents.filter((d) => ["certificate", "declaration", "report"].includes(d.document_type)).length,
-    expiring: alerts.length,
-  }), [documents, alerts]);
+    expiring: documentAlerts.length,
+  }), [documents, documentAlerts]);
 
   // Category-specific counts
   const categoryCounts = useMemo(() => ({
@@ -227,25 +227,20 @@ export default function Documents() {
           </DropdownMenu>
         </div>
 
-        {/* Expiry Alerts */}
-        {alerts.length > 0 && (
+        {/* Expiry Alerts — only show actual document expiries on the Documents page */}
+        {documentAlerts.length > 0 && (
           <Card className="border-amber-500/30 bg-amber-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Expiring Documents & Certificates
+                Expiring Documents
               </CardTitle>
               <CardDescription>
-                {criticalAlerts.length > 0 && (
-                  <Badge variant="destructive" className="mr-2">{criticalAlerts.length} critical</Badge>
-                )}
-                {warningAlerts.length > 0 && (
-                  <Badge variant="secondary">{warningAlerts.length} due soon</Badge>
-                )}
+                Documents approaching or past their expiry date
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExpiryAlertBanner alerts={alerts} variant="full" maxVisible={5} />
+              <ExpiryAlertBanner alerts={documentAlerts} variant="full" maxVisible={5} />
             </CardContent>
           </Card>
         )}
