@@ -357,7 +357,7 @@ export default function Onboarding() {
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            {currentStep === 3 ? "Proceed to Payment" : "Continue"}
+            {currentStep === 3 ? "Start 7-Day Free Trial" : "Continue"}
             {currentStep < 3 && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </div>
