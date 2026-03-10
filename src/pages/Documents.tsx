@@ -182,8 +182,8 @@ export default function Documents() {
     certificates: documents.filter((d) => d.document_type === "certificate").length,
     photos: documents.filter((d) => d.document_type === "photo" || d.mime_type?.startsWith("image/")).length,
     compliance: documents.filter((d) => ["certificate", "declaration", "report"].includes(d.document_type)).length,
-    expiring: alerts.length,
-  }), [documents, alerts]);
+    expiring: documentAlerts.length,
+  }), [documents, documentAlerts]);
 
   // Category-specific counts
   const categoryCounts = useMemo(() => ({
