@@ -203,7 +203,12 @@ export function ExpiryAlertBanner({
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={() => navigate("/documents")}
+          onClick={() => {
+            const remaining = visibleAlerts.slice(maxVisible);
+            const allCerts = remaining.every((a) => a.type === "certificate");
+            const allDocs = remaining.every((a) => a.type === "document");
+            navigate(allCerts ? "/settings/profile" : allDocs ? "/documents" : "/documents");
+          }}
         >
           View {remainingCount} more alert{remainingCount !== 1 && "s"}
         </Button>
