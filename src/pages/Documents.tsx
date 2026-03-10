@@ -63,7 +63,7 @@ export default function Documents() {
   const navigate = useNavigate();
   const companyId = profile?.company_id;
   const [searchParams, setSearchParams] = useSearchParams();
-  const { alerts, criticalAlerts, warningAlerts } = useExpiryAlerts();
+  const { documentAlerts } = useExpiryAlerts();
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
