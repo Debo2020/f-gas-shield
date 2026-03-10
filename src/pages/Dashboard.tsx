@@ -51,6 +51,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { alerts } = useExpiryAlerts();
+  const { score, isActivated, progress, loading: activationLoading } = useActivationScore();
 
   // Role checks for manager features
   const isOwner = hasRole("owner");
