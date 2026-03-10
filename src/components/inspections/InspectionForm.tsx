@@ -112,19 +112,24 @@ export function InspectionForm({
 
   useEffect(() => {
     const fetchEquipment = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("equipment")
         .select("id, name, sites!inner(name)")
         .eq("company_id", companyId)
-        .eq("is_active", true)
-        .order("name");
+        .eq("is_active", true);
+
+      if (siteId) {
+        query = query.eq("site_id", siteId);
+      }
+
+      const { data } = await query.order("name");
 
       setEquipment(data || []);
       setIsLoadingEquipment(false);
     };
 
     fetchEquipment();
-  }, [companyId]);
+  }, [companyId, siteId]);
 
   return (
     <Form {...form}>
