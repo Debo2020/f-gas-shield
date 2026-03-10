@@ -90,6 +90,7 @@ export function useExpiryAlerts() {
           .select("id, full_name, f_gas_certificate_expiry")
           .eq("company_id", profile.company_id)
           .not("f_gas_certificate_expiry", "is", null)
+          .gte("f_gas_certificate_expiry", thirtyDaysAgo.toISOString().split("T")[0])
           .lte("f_gas_certificate_expiry", ninetyDaysFromNow.toISOString().split("T")[0]);
 
         if (profiles) {
