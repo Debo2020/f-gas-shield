@@ -16,7 +16,7 @@ const passwordSchema = z.string().min(1, "Password is required");
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, isLoading, signIn, signInOffline } = useAuth();
+  const { user, profile, isLoading, signIn, signInOffline } = useAuth();
   const { isOffline } = useNetworkStatus();
 
   const [email, setEmail] = useState("");
