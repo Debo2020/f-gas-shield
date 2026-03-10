@@ -85,12 +85,18 @@ export function PlanSelector({ selectedTier, onSelectTier, isAnnual, onToggleAnn
                 </div>
                 <CardTitle className="text-xl">{config.name}</CardTitle>
                 <CardDescription>
-                  <span className="text-3xl font-bold text-foreground">
-                    {formatPrice(displayPrice, config.currency)}
-                  </span>
-                  <span className="text-muted-foreground">
-                    /user/{isAnnual ? "month (billed annually)" : "month"}
-                  </span>
+                  {displayPrice !== null ? (
+                    <>
+                      <span className="text-3xl font-bold text-foreground">
+                        {formatPrice(displayPrice, config.currency)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        /user/{isAnnual ? "month (billed annually)" : "month"}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-3xl font-bold text-foreground">Custom Pricing</span>
+                  )}
                 </CardDescription>
                 {isAnnual && annualSavings > 0 && (
                   <Badge variant="outline" className="mt-2 text-green-600 border-green-600">

@@ -168,7 +168,8 @@ export function useSubscription() {
       if (error) throw new Error(error.message);
       
       if (data.url) {
-        window.open(data.url, "_blank");
+        // Redirect in same tab for seamless onboarding flow
+        window.location.href = data.url;
       }
     } catch (err) {
       throw err;

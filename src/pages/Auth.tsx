@@ -16,7 +16,7 @@ const passwordSchema = z.string().min(1, "Password is required");
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, isLoading, signIn, signInOffline } = useAuth();
+  const { user, profile, isLoading, signIn, signInOffline } = useAuth();
   const { isOffline } = useNetworkStatus();
 
   const [email, setEmail] = useState("");
@@ -29,9 +29,14 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !isLoading) {
-      navigate("/dashboard");
+      // New users without a company go to setup
+      if (profile && !profile.company_id) {
+        navigate("/setup-company");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, profile, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
