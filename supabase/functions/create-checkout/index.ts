@@ -94,6 +94,22 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
+    
+    const subscriptionData: Record<string, unknown> = {
+      metadata: {
+        user_id: userId,
+        company_name: companyName || "",
+        tier: tier || "",
+        license_count: quantity.toString(),
+      },
+    };
+
+    // Add trial period if requested
+    if (trial) {
+      subscriptionData.trial_period_days = 7;
+      logStep("Trial enabled", { trial_period_days: 7 });
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
@@ -107,14 +123,7 @@ serve(async (req) => {
         tier: tier || "",
         license_count: quantity.toString(),
       },
-      subscription_data: {
-        metadata: {
-          user_id: userId,
-          company_name: companyName || "",
-          tier: tier || "",
-          license_count: quantity.toString(),
-        },
-      },
+      subscription_data: subscriptionData as Stripe.Checkout.SessionCreateParams.SubscriptionData,
     });
 
     logStep("Checkout session created", { sessionId: session.id, quantity });
