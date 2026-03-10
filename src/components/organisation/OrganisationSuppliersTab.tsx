@@ -408,6 +408,16 @@ export function OrganisationSuppliersTab() {
           </form>
         </DialogContent>
       </Dialog>
+      {profile?.company_id && (
+        <CSVBatchUploadDialog
+          open={batchUploadOpen}
+          onOpenChange={setBatchUploadOpen}
+          type="suppliers"
+          companyId={profile.company_id}
+          onSuccess={fetchSuppliers}
+          existingNames={suppliers.map((s) => s.name)}
+        />
+      )}
     </div>
   );
 }

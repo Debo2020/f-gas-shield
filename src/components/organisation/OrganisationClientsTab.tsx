@@ -349,6 +349,16 @@ export function OrganisationClientsTab() {
           onSuccess={fetchClients}
         />
       )}
+      {profile?.company_id && (
+        <CSVBatchUploadDialog
+          open={batchUploadOpen}
+          onOpenChange={setBatchUploadOpen}
+          type="clients"
+          companyId={profile.company_id}
+          onSuccess={fetchClients}
+          existingNames={clients.map((c) => c.name)}
+        />
+      )}
     </div>
   );
 }
