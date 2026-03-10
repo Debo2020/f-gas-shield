@@ -124,7 +124,7 @@ export default function Onboarding() {
         ? config.annual_price_id 
         : config.price_id;
 
-      await createCheckout(priceId, licenseCount, companyName, selectedTier);
+      await createCheckout(priceId, licenseCount, companyName, selectedTier, true);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create checkout");
     } finally {

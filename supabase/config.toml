@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.invite-client-user]
 verify_jwt = false
+
+[functions.onboarding-cron]
+verify_jwt = false

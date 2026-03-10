@@ -159,10 +159,10 @@ export function useSubscription() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  const createCheckout = async (priceId: string, quantity = 1, companyName?: string, tier?: string) => {
+  const createCheckout = async (priceId: string, quantity = 1, companyName?: string, tier?: string, trial = false) => {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, quantity, companyName, tier },
+        body: { priceId, quantity, companyName, tier, trial },
       });
       
       if (error) throw new Error(error.message);

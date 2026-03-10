@@ -193,6 +193,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         )}
       </header>
 
+      {/* Trial Banner */}
+      <TrialBanner />
+
       {/* Offline Status Banner */}
       <OfflineBanner />
 

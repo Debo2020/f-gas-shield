@@ -257,10 +257,22 @@ export default function Dashboard() {
           <InspectionTrendsChart />
         </div>
 
-        {/* Quick Actions & Recent Activity */}
+        {/* Quick Actions & Onboarding */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Getting Started / Setup Complete */}
-          {isSetupComplete && setupDismissed ? null : (
+          {/* Onboarding Setup Wizard (replaces old Getting Started) */}
+          {!isActivated && !activationLoading && (
+            <SetupWizard score={score} isActivated={isActivated} progress={progress} />
+          )}
+
+          {/* In-App Nudge */}
+          {!isActivated && !activationLoading && (
+            <div className="lg:col-span-1">
+              <InAppNudge progress={progress} isActivated={isActivated} />
+            </div>
+          )}
+
+          {/* Old Getting Started - hidden when activation system is active */}
+          {isActivated && !setupDismissed && isSetupComplete && (
             <Card className="card-interactive animate-slide-up opacity-0" style={{ animationDelay: '500ms', animationFillMode: 'forwards' }}>
               {isSetupComplete ? (
                 // Setup Complete Celebration
