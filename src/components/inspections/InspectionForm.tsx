@@ -144,7 +144,7 @@ export function InspectionForm({
                 <Thermometer className="h-4 w-4 text-muted-foreground" />
                 Equipment *
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!lockedEquipmentId}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select equipment"} />
