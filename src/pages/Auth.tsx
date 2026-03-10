@@ -36,6 +36,7 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState("signin");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check for checkout redirect params
   const redirectToCheckout = searchParams.get("redirect") === "checkout";
