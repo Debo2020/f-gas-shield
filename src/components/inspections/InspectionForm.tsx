@@ -69,6 +69,8 @@ interface InspectionFormProps {
   companyId: string;
   currentUserName?: string;
   currentUserCertificate?: string | null;
+  lockedEquipmentId?: string;
+  siteId?: string;
 }
 
 export function InspectionForm({
