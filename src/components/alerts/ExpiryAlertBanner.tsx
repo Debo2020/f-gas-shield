@@ -92,55 +92,55 @@ export function ExpiryAlertBanner({
   };
 
   if (variant === "compact") {
-    const criticalCount = alerts.filter((a) => a.severity === "critical").length;
-    const warningCount = alerts.filter((a) => a.severity === "warning").length;
-
     if (visibleAlerts.length === 0) return null;
 
-    const docCount = visibleAlerts.filter((a) => a.type === "document").length;
-    const certCount = visibleAlerts.filter((a) => a.type === "certificate").length;
-
-    const labelParts: string[] = [];
-    if (docCount > 0) labelParts.push(`${docCount} expiring document${docCount !== 1 ? "s" : ""}`);
-    if (certCount > 0) labelParts.push(`${certCount} expiring certificate${certCount !== 1 ? "s" : ""}`);
-    const label = labelParts.join(", ");
+    const compactAlerts = visibleAlerts.slice(0, maxVisible);
+    const compactRemaining = visibleAlerts.length - maxVisible;
 
     return (
-      <Card className={`border-amber-500/30 bg-amber-500/5 ${className}`}>
-        <CardContent className="py-3 px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <div>
-                <p className="text-sm font-medium">
-                  {label}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  {criticalCount > 0 && (
-                    <Badge variant="destructive" className="text-xs">
-                      {criticalCount} critical
-                    </Badge>
-                  )}
-                  {warningCount > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {warningCount} due soon
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/documents")}
-              className="gap-1"
+      <div className={`space-y-2 ${className}`}>
+        {compactAlerts.map((alert) => {
+          const styles = getSeverityStyles(alert.severity);
+          const Icon = alert.type === "certificate" ? Award : FileWarning;
+
+          return (
+            <Card
+              key={alert.id}
+              className={`border ${styles.bg} cursor-pointer hover:shadow-md transition-shadow`}
+              onClick={() => handleNavigate(alert)}
             >
-              View all
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <CardContent className="py-2.5 px-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Icon className={`h-4 w-4 flex-shrink-0 ${styles.icon}`} />
+                    <p className="text-sm font-medium truncate">{alert.name}</p>
+                    <Badge variant={styles.badge} className="text-xs flex-shrink-0">
+                      {getExpiryLabel(alert.daysUntilExpiry)}
+                    </Badge>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        {compactRemaining > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              const remaining = visibleAlerts.slice(maxVisible);
+              const allCerts = remaining.every((a) => a.type === "certificate");
+              const allDocs = remaining.every((a) => a.type === "document");
+              navigate(allCerts ? "/settings/profile" : allDocs ? "/documents" : "/documents");
+            }}
+          >
+            View {compactRemaining} more alert{compactRemaining !== 1 && "s"}
+          </Button>
+        )}
+      </div>
     );
   }
 
@@ -203,7 +203,12 @@ export function ExpiryAlertBanner({
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={() => navigate("/documents")}
+          onClick={() => {
+            const remaining = visibleAlerts.slice(maxVisible);
+            const allCerts = remaining.every((a) => a.type === "certificate");
+            const allDocs = remaining.every((a) => a.type === "document");
+            navigate(allCerts ? "/settings/profile" : allDocs ? "/documents" : "/documents");
+          }}
         >
           View {remainingCount} more alert{remainingCount !== 1 && "s"}
         </Button>
