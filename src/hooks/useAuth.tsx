@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Create a minimal user object for compatibility
       setUser({
         id: cached.user_id,
-        email: cached.profile.email,
+        email: profileData.email,
       } as User);
 
       return { error: null };
