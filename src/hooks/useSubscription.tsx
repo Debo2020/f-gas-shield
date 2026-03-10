@@ -11,6 +11,9 @@ interface SubscriptionState {
   licensesUsed: number;
   loading: boolean;
   error: string | null;
+  isTrialing: boolean;
+  trialEnd: string | null;
+  trialDaysRemaining: number;
 }
 
 // Global cache to prevent multiple simultaneous calls across component instances
