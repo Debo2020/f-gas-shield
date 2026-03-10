@@ -52,6 +52,7 @@ export function OrganisationClientsTab() {
   const [selectedClientForSites, setSelectedClientForSites] = useState<Client | null>(null);
   const [usersDialogOpen, setUsersDialogOpen] = useState(false);
   const [selectedClientForUsers, setSelectedClientForUsers] = useState<Client | null>(null);
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
 
   const canManageClients = hasRole("owner") || hasRole("manager");
   const canDelete = hasRole("owner");
