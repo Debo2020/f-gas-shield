@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { InspectionDialog } from "@/components/inspections/InspectionDialog";
+import { InspectionWizard } from "@/components/inspections/InspectionWizard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -440,9 +441,9 @@ export default function Inspections() {
         </div>
       </div>
 
-      {/* Add Inspection Dialog */}
+      {/* Add Inspection Wizard */}
       {profile?.company_id && (
-        <InspectionDialog
+        <InspectionWizard
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           onSubmit={handleAddInspection}

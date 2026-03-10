@@ -69,6 +69,8 @@ interface InspectionFormProps {
   companyId: string;
   currentUserName?: string;
   currentUserCertificate?: string | null;
+  lockedEquipmentId?: string;
+  siteId?: string;
 }
 
 export function InspectionForm({
@@ -80,6 +82,8 @@ export function InspectionForm({
   companyId,
   currentUserName = "",
   currentUserCertificate = null,
+  lockedEquipmentId,
+  siteId,
 }: InspectionFormProps) {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [isLoadingEquipment, setIsLoadingEquipment] = useState(true);
@@ -108,19 +112,24 @@ export function InspectionForm({
 
   useEffect(() => {
     const fetchEquipment = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("equipment")
         .select("id, name, sites!inner(name)")
         .eq("company_id", companyId)
-        .eq("is_active", true)
-        .order("name");
+        .eq("is_active", true);
+
+      if (siteId) {
+        query = query.eq("site_id", siteId);
+      }
+
+      const { data } = await query.order("name");
 
       setEquipment(data || []);
       setIsLoadingEquipment(false);
     };
 
     fetchEquipment();
-  }, [companyId]);
+  }, [companyId, siteId]);
 
   return (
     <Form {...form}>
@@ -135,7 +144,7 @@ export function InspectionForm({
                 <Thermometer className="h-4 w-4 text-muted-foreground" />
                 Equipment *
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!lockedEquipmentId}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select equipment"} />
