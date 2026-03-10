@@ -362,12 +362,22 @@ export default function Auth() {
                   </div>
                   <Input
                     id="signin-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
                   />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-password-signin"
+                      checked={showPassword}
+                      onCheckedChange={(checked) => setShowPassword(checked === true)}
+                    />
+                    <Label htmlFor="show-password-signin" className="text-sm font-normal cursor-pointer">
+                      Show password
+                    </Label>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
