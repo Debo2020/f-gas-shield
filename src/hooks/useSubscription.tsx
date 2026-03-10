@@ -44,6 +44,9 @@ export function useSubscription() {
       licensesUsed: 0,
       loading: true,
       error: null,
+      isTrialing: false,
+      trialEnd: null,
+      trialDaysRemaining: 0,
     };
   });
   
