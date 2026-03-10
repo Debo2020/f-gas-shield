@@ -194,9 +194,9 @@ export default function Dashboard() {
                   </Button>
                 </>
               )}
-              <Button onClick={() => navigate("/sites?action=new")} className="animate-scale-in">
+              <Button onClick={() => navigate("/organisation?tab=clients&action=new")} className="animate-scale-in">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Site
+                Add Client
               </Button>
             </div>
           </div>
