@@ -97,14 +97,26 @@ export function useSubscription() {
         
         const tier = getTierFromProductId(data.product_id);
         
+        const isTrialing = data.is_trialing || false;
+        const trialEnd = data.trial_end || null;
+        let trialDaysRemaining = 0;
+        if (isTrialing && trialEnd) {
+          trialDaysRemaining = Math.max(0, Math.ceil(
+            (new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          ));
+        }
+
         const newState: SubscriptionState = {
-          subscribed: data.subscribed,
+          subscribed: data.subscribed || isTrialing,
           tier,
           subscriptionEnd: data.subscription_end,
           licenseCount: data.license_count || 0,
           licensesUsed: data.licenses_used || 0,
           loading: false,
           error: null,
+          isTrialing,
+          trialEnd,
+          trialDaysRemaining,
         };
         
         globalCache = { data: newState, timestamp: Date.now(), pendingPromise: null };
