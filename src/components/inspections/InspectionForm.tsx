@@ -82,6 +82,8 @@ export function InspectionForm({
   companyId,
   currentUserName = "",
   currentUserCertificate = null,
+  lockedEquipmentId,
+  siteId,
 }: InspectionFormProps) {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [isLoadingEquipment, setIsLoadingEquipment] = useState(true);
