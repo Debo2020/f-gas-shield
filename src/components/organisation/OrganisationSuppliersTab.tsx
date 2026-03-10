@@ -55,6 +55,7 @@ export function OrganisationSuppliersTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
