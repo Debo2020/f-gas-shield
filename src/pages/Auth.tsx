@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
