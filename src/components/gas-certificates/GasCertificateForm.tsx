@@ -381,26 +381,59 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
 
     if (currentStepName === "Job Details") {
+      const isManualClient = selectedClientId === "manual";
+      const isManualSite = selectedSiteId === "manual";
       return (
         <div className="space-y-4">
+          {/* Client & Site Selection */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Select Client & Site</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Client</Label>
+                <Select value={selectedClientId} onValueChange={handleClientChange}>
+                  <SelectTrigger><SelectValue placeholder="Select a client..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual entry</SelectItem>
+                    {clients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Site</Label>
+                <Select value={selectedSiteId} onValueChange={handleSiteChange} disabled={!selectedClientId || isManualClient}>
+                  <SelectTrigger><SelectValue placeholder={isManualClient ? "Manual entry" : selectedClientId ? "Select a site..." : "Select client first"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual entry</SelectItem>
+                    {sites.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">Property / Job Address</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Name</Label><Input value={jobDetails.job_address_name} onChange={e => setJobDetails(d => ({ ...d, job_address_name: e.target.value }))} /></div>
-              <div><Label>Phone</Label><Input value={jobDetails.job_phone} onChange={e => setJobDetails(d => ({ ...d, job_phone: e.target.value }))} /></div>
-              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.job_address} onChange={e => setJobDetails(d => ({ ...d, job_address: e.target.value }))} /></div>
-              <div><Label>Postcode</Label><Input value={jobDetails.job_postcode} onChange={e => setJobDetails(d => ({ ...d, job_postcode: e.target.value }))} /></div>
+              <div><Label>Name</Label><Input value={jobDetails.job_address_name} onChange={e => setJobDetails(d => ({ ...d, job_address_name: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div><Label>Phone</Label><Input value={jobDetails.job_phone} onChange={e => setJobDetails(d => ({ ...d, job_phone: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.job_address} onChange={e => setJobDetails(d => ({ ...d, job_address: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div><Label>Postcode</Label><Input value={jobDetails.job_postcode} onChange={e => setJobDetails(d => ({ ...d, job_postcode: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
               <div><Label>Inspection Date</Label><Input type="date" value={jobDetails.inspection_date} onChange={e => setJobDetails(d => ({ ...d, inspection_date: e.target.value }))} /></div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle className="text-base">Client / Landlord Details</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Name</Label><Input value={jobDetails.customer_name} onChange={e => setJobDetails(d => ({ ...d, customer_name: e.target.value }))} /></div>
-              <div><Label>Company</Label><Input value={jobDetails.customer_company} onChange={e => setJobDetails(d => ({ ...d, customer_company: e.target.value }))} /></div>
-              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.customer_address} onChange={e => setJobDetails(d => ({ ...d, customer_address: e.target.value }))} /></div>
+              <div><Label>Name</Label><Input value={jobDetails.customer_name} onChange={e => setJobDetails(d => ({ ...d, customer_name: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
+              <div><Label>Company</Label><Input value={jobDetails.customer_company} onChange={e => setJobDetails(d => ({ ...d, customer_company: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
+              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.customer_address} onChange={e => setJobDetails(d => ({ ...d, customer_address: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
               <div><Label>Postcode</Label><Input value={jobDetails.customer_postcode} onChange={e => setJobDetails(d => ({ ...d, customer_postcode: e.target.value }))} /></div>
-              <div><Label>Phone</Label><Input value={jobDetails.customer_phone} onChange={e => setJobDetails(d => ({ ...d, customer_phone: e.target.value }))} /></div>
+              <div><Label>Phone</Label><Input value={jobDetails.customer_phone} onChange={e => setJobDetails(d => ({ ...d, customer_phone: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
             </CardContent>
           </Card>
         </div>
