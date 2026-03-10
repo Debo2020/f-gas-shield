@@ -193,14 +193,6 @@ const App = () => (
               }
             />
             <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute>
-                  <Onboarding />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/settings/licenses"
               element={
                 <ProtectedRoute>
