@@ -31,7 +31,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, MoreHorizontal, Pencil, Trash2, Truck } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Truck, Upload, Download } from "lucide-react";
+import { CSVBatchUploadDialog } from "@/components/batch-upload/CSVBatchUploadDialog";
+import { downloadSupplierTemplate } from "@/lib/csv-templates";
 
 interface Supplier {
   id: string;
