@@ -52,7 +52,7 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                onClick={() => navigate("/onboarding")}
+                onClick={() => navigate("/get-started")}
                 className="text-lg px-8"
               >
                 Start Free Trial

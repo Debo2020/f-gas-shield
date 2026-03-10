@@ -42,6 +42,7 @@ import CheckoutRedirect from "./pages/CheckoutRedirect";
 import SetupCompany from "./pages/SetupCompany";
 import EnterpriseContact from "./pages/EnterpriseContact";
 import GasCertificates from "./pages/GasCertificates";
+import GetStarted from "./pages/GetStarted";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +68,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/get-started" element={<GetStarted />} />
+            <Route path="/onboarding" element={<Navigate to="/get-started" replace />} />
             <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route path="/accept-license" element={<AcceptLicense />} />
             <Route path="/set-password" element={<SetPassword />} />
@@ -186,14 +189,6 @@ const App = () => (
               element={
                 <ProtectedRoute requireLicense>
                   <Documents />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute>
-                  <Onboarding />
                 </ProtectedRoute>
               }
             />
