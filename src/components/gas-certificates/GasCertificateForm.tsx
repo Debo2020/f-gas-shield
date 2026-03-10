@@ -113,6 +113,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
   };
 
+  const steps = STEPS[certificateType] || STEPS.gas_warning_notice;
+
   // Company/Installer info
   const [companyInfo, setCompanyInfo] = useState({
     company_name: "", company_address: "", company_phone: "",
