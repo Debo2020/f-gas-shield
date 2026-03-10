@@ -48,9 +48,9 @@ serve(async (req) => {
     if (!userEmail) throw new Error("User email not available in claims");
     logStep("User authenticated via getClaims", { userId });
     
-    const { priceId, quantity = 1, companyName, tier } = await req.json();
+    const { priceId, quantity = 1, companyName, tier, trial = false } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Request received", { priceId, quantity, companyName, tier });
+    logStep("Request received", { priceId, quantity, companyName, tier, trial });
 
     // Overage price IDs for metered AI credits billing
     const OVERAGE_PRICES: Record<string, string> = {
