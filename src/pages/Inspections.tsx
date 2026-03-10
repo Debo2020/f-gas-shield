@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { InspectionDialog } from "@/components/inspections/InspectionDialog";
+import { InspectionWizard } from "@/components/inspections/InspectionWizard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
