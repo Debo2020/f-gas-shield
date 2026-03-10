@@ -425,12 +425,22 @@ export default function Auth() {
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
                   />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-password-signup"
+                      checked={showPassword}
+                      onCheckedChange={(checked) => setShowPassword(checked === true)}
+                    />
+                    <Label htmlFor="show-password-signup" className="text-sm font-normal cursor-pointer">
+                      Show password
+                    </Label>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Min 12 characters with uppercase, lowercase, number &amp; special character
                   </p>
