@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          event_type: string
+          id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activation_scores: {
+        Row: {
+          activated_at: string | null
+          company_id: string
+          id: string
+          is_activated: boolean
+          total_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          company_id: string
+          id?: string
+          is_activated?: boolean
+          total_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          company_id?: string
+          id?: string
+          is_activated?: boolean
+          total_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       addon_licenses: {
         Row: {
           addon_type: Database["public"]["Enums"]["addon_type"]
@@ -1339,6 +1412,85 @@ export type Database = {
           },
         ]
       }
+      onboarding_nudges: {
+        Row: {
+          company_id: string
+          created_at: string
+          delivered_via: string
+          id: string
+          nudge_type: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          delivered_via?: string
+          id?: string
+          nudge_type: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          delivered_via?: string
+          id?: string
+          nudge_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_nudges_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_progress: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          id: string
+          step_add_equipment: boolean
+          step_create_site: boolean
+          step_first_certificate: boolean
+          step_first_inspection: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          id?: string
+          step_add_equipment?: boolean
+          step_create_site?: boolean
+          step_first_certificate?: boolean
+          step_first_inspection?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          id?: string
+          step_add_equipment?: boolean
+          step_create_site?: boolean
+          step_first_certificate?: boolean
+          step_first_inspection?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_memberships: {
         Row: {
           created_at: string
@@ -1955,6 +2107,56 @@ export type Database = {
           },
         ]
       }
+      trial_status: {
+        Row: {
+          company_id: string
+          converted_at: string | null
+          created_at: string
+          extended: boolean
+          extended_at: string | null
+          extension_reason: string | null
+          id: string
+          status: string
+          trial_end: string
+          trial_start: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          converted_at?: string | null
+          created_at?: string
+          extended?: boolean
+          extended_at?: string | null
+          extension_reason?: string | null
+          id?: string
+          status?: string
+          trial_end: string
+          trial_start?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          converted_at?: string | null
+          created_at?: string
+          extended?: boolean
+          extended_at?: string | null
+          extension_reason?: string | null
+          id?: string
+          status?: string
+          trial_end?: string
+          trial_start?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_status_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_licenses: {
         Row: {
           assigned_at: string | null
@@ -2119,6 +2321,10 @@ export type Database = {
           _target_table: string
         }
         Returns: string
+      }
+      recalculate_activation_score: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       user_can_create_company: { Args: { _user_id: string }; Returns: boolean }
       validate_profile_for_role: {
