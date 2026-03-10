@@ -45,7 +45,73 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const steps = STEPS[certificateType] || STEPS.gas_warning_notice;
+  // Client / Site selection state
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedSiteId, setSelectedSiteId] = useState<string>("");
+  const [clients, setClients] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+
+  const companyId = profile?.company_id;
+
+  // Fetch clients
+  useEffect(() => {
+    if (!companyId) return;
+    supabase
+      .from("clients")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => setClients(data || []));
+  }, [companyId]);
+
+  // Fetch sites filtered by selected client
+  useEffect(() => {
+    setSites([]);
+    setSelectedSiteId("");
+    if (!selectedClientId || selectedClientId === "manual") return;
+    supabase
+      .from("sites")
+      .select("*")
+      .eq("client_id", selectedClientId)
+      .eq("is_deleted", false)
+      .order("name")
+      .then(({ data }) => setSites(data || []));
+  }, [selectedClientId]);
+
+  // Auto-populate from client selection
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (clientId === "manual" || !clientId) {
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setJobDetails(d => ({
+        ...d,
+        customer_name: client.contact_name || "",
+        customer_company: client.name || "",
+        customer_address: client.address || "",
+        customer_phone: client.contact_phone || "",
+      }));
+    }
+  };
+
+  // Auto-populate from site selection
+  const handleSiteChange = (siteId: string) => {
+    setSelectedSiteId(siteId);
+    if (siteId === "manual" || !siteId) return;
+    const site = sites.find(s => s.id === siteId);
+    if (site) {
+      setJobDetails(d => ({
+        ...d,
+        job_address_name: site.name || "",
+        job_address: site.address || "",
+        job_postcode: site.postcode || "",
+        job_phone: site.contact_phone || "",
+      }));
+    }
+  };
 
   // Company/Installer info
   const [companyInfo, setCompanyInfo] = useState({
