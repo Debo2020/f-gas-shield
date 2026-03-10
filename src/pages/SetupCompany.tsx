@@ -91,15 +91,7 @@ export default function SetupCompany() {
 
         setCompanyId(newCompanyId);
 
-        // Create owner license
-        await supabase.from("user_licenses").insert({
-          company_id: newCompanyId,
-          user_id: user.id,
-          email: user.email,
-          status: "active",
-          license_type: "owner",
-          assigned_by: user.id,
-        });
+        // Owner license is now created atomically by the RPC
 
         await refreshProfile();
         toast.success("Company created successfully!");
