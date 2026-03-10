@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ApplianceFields, ApplianceData, emptyAppliance } from "./ApplianceFields";
 import { WarningNoticeFields, WarningNoticeData, emptyWarningData } from "./WarningNoticeFields";
 import { WarningNoticePreview } from "./WarningNoticePreview";
@@ -43,6 +44,74 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
   const { profile, user } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  // Client / Site selection state
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedSiteId, setSelectedSiteId] = useState<string>("");
+  const [clients, setClients] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+
+  const companyId = profile?.company_id;
+
+  // Fetch clients
+  useEffect(() => {
+    if (!companyId) return;
+    supabase
+      .from("clients")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => setClients(data || []));
+  }, [companyId]);
+
+  // Fetch sites filtered by selected client
+  useEffect(() => {
+    setSites([]);
+    setSelectedSiteId("");
+    if (!selectedClientId || selectedClientId === "manual") return;
+    supabase
+      .from("sites")
+      .select("*")
+      .eq("client_id", selectedClientId)
+      .eq("is_deleted", false)
+      .order("name")
+      .then(({ data }) => setSites(data || []));
+  }, [selectedClientId]);
+
+  // Auto-populate from client selection
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (clientId === "manual" || !clientId) {
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setJobDetails(d => ({
+        ...d,
+        customer_name: client.contact_name || "",
+        customer_company: client.name || "",
+        customer_address: client.address || "",
+        customer_phone: client.contact_phone || "",
+      }));
+    }
+  };
+
+  // Auto-populate from site selection
+  const handleSiteChange = (siteId: string) => {
+    setSelectedSiteId(siteId);
+    if (siteId === "manual" || !siteId) return;
+    const site = sites.find(s => s.id === siteId);
+    if (site) {
+      setJobDetails(d => ({
+        ...d,
+        job_address_name: site.name || "",
+        job_address: site.address || "",
+        job_postcode: site.postcode || "",
+        job_phone: site.contact_phone || "",
+      }));
+    }
+  };
 
   const steps = STEPS[certificateType] || STEPS.gas_warning_notice;
 
@@ -123,6 +192,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
         certificate_type: certificateType,
         certificate_number: "",
         status,
+        client_id: (selectedClientId && selectedClientId !== "manual") ? selectedClientId : null,
+        site_id: (selectedSiteId && selectedSiteId !== "manual") ? selectedSiteId : null,
         ...jobDetails,
         inspection_date: jobDetails.inspection_date || new Date().toISOString().split("T")[0],
         next_inspection_due: jobDetails.next_inspection_due || null,
@@ -310,26 +381,59 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
     }
 
     if (currentStepName === "Job Details") {
+      const isManualClient = selectedClientId === "manual";
+      const isManualSite = selectedSiteId === "manual";
       return (
         <div className="space-y-4">
+          {/* Client & Site Selection */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Select Client & Site</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label>Client</Label>
+                <Select value={selectedClientId} onValueChange={handleClientChange}>
+                  <SelectTrigger><SelectValue placeholder="Select a client..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual entry</SelectItem>
+                    {clients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Site</Label>
+                <Select value={selectedSiteId} onValueChange={handleSiteChange} disabled={!selectedClientId || isManualClient}>
+                  <SelectTrigger><SelectValue placeholder={isManualClient ? "Manual entry" : selectedClientId ? "Select a site..." : "Select client first"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual entry</SelectItem>
+                    {sites.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">Property / Job Address</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Name</Label><Input value={jobDetails.job_address_name} onChange={e => setJobDetails(d => ({ ...d, job_address_name: e.target.value }))} /></div>
-              <div><Label>Phone</Label><Input value={jobDetails.job_phone} onChange={e => setJobDetails(d => ({ ...d, job_phone: e.target.value }))} /></div>
-              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.job_address} onChange={e => setJobDetails(d => ({ ...d, job_address: e.target.value }))} /></div>
-              <div><Label>Postcode</Label><Input value={jobDetails.job_postcode} onChange={e => setJobDetails(d => ({ ...d, job_postcode: e.target.value }))} /></div>
+              <div><Label>Name</Label><Input value={jobDetails.job_address_name} onChange={e => setJobDetails(d => ({ ...d, job_address_name: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div><Label>Phone</Label><Input value={jobDetails.job_phone} onChange={e => setJobDetails(d => ({ ...d, job_phone: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.job_address} onChange={e => setJobDetails(d => ({ ...d, job_address: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
+              <div><Label>Postcode</Label><Input value={jobDetails.job_postcode} onChange={e => setJobDetails(d => ({ ...d, job_postcode: e.target.value }))} readOnly={!isManualSite && !!selectedSiteId} className={!isManualSite && selectedSiteId ? "bg-muted" : ""} /></div>
               <div><Label>Inspection Date</Label><Input type="date" value={jobDetails.inspection_date} onChange={e => setJobDetails(d => ({ ...d, inspection_date: e.target.value }))} /></div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle className="text-base">Client / Landlord Details</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Name</Label><Input value={jobDetails.customer_name} onChange={e => setJobDetails(d => ({ ...d, customer_name: e.target.value }))} /></div>
-              <div><Label>Company</Label><Input value={jobDetails.customer_company} onChange={e => setJobDetails(d => ({ ...d, customer_company: e.target.value }))} /></div>
-              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.customer_address} onChange={e => setJobDetails(d => ({ ...d, customer_address: e.target.value }))} /></div>
+              <div><Label>Name</Label><Input value={jobDetails.customer_name} onChange={e => setJobDetails(d => ({ ...d, customer_name: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
+              <div><Label>Company</Label><Input value={jobDetails.customer_company} onChange={e => setJobDetails(d => ({ ...d, customer_company: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
+              <div className="md:col-span-2"><Label>Address</Label><Input value={jobDetails.customer_address} onChange={e => setJobDetails(d => ({ ...d, customer_address: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
               <div><Label>Postcode</Label><Input value={jobDetails.customer_postcode} onChange={e => setJobDetails(d => ({ ...d, customer_postcode: e.target.value }))} /></div>
-              <div><Label>Phone</Label><Input value={jobDetails.customer_phone} onChange={e => setJobDetails(d => ({ ...d, customer_phone: e.target.value }))} /></div>
+              <div><Label>Phone</Label><Input value={jobDetails.customer_phone} onChange={e => setJobDetails(d => ({ ...d, customer_phone: e.target.value }))} readOnly={!isManualClient && !!selectedClientId} className={!isManualClient && selectedClientId ? "bg-muted" : ""} /></div>
             </CardContent>
           </Card>
         </div>
