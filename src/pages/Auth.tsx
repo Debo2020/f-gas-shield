@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -35,6 +36,7 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState("signin");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check for checkout redirect params
   const redirectToCheckout = searchParams.get("redirect") === "checkout";
@@ -360,12 +362,22 @@ export default function Auth() {
                   </div>
                   <Input
                     id="signin-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
                   />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-password-signin"
+                      checked={showPassword}
+                      onCheckedChange={(checked) => setShowPassword(checked === true)}
+                    />
+                    <Label htmlFor="show-password-signin" className="text-sm font-normal cursor-pointer">
+                      Show password
+                    </Label>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
@@ -413,12 +425,22 @@ export default function Auth() {
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
                   />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="show-password-signup"
+                      checked={showPassword}
+                      onCheckedChange={(checked) => setShowPassword(checked === true)}
+                    />
+                    <Label htmlFor="show-password-signup" className="text-sm font-normal cursor-pointer">
+                      Show password
+                    </Label>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Min 12 characters with uppercase, lowercase, number &amp; special character
                   </p>
