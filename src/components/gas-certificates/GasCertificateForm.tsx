@@ -192,6 +192,8 @@ export function GasCertificateForm({ certificateType, onComplete, onCancel }: Ga
         certificate_type: certificateType,
         certificate_number: "",
         status,
+        client_id: (selectedClientId && selectedClientId !== "manual") ? selectedClientId : null,
+        site_id: (selectedSiteId && selectedSiteId !== "manual") ? selectedSiteId : null,
         ...jobDetails,
         inspection_date: jobDetails.inspection_date || new Date().toISOString().split("T")[0],
         next_inspection_due: jobDetails.next_inspection_due || null,
