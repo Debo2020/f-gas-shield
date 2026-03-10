@@ -26,6 +26,7 @@ import {
 import { useGasAddon } from "@/hooks/useGasAddon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
+import { TrialBanner } from "./TrialBanner";
 import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -191,6 +192,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           </nav>
         )}
       </header>
+
+      {/* Trial Banner */}
+      <TrialBanner />
 
       {/* Offline Status Banner */}
       <OfflineBanner />

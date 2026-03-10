@@ -11,6 +11,9 @@ interface SubscriptionState {
   licensesUsed: number;
   loading: boolean;
   error: string | null;
+  isTrialing: boolean;
+  trialEnd: string | null;
+  trialDaysRemaining: number;
 }
 
 // Global cache to prevent multiple simultaneous calls across component instances
@@ -41,6 +44,9 @@ export function useSubscription() {
       licensesUsed: 0,
       loading: true,
       error: null,
+      isTrialing: false,
+      trialEnd: null,
+      trialDaysRemaining: 0,
     };
   });
   
@@ -56,6 +62,9 @@ export function useSubscription() {
         licensesUsed: 0,
         loading: false,
         error: null,
+        isTrialing: false,
+        trialEnd: null,
+        trialDaysRemaining: 0,
       };
       globalCache = { data: emptyState, timestamp: Date.now(), pendingPromise: null };
       setState(emptyState);
@@ -88,14 +97,26 @@ export function useSubscription() {
         
         const tier = getTierFromProductId(data.product_id);
         
+        const isTrialing = data.is_trialing || false;
+        const trialEnd = data.trial_end || null;
+        let trialDaysRemaining = 0;
+        if (isTrialing && trialEnd) {
+          trialDaysRemaining = Math.max(0, Math.ceil(
+            (new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          ));
+        }
+
         const newState: SubscriptionState = {
-          subscribed: data.subscribed,
+          subscribed: data.subscribed || isTrialing,
           tier,
           subscriptionEnd: data.subscription_end,
           licenseCount: data.license_count || 0,
           licensesUsed: data.licenses_used || 0,
           loading: false,
           error: null,
+          isTrialing,
+          trialEnd,
+          trialDaysRemaining,
         };
         
         globalCache = { data: newState, timestamp: Date.now(), pendingPromise: null };
@@ -138,10 +159,10 @@ export function useSubscription() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  const createCheckout = async (priceId: string, quantity = 1, companyName?: string, tier?: string) => {
+  const createCheckout = async (priceId: string, quantity = 1, companyName?: string, tier?: string, trial = false) => {
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId, quantity, companyName, tier },
+        body: { priceId, quantity, companyName, tier, trial },
       });
       
       if (error) throw new Error(error.message);

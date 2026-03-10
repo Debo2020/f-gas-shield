@@ -128,6 +128,48 @@ serve(async (req) => {
         } else {
           logStep("Subscription synced", { companyId, status: subscription.status, tier });
         }
+
+        // === TRIAL STATUS TRACKING ===
+        const trialEnd = safeTimestampToISO(subscription.trial_end);
+        if (subscription.status === "trialing" && trialEnd) {
+          // Insert or update trial_status
+          const { error: trialError } = await adminClient
+            .from("trial_status")
+            .upsert({
+              company_id: companyId,
+              trial_start: safeTimestampToISO(subscription.trial_start) || new Date().toISOString(),
+              trial_end: trialEnd,
+              status: "active",
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "company_id" });
+
+          if (trialError) {
+            logStep("ERROR: Failed to upsert trial_status", { error: trialError.message });
+          } else {
+            logStep("Trial status synced", { companyId, trialEnd });
+          }
+        } else if (subscription.status === "active") {
+          // Check if transitioning from trial to active
+          const { data: existingTrial } = await adminClient
+            .from("trial_status")
+            .select("id, status")
+            .eq("company_id", companyId)
+            .eq("status", "active")
+            .maybeSingle();
+
+          if (existingTrial) {
+            await adminClient
+              .from("trial_status")
+              .update({
+                status: "converted",
+                converted_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingTrial.id);
+            logStep("Trial converted to paid", { companyId });
+          }
+        }
+
         break;
       }
 
