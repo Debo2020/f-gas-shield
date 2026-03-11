@@ -364,6 +364,10 @@ export default function AcceptLicense() {
                 )}
               </Button>
             </form>
+
+            {token && (
+              <AppDownloadSection token={token} tokenType="license" />
+            )}
           </CardContent>
         </Card>
       </div>

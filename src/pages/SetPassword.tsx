@@ -349,6 +349,10 @@ export default function SetPassword() {
                     )}
                   </Button>
                 </form>
+
+                {token && (
+                  <AppDownloadSection token={token} tokenType="invite" />
+                )}
               </CardContent>
             </>
           ) : null}

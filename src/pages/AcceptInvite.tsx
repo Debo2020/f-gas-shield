@@ -261,6 +261,10 @@ export default function AcceptInvite() {
                     </Button>
                   </div>
                 )}
+
+                {token && (
+                  <AppDownloadSection token={token} tokenType="invite" />
+                )}
               </CardContent>
             </>
           ) : null}
