@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type AppRole = "owner" | "manager" | "engineer" | "admin" | "auditor" | "read_only";
+type AppRole = "owner" | "manager" | "engineer" | "admin" | "auditor" | "read_only" | "stores_manager";
 
 interface InvitationDetails {
   id: string;
@@ -39,24 +39,7 @@ export default function SetPassword() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
-    const initializePage = async () => {
-      // First, check if we have a valid session from the magic link
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        setError("Failed to verify your session. Please try clicking the invitation link again.");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!session) {
-        setError("No active session. Please click the invitation link from your email again.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Now fetch the invitation details using the token
+    const fetchInvitation = async () => {
       if (!token) {
         setError("Invalid invitation link - missing token");
         setIsLoading(false);
@@ -64,6 +47,8 @@ export default function SetPassword() {
       }
 
       try {
+        // Fetch invitation details using the token - no session needed
+        // We use the anon key which can read team_invitations by token
         const { data, error: queryError } = await supabase
           .from("team_invitations")
           .select(`
@@ -81,7 +66,7 @@ export default function SetPassword() {
           .maybeSingle();
 
         if (queryError || !data) {
-          setError("Invitation not found or has expired");
+          setError("Invitation not found or is invalid");
           setIsLoading(false);
           return;
         }
@@ -93,14 +78,7 @@ export default function SetPassword() {
         }
 
         if (new Date(data.expires_at) < new Date()) {
-          setError("This invitation has expired");
-          setIsLoading(false);
-          return;
-        }
-
-        // Verify the session email matches the invitation email
-        if (session.user.email?.toLowerCase() !== data.email.toLowerCase()) {
-          setError(`This invitation was sent to ${data.email}. You are logged in as ${session.user.email}.`);
+          setError("This invitation has expired. Please ask your administrator to send a new invitation.");
           setIsLoading(false);
           return;
         }
@@ -125,7 +103,7 @@ export default function SetPassword() {
       }
     };
 
-    initializePage();
+    fetchInvitation();
   }, [token]);
 
   const validatePassword = (): boolean => {
@@ -160,48 +138,37 @@ export default function SetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validatePassword() || !invitation) return;
+    if (!validatePassword() || !invitation || !token) return;
 
     setIsSubmitting(true);
     try {
-      // Update the user's password
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: password,
+      // Call the accept-invitation edge function
+      const { data, error: fnError } = await supabase.functions.invoke("accept-invitation", {
+        body: { token, password },
       });
 
-      if (passwordError) {
-        throw passwordError;
+      if (fnError) {
+        throw new Error(fnError.message || "Failed to accept invitation");
       }
 
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not found after password update");
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to accept invitation");
+      }
 
-      // Update profile with company_id
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ company_id: invitation.company.id })
-        .eq("user_id", user.id);
+      const email = data.email;
 
-      if (profileError) throw profileError;
+      // Sign in with the new password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // Assign role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .upsert(
-          { user_id: user.id, role: invitation.role },
-          { onConflict: "user_id,role" }
-        );
-
-      if (roleError) throw roleError;
-
-      // Mark invitation as accepted
-      const { error: inviteError } = await supabase
-        .from("team_invitations")
-        .update({ accepted_at: new Date().toISOString() })
-        .eq("id", invitation.id);
-
-      if (inviteError) throw inviteError;
+      if (signInError) {
+        // Password was set successfully but sign-in failed - direct to auth page
+        toast.success("Account set up! Please sign in with your new password.");
+        navigate("/auth");
+        return;
+      }
 
       toast.success(`Welcome to ${invitation.company.name}!`);
       navigate("/dashboard");
@@ -241,7 +208,6 @@ export default function SetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 flex flex-col">
-      {/* Header */}
       <header className="border-b bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
@@ -254,13 +220,12 @@ export default function SetPassword() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           {isLoading ? (
             <CardContent className="py-12 flex flex-col items-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">Setting up your account...</p>
+              <p className="text-muted-foreground">Loading invitation...</p>
             </CardContent>
           ) : error ? (
             <>
@@ -289,7 +254,6 @@ export default function SetPassword() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Invitation Details */}
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Company</span>
@@ -298,7 +262,7 @@ export default function SetPassword() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Your Role</span>
                     <Badge variant={getRoleBadgeVariant(invitation.role)}>
-                      {invitation.role}
+                      {invitation.role.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
@@ -307,7 +271,6 @@ export default function SetPassword() {
                   </div>
                 </div>
 
-                {/* Password Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="password">New Password</Label>
@@ -361,6 +324,10 @@ export default function SetPassword() {
                       </button>
                     </div>
                   </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    Min 12 characters with uppercase, lowercase, number, and special character.
+                  </p>
 
                   {passwordError && (
                     <p className="text-sm text-destructive">{passwordError}</p>
