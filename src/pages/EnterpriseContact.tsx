@@ -451,10 +451,10 @@ export default function EnterpriseContact() {
               <div className="text-center text-sm text-muted-foreground">
                 <p>Prefer to email directly?</p>
                 <a 
-                  href="mailto:sales@ftrack.uk" 
+                  href="mailto:hello@build-iq.co.uk" 
                   className="text-primary hover:underline"
-                >
-                  sales@ftrack.uk
+>
+                  hello@build-iq.co.uk
                 </a>
               </div>
             </div>
