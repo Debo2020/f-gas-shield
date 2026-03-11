@@ -180,8 +180,8 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                     </ul>
 
                     <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
-                      <p>Up to {(config.limits.equipment as number) === -1 ? "Unlimited" : config.limits.equipment} F Gas Systems</p>
-                      <p>Up to {(config.limits.sites as number) === -1 ? "Unlimited" : config.limits.sites} sites</p>
+                      <p>{(config.limits.equipment as number) === -1 ? "Unlimited F Gas Systems" : `Up to ${config.limits.equipment} F Gas Systems`}</p>
+                      <p>{(config.limits.sites as number) === -1 ? "Unlimited sites" : `Up to ${config.limits.sites} sites`}</p>
                     </div>
 
                     {/* AI Credits Section */}
