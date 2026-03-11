@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.onboarding-cron]
 verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false

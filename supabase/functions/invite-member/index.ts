@@ -196,18 +196,17 @@ serve(async (req) => {
     const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
     const acceptUrl = `${appUrl}/set-password?token=${invitation.token}`;
 
-    // Check if user already exists using generateLink (avoids listUsers)
-    const { data: linkCheck, error: linkCheckError } = await adminClient.auth.admin.generateLink({
-      type: "magiclink",
-      email: email.toLowerCase(),
-    });
-    const userExists = !linkCheckError && !!linkCheck?.user?.id;
+    // Check if user already exists
+    const { data: usersData } = await adminClient.auth.admin.listUsers();
+    const userExists = usersData?.users?.some(
+      (u) => u.email?.toLowerCase() === email.toLowerCase()
+    );
 
     if (!userExists) {
-      // Create new user with a random password (they'll set their own via magic link)
+      // Create new user - email_confirm: true so they're pre-verified
       const { error: createUserError } = await adminClient.auth.admin.createUser({
         email: email.toLowerCase(),
-        email_confirm: false,
+        email_confirm: true,
         user_metadata: {
           full_name: full_name || email.split("@")[0],
           phone: phone || null,
@@ -224,22 +223,8 @@ serve(async (req) => {
       }
     }
 
-    // Generate magic link for the user
-    const { data: magicLinkData, error: magicLinkError } = await adminClient.auth.admin.generateLink({
-      type: "magiclink",
-      email: email.toLowerCase(),
-      options: {
-        redirectTo: acceptUrl,
-      }
-    });
-
-    let actionUrl = acceptUrl;
-    if (magicLinkData?.properties?.action_link) {
-      actionUrl = magicLinkData.properties.action_link;
-      logStep("Magic link generated");
-    } else if (magicLinkError) {
-      logStep("WARN: Failed to generate magic link, using direct URL", { error: magicLinkError.message });
-    }
+    // Use direct URL - no magic link needed
+    const actionUrl = acceptUrl;
 
     // Send branded invitation email via Resend
     const roleBadgeColor = getRoleBadgeColor(role);
