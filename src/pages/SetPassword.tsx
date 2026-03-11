@@ -84,7 +84,7 @@ export default function SetPassword() {
           return;
         }
 
-        const companyData = data.companies as unknown as { id: string; name: string };
+        const companyData = data.companies as unknown as { id: string; name: string } | null;
 
         setInvitation({
           id: data.id,
@@ -92,8 +92,8 @@ export default function SetPassword() {
           role: data.role as AppRole,
           expires_at: data.expires_at,
           company: {
-            id: companyData.id,
-            name: companyData.name,
+            id: companyData?.id || "",
+            name: companyData?.name || "Your Organization",
           },
         });
       } catch (err) {
