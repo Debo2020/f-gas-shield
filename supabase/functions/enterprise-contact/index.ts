@@ -166,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     await resend.emails.send({
       from: "F-Gas Comply <noreply@ftrack.uk>",
-      to: ["sales@ftrack.uk"],
+      to: ["Darren.allison@build-iq.co.uk"],
       subject: `🏢 Enterprise Inquiry - ${safeData.companyName}`,
       html: salesEmailHtml,
     });
