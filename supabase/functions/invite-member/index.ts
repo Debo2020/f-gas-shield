@@ -252,7 +252,7 @@ serve(async (req) => {
     if (send_invite) {
       try {
         const emailResponse = await resend.emails.send({
-          from: "FTrack <onboarding@resend.dev>",
+          from: "FTrack <noreply@ftrack.uk>",
           to: [email.toLowerCase()],
           subject: `You've been invited to join ${companyName} on FTrack`,
           html: emailHtml,
