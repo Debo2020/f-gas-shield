@@ -40,8 +40,13 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
     });
 
     if (error || result?.error) {
-      toast.error(result?.error || error?.message || "Failed to add team member");
-      throw error || new Error(result?.error);
+      const errorMsg = result?.error || error?.message || "Failed to add team member";
+      const isDuplicate = errorMsg.includes("pending invitation already exists");
+      toast.error(isDuplicate 
+        ? "This person already has a pending invitation. You can resend it from the team list." 
+        : errorMsg
+      );
+      throw new Error(errorMsg);
     }
 
     toast.success(
