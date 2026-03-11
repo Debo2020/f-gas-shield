@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Eye, EyeOff, CheckCircle, Loader2, AlertTriangle, Building2, Shield } from "lucide-react";
+import AppDownloadSection from "@/components/invitation/AppDownloadSection";
 
 interface LicenseDetails {
   id: string;
@@ -363,6 +364,10 @@ export default function AcceptLicense() {
                 )}
               </Button>
             </form>
+
+            {token && (
+              <AppDownloadSection token={token} tokenType="license" />
+            )}
           </CardContent>
         </Card>
       </div>

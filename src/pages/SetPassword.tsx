@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Shield, CheckCircle2, XCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import AppDownloadSection from "@/components/invitation/AppDownloadSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -348,6 +349,10 @@ export default function SetPassword() {
                     )}
                   </Button>
                 </form>
+
+                {token && (
+                  <AppDownloadSection token={token} tokenType="invite" />
+                )}
               </CardContent>
             </>
           ) : null}
