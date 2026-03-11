@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, EyeOff, CheckCircle, Loader2, AlertTriangle, Building2, Shield, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, Loader2, AlertTriangle, Building2, Shield } from "lucide-react";
 
 interface LicenseDetails {
   id: string;
@@ -33,11 +33,9 @@ export default function AcceptLicense() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isExpiredLink, setIsExpiredLink] = useState(false);
-  const [resendingInvite, setResendingInvite] = useState(false);
 
   useEffect(() => {
-    const initializePage = async () => {
+    const fetchLicense = async () => {
       if (!token) {
         setError("No invitation token provided");
         setLoading(false);
@@ -45,32 +43,7 @@ export default function AcceptLicense() {
       }
 
       try {
-        // Wait for auth to settle after magic link redirect
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          // Check if this is a token expiry issue
-          const errorMessage = sessionError.message?.toLowerCase() || "";
-          if (errorMessage.includes("token") || errorMessage.includes("expired") || errorMessage.includes("invalid")) {
-            setIsExpiredLink(true);
-            setError("Your invitation link has expired. Please request a new one.");
-          } else {
-            setError("Failed to verify your session. Please request a new invitation.");
-          }
-          setLoading(false);
-          return;
-        }
-
-        if (!session) {
-          // User may need to click the magic link first or link has expired
-          setIsExpiredLink(true);
-          setError("Your invitation link has expired or is invalid. Please request a new invitation from your administrator.");
-          setLoading(false);
-          return;
-        }
-
-        // Fetch license details using the token
+        // Fetch license details by token (anon RLS policy allows this)
         const { data: licenseData, error: licenseError } = await supabase
           .from("user_licenses")
           .select(`
@@ -94,16 +67,8 @@ export default function AcceptLicense() {
           return;
         }
 
-        // Check if license is still pending
         if (licenseData.status !== "pending") {
           setError("This invitation has already been accepted.");
-          setLoading(false);
-          return;
-        }
-
-        // Verify that the session email matches the license email
-        if (session.user.email?.toLowerCase() !== licenseData.email?.toLowerCase()) {
-          setError("This invitation was sent to a different email address. Please sign in with the correct email.");
           setLoading(false);
           return;
         }
@@ -125,12 +90,28 @@ export default function AcceptLicense() {
       }
     };
 
-    initializePage();
+    fetchLicense();
   }, [token]);
 
   const validatePassword = (): boolean => {
-    if (password.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
+    if (password.length < 12) {
+      setPasswordError("Password must be at least 12 characters");
+      return false;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setPasswordError("Password must contain an uppercase letter");
+      return false;
+    }
+    if (!/[a-z]/.test(password)) {
+      setPasswordError("Password must contain a lowercase letter");
+      return false;
+    }
+    if (!/[0-9]/.test(password)) {
+      setPasswordError("Password must contain a number");
+      return false;
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      setPasswordError("Password must contain a special character");
       return false;
     }
     if (password !== confirmPassword) {
@@ -143,81 +124,45 @@ export default function AcceptLicense() {
 
   const getPasswordStrength = (): { strength: string; color: string; width: string } => {
     if (password.length === 0) return { strength: "", color: "", width: "0%" };
-    if (password.length < 6) return { strength: "Weak", color: "bg-destructive", width: "25%" };
-    if (password.length < 8) return { strength: "Fair", color: "bg-amber-500", width: "50%" };
-    if (password.length < 12) return { strength: "Good", color: "bg-emerald-500", width: "75%" };
+    if (password.length < 8) return { strength: "Weak", color: "bg-destructive", width: "25%" };
+    if (password.length < 12) return { strength: "Fair", color: "bg-amber-500", width: "50%" };
+    if (password.length < 16) return { strength: "Good", color: "bg-emerald-500", width: "75%" };
     return { strength: "Strong", color: "bg-emerald-600", width: "100%" };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!license) return;
     if (!validatePassword()) return;
 
     setSubmitting(true);
     try {
-      // 1. Update user password
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: password,
+      // Call the accept-invitation edge function with license_token
+      const { data, error: fnError } = await supabase.functions.invoke("accept-invitation", {
+        body: { license_token: token, password },
       });
 
-      if (passwordError) {
-        throw new Error(`Failed to set password: ${passwordError.message}`);
+      if (fnError) {
+        throw new Error(fnError.message || "Failed to set up your account");
       }
 
-      // 2. Get current session user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("No authenticated user found");
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
-      // 3. Update or create profile with company_id
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          user_id: user.id,
-          email: license.email,
-          full_name: user.user_metadata?.full_name || license.email.split("@")[0],
-          company_id: license.company_id,
-        }, {
-          onConflict: "user_id",
-        });
+      const email = data?.email || license.email;
 
-      if (profileError) {
-        console.error("Profile update error:", profileError);
-        // Don't throw - profile may already exist
-      }
+      // Sign in with the new password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // 4. Assign role based on license type
-      const roleToAssign = license.license_type === "manager" ? "manager" : "engineer";
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .upsert({
-          user_id: user.id,
-          role: roleToAssign,
-        }, {
-          onConflict: "user_id,role",
-          ignoreDuplicates: true,
-        });
-
-      if (roleError) {
-        console.error("Role assignment error:", roleError);
-        // Don't throw - role may already exist
-      }
-
-      // 5. Update license status to active and link to user
-      const { error: licenseUpdateError } = await supabase
-        .from("user_licenses")
-        .update({
-          status: "active",
-          user_id: user.id,
-          assigned_at: new Date().toISOString(),
-        })
-        .eq("id", license.id);
-
-      if (licenseUpdateError) {
-        throw new Error(`Failed to activate license: ${licenseUpdateError.message}`);
+      if (signInError) {
+        // Password was set successfully, but auto-sign-in failed — redirect to login
+        toast.success("Account set up! Please sign in with your new password.");
+        navigate("/auth");
+        return;
       }
 
       toast.success("Welcome to FTrack! Your account is now set up.");
@@ -232,12 +177,9 @@ export default function AcceptLicense() {
 
   const getRoleBadgeVariant = (role: string): "default" | "secondary" | "outline" => {
     switch (role) {
-      case "manager":
-        return "default";
-      case "engineer":
-        return "secondary";
-      default:
-        return "outline";
+      case "manager": return "default";
+      case "engineer": return "secondary";
+      default: return "outline";
     }
   };
 
@@ -285,16 +227,9 @@ export default function AcceptLicense() {
                   <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {isExpiredLink ? "Invitation Link Expired" : "Invitation Error"}
-                  </h2>
+                  <h2 className="text-lg font-semibold text-foreground">Invitation Error</h2>
                   <p className="text-muted-foreground mt-1">{error}</p>
                 </div>
-                {isExpiredLink && (
-                  <p className="text-sm text-muted-foreground">
-                    Contact your company administrator to resend your invitation.
-                  </p>
-                )}
                 <Button onClick={() => navigate("/auth")} variant="outline" className="mt-2">
                   Go to Sign In
                 </Button>
@@ -408,6 +343,10 @@ export default function AcceptLicense() {
                   </button>
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                Must be at least 12 characters with uppercase, lowercase, number, and special character.
+              </p>
 
               {passwordError && (
                 <p className="text-sm text-destructive">{passwordError}</p>
