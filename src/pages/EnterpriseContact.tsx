@@ -454,7 +454,7 @@ export default function EnterpriseContact() {
                   href="mailto:hello@build-iq.co.uk" 
                   className="text-primary hover:underline"
 >
-                  sales@ftrack.uk
+                  hello@build-iq.co.uk
                 </a>
               </div>
             </div>
