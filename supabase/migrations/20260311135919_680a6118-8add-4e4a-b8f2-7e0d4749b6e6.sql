@@ -1,0 +1,1 @@
+CREATE POLICY "Anyone can view license by token" ON public.user_licenses FOR SELECT TO anon USING (true);
