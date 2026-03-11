@@ -115,8 +115,13 @@ export default function Team() {
     });
 
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Failed to add team member");
-      throw error || new Error(data?.error);
+      const errorMsg = data?.error || error?.message || "Failed to add team member";
+      const isDuplicate = errorMsg.includes("pending invitation already exists");
+      toast.error(isDuplicate 
+        ? "This person already has a pending invitation. You can resend it from the team list." 
+        : errorMsg
+      );
+      throw new Error(errorMsg);
     }
 
     toast.success(
