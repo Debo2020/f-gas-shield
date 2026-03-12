@@ -537,7 +537,7 @@ export default function Equipment() {
                   <TableHead>Threshold</TableHead>
                   <TableHead>Next Inspection</TableHead>
                   <TableHead>Status</TableHead>
-                  {(canEdit || canDelete) && <TableHead className="w-10"></TableHead>}
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -615,8 +615,7 @@ export default function Equipment() {
                           {inspectionStatus.label}
                         </Badge>
                       </TableCell>
-                      {(canEdit || canDelete) && (
-                        <TableCell>
+                      <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -624,6 +623,10 @@ export default function Equipment() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => navigate(`/equipment/${eq.id}`)}>
+                                <Thermometer className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => navigate(`/inspections?equipment=${eq.id}`)}>
                                 <ClipboardCheck className="h-4 w-4 mr-2" />
                                 View Inspections
@@ -650,7 +653,6 @@ export default function Equipment() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}
