@@ -255,6 +255,7 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
             onDeleteMember={handleDeleteMember}
             onResendInvitation={handleResendInvitation}
             onDeleteInvitation={handleDeleteInvitation}
+            onTransferOwnership={(userId, name) => setTransferTarget({ userId, name })}
           />
         </CardContent>
       </Card>
@@ -265,6 +266,25 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
         onInvite={handleInvite}
         existingEmails={existingEmails}
       />
+
+      <AlertDialog open={!!transferTarget} onOpenChange={(open) => !open && setTransferTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer Ownership</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to transfer ownership to <strong>{transferTarget?.name}</strong>? 
+              You will be demoted to Manager and will no longer have owner-level access. 
+              This action can only be reversed by the new owner.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTransferOwnership}>
+              Transfer Ownership
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
