@@ -537,7 +537,7 @@ export default function Equipment() {
                   <TableHead>Threshold</TableHead>
                   <TableHead>Next Inspection</TableHead>
                   <TableHead>Status</TableHead>
-                  {(canEdit || canDelete) && <TableHead className="w-10"></TableHead>}
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
