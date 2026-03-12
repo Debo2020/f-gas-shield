@@ -283,8 +283,8 @@ async function handleTeamInvitation(
 
   if (updateError) {
     logStep("ERROR: Failed to update user password", { error: updateError.message });
-    return new Response(JSON.stringify({ error: "Failed to set password" }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: updateError.message }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
