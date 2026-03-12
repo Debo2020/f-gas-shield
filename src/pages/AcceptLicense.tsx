@@ -125,8 +125,8 @@ export default function AcceptLicense() {
       setPasswordError("Password must contain a number");
       return false;
     }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setPasswordError("Password must contain a special character");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      setPasswordError("Password must contain a special character (!@#$%^&* etc.)");
       return false;
     }
     if (password !== confirmPassword) {
