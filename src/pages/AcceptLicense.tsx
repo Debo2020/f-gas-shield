@@ -125,8 +125,8 @@ export default function AcceptLicense() {
       setPasswordError("Password must contain a number");
       return false;
     }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setPasswordError("Password must contain a special character");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      setPasswordError("Password must contain a special character (!@#$%^&* etc.)");
       return false;
     }
     if (password !== confirmPassword) {
@@ -360,7 +360,7 @@ export default function AcceptLicense() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Must be at least 12 characters with uppercase, lowercase, number, and special character.
+                Must be at least 12 characters with uppercase, lowercase, number, and special character (!@#$%^&amp;* etc.).
               </p>
 
               {passwordError && (

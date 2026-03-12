@@ -40,8 +40,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      return new Response(JSON.stringify({ error: "Password must contain uppercase, lowercase, number, and special character" }), {
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      return new Response(JSON.stringify({ error: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&* etc.)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -136,8 +136,8 @@ async function handleLicenseInvitation(
 
   if (updateError) {
     logStep("ERROR: Failed to update user password", { error: updateError.message });
-    return new Response(JSON.stringify({ error: "Failed to set password" }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: updateError.message }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -283,8 +283,8 @@ async function handleTeamInvitation(
 
   if (updateError) {
     logStep("ERROR: Failed to update user password", { error: updateError.message });
-    return new Response(JSON.stringify({ error: "Failed to set password" }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: updateError.message }), {
+      status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

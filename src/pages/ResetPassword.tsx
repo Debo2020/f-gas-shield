@@ -64,8 +64,8 @@ export default function ResetPassword() {
       setPasswordError("Must contain at least one number");
       return false;
     }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setPasswordError("Must contain at least one special character");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      setPasswordError("Must contain at least one special character (!@#$%^&* etc.)");
       return false;
     }
     if (password !== confirmPassword) {
@@ -82,7 +82,7 @@ export default function ResetPassword() {
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
     const hasNum = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password);
     const score = [hasUpper, hasLower, hasNum, hasSpecial].filter(Boolean).length;
     if (score < 4) return { label: "Fair", color: "text-yellow-500" };
     return { label: "Strong", color: "text-green-500" };

@@ -139,8 +139,8 @@ export default function SetPassword() {
       setPasswordError("Must contain at least one number");
       return false;
     }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setPasswordError("Must contain at least one special character");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      setPasswordError("Must contain at least one special character (!@#$%^&* etc.)");
       return false;
     }
     if (password !== confirmPassword) {
@@ -214,7 +214,7 @@ export default function SetPassword() {
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
     const hasNum = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password);
     const score = [hasUpper, hasLower, hasNum, hasSpecial].filter(Boolean).length;
     if (score < 4) return { label: "Fair", color: "bg-yellow-500" };
     return { label: "Strong", color: "bg-success" };
@@ -342,7 +342,7 @@ export default function SetPassword() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Min 12 characters with uppercase, lowercase, number, and special character.
+                    Min 12 characters with uppercase, lowercase, number, and special character (!@#$%^&amp;* etc.).
                   </p>
 
                   {passwordError && (
