@@ -30,6 +30,7 @@ interface OrganisationTeamTabProps {
 export function OrganisationTeamTab({ members, invitations, isLoading, refetch }: OrganisationTeamTabProps) {
   const { user, profile, hasRole, hasActiveLicense } = useAuth();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<{ userId: string; name: string } | null>(null);
 
   const isOwner = hasRole("owner");
   const canInvite = isOwner || hasRole("manager");
