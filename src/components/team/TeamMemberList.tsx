@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Shield, UserCog, Wrench, Trash2, Package, Ban, CheckCircle, Mail, RefreshCw, Clock } from "lucide-react";
+import { MoreVertical, Shield, UserCog, Wrench, Trash2, Package, Ban, CheckCircle, Mail, RefreshCw, Clock, ArrowRightLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
