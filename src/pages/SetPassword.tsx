@@ -342,7 +342,7 @@ export default function SetPassword() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Min 12 characters with uppercase, lowercase, number, and special character.
+                    Min 12 characters with uppercase, lowercase, number, and special character (!@#$%^&amp;* etc.).
                   </p>
 
                   {passwordError && (
