@@ -193,7 +193,8 @@ serve(async (req) => {
     logStep("Invitation created", { invitationId: invitation.id, email, role });
 
     // Get the app URL for redirect
-    const appUrl = Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
+    // Always use the published production URL for email links
+    const appUrl = "https://f-gas-shield.lovable.app";
     const acceptUrl = `${appUrl}/set-password?token=${invitation.token}`;
 
     // Check if user already exists

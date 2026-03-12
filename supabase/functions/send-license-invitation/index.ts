@@ -153,8 +153,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("License details fetched", { email, companyName, licenseType });
 
-    // Determine the app URL
-    const appUrl = origin || Deno.env.get("APP_URL") || "https://ftrack.lovable.app";
+    // Always use the published production URL for email links
+    const appUrl = "https://f-gas-shield.lovable.app";
     // Direct link — no magic link needed
     const actionUrl = `${appUrl}/accept-license?token=${token}`;
     logStep("Using direct URL", { actionUrl });

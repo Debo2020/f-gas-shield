@@ -67,7 +67,22 @@ export default function SetPassword() {
           .maybeSingle();
 
         if (queryError || !data) {
-          setError("Invitation not found or is invalid");
+          console.error("Team invitation lookup failed:", queryError);
+          
+          // Cross-flow detection: check if this token belongs to a license invitation instead
+          const { data: licenseInvite } = await supabase
+            .from("user_licenses")
+            .select("id")
+            .eq("token", token)
+            .maybeSingle();
+
+          if (licenseInvite) {
+            // Token belongs to user_licenses, redirect to the correct page
+            window.location.replace(`/accept-license?token=${token}`);
+            return;
+          }
+
+          setError("Invitation not found or is invalid. Please ask your administrator to send a new invitation.");
           setIsLoading(false);
           return;
         }
