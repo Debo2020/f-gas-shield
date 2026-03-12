@@ -139,8 +139,8 @@ export default function SetPassword() {
       setPasswordError("Must contain at least one number");
       return false;
     }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      setPasswordError("Must contain at least one special character");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
+      setPasswordError("Must contain at least one special character (!@#$%^&* etc.)");
       return false;
     }
     if (password !== confirmPassword) {
