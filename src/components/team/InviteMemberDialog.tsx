@@ -45,7 +45,7 @@ export type InviteMemberData = {
   fullName: string;
   email: string;
   phone?: string;
-  role: "admin" | "manager" | "stores_manager" | "engineer";
+  role: "manager" | "stores_manager" | "engineer";
   sendInvite: boolean;
 };
 
