@@ -91,9 +91,36 @@ export function useSubscription() {
       try {
         setState(prev => ({ ...prev, loading: true, error: null }));
         
+        // Ensure we have a fresh session before calling
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
+          const emptyState: SubscriptionState = {
+            subscribed: false, tier: null, subscriptionEnd: null,
+            licenseCount: 0, licensesUsed: 0, loading: false, error: null,
+            isTrialing: false, trialEnd: null, trialDaysRemaining: 0,
+          };
+          globalCache = { data: emptyState, timestamp: Date.now(), pendingPromise: null };
+          if (isMounted.current) setState(emptyState);
+          return;
+        }
+
         const { data, error } = await supabase.functions.invoke("check-subscription");
         
-        if (error) throw new Error(error.message);
+        if (error) {
+          // If 401/403, session is invalid — treat as unauthenticated, don't show error
+          const errorMsg = error.message || "";
+          if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("403")) {
+            const emptyState: SubscriptionState = {
+              subscribed: false, tier: null, subscriptionEnd: null,
+              licenseCount: 0, licensesUsed: 0, loading: false, error: null,
+              isTrialing: false, trialEnd: null, trialDaysRemaining: 0,
+            };
+            globalCache = { data: emptyState, timestamp: Date.now(), pendingPromise: null };
+            if (isMounted.current) setState(emptyState);
+            return;
+          }
+          throw new Error(error.message);
+        }
         
         const tier = getTierFromProductId(data.product_id);
         
