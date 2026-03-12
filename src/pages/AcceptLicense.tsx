@@ -62,8 +62,22 @@ export default function AcceptLicense() {
           .single();
 
         if (licenseError || !licenseData) {
-          console.error("License error:", licenseError);
-          setError("Invalid or expired invitation. Please request a new invitation.");
+          console.error("License lookup failed:", licenseError);
+          
+          // Cross-flow detection: check if this token belongs to a team invitation instead
+          const { data: teamInvite } = await supabase
+            .from("team_invitations")
+            .select("id")
+            .eq("token", token)
+            .maybeSingle();
+
+          if (teamInvite) {
+            // Token belongs to team_invitations, redirect to the correct page
+            window.location.replace(`/set-password?token=${token}`);
+            return;
+          }
+
+          setError("Invalid or expired invitation. Please request a new invitation from your administrator.");
           setLoading(false);
           return;
         }
