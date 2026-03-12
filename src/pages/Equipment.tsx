@@ -653,7 +653,6 @@ export default function Equipment() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
-                      )}
                     </TableRow>
                   );
                 })}
