@@ -158,7 +158,16 @@ export default function AcceptLicense() {
       });
 
       if (fnError) {
-        throw new Error(fnError.message || "Failed to set up your account");
+        // supabase.functions.invoke wraps non-2xx as FunctionsHttpError
+        // Try to extract the actual error message from the response context
+        let errorMessage = "Failed to set up your account";
+        try {
+          const errorBody = await (fnError as any).context?.json?.();
+          if (errorBody?.error) errorMessage = errorBody.error;
+        } catch {
+          if (fnError.message) errorMessage = fnError.message;
+        }
+        throw new Error(errorMessage);
       }
 
       if (data?.error) {
