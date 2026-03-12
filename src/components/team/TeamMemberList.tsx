@@ -38,6 +38,7 @@ interface TeamMemberListProps {
   onDeleteMember?: (userId: string) => void;
   onResendInvitation?: (invitation: { id: string; email: string; role: string }) => Promise<void>;
   onDeleteInvitation?: (id: string) => void;
+  onTransferOwnership?: (userId: string, memberName: string) => void;
 }
 
 export function TeamMemberList({
