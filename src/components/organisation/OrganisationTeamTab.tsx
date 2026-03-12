@@ -152,6 +152,23 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
     }
   };
 
+  const handleTransferOwnership = async () => {
+    if (!transferTarget) return;
+    
+    const { data, error } = await supabase.functions.invoke("transfer-ownership", {
+      body: { new_owner_id: transferTarget.userId },
+    });
+
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to transfer ownership");
+      return;
+    }
+
+    toast.success(`Ownership transferred to ${transferTarget.name}. You are now a Manager.`);
+    setTransferTarget(null);
+    refetch();
+  };
+
   // Create unified list
   const unifiedMembers: UnifiedTeamMember[] = [
     ...members.map((m) => ({
