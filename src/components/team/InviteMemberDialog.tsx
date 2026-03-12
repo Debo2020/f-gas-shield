@@ -183,14 +183,6 @@ export function InviteMemberDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">
-                          <div className="flex flex-col">
-                            <span>Admin</span>
-                            <span className="text-xs text-muted-foreground">
-                              Full access to manage company settings and team
-                            </span>
-                          </div>
-                        </SelectItem>
                         <SelectItem value="manager">
                           <div className="flex flex-col">
                             <span>Manager</span>

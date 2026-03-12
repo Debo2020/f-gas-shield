@@ -139,7 +139,9 @@ async function handleLicenseInvitation(
   logStep("Password set and email confirmed");
 
   const companyId = license.company_id;
-  const roleToAssign = license.license_type === "manager" ? "manager" : "engineer";
+  // Map license_type to valid non-owner roles
+  const validRoles = ["manager", "stores_manager", "engineer"];
+  const roleToAssign = validRoles.includes(license.license_type) ? license.license_type : "engineer";
 
   // Update profile with company_id
   const { error: profileError } = await adminClient
