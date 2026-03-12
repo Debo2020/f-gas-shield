@@ -18,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { EnrichedTeamMember, PendingInvitation } from "@/hooks/useTeamMembers";
 
 interface OrganisationTeamTabProps {
   members: EnrichedTeamMember[];
