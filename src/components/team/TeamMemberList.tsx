@@ -50,6 +50,7 @@ export function TeamMemberList({
   onDeleteMember,
   onResendInvitation,
   onDeleteInvitation,
+  onTransferOwnership,
 }: TeamMemberListProps) {
   const [resendingId, setResendingId] = useState<string | null>(null);
 
