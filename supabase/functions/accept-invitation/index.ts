@@ -33,15 +33,9 @@ serve(async (req) => {
       });
     }
 
-    // Validate password server-side
+    // Basic length check only — Supabase Auth enforces the full password policy
     if (password.length < 12) {
       return new Response(JSON.stringify({ error: "Password must be at least 12 characters" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(password)) {
-      return new Response(JSON.stringify({ error: "Password must contain uppercase, lowercase, number, and special character (!@#$%^&* etc.)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
