@@ -35,7 +35,7 @@ const inviteSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
-  role: z.enum(["admin", "manager", "stores_manager", "engineer"]),
+  role: z.enum(["manager", "stores_manager", "engineer"]),
   activationOption: z.enum(["send_invite", "keep_inactive"]),
 });
 
@@ -45,7 +45,7 @@ export type InviteMemberData = {
   fullName: string;
   email: string;
   phone?: string;
-  role: "admin" | "manager" | "stores_manager" | "engineer";
+  role: "manager" | "stores_manager" | "engineer";
   sendInvite: boolean;
 };
 
@@ -183,14 +183,6 @@ export function InviteMemberDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">
-                          <div className="flex flex-col">
-                            <span>Admin</span>
-                            <span className="text-xs text-muted-foreground">
-                              Full access to manage company settings and team
-                            </span>
-                          </div>
-                        </SelectItem>
                         <SelectItem value="manager">
                           <div className="flex flex-col">
                             <span>Manager</span>

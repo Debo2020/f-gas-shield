@@ -8,6 +8,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import type { EnrichedTeamMember, PendingInvitation } from "@/hooks/useTeamMembers";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface OrganisationTeamTabProps {
   members: EnrichedTeamMember[];
@@ -19,6 +29,7 @@ interface OrganisationTeamTabProps {
 export function OrganisationTeamTab({ members, invitations, isLoading, refetch }: OrganisationTeamTabProps) {
   const { user, profile, hasRole, hasActiveLicense } = useAuth();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<{ userId: string; name: string } | null>(null);
 
   const isOwner = hasRole("owner");
   const canInvite = isOwner || hasRole("manager");
@@ -140,6 +151,23 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
     }
   };
 
+  const handleTransferOwnership = async () => {
+    if (!transferTarget) return;
+    
+    const { data, error } = await supabase.functions.invoke("transfer-ownership", {
+      body: { new_owner_id: transferTarget.userId },
+    });
+
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to transfer ownership");
+      return;
+    }
+
+    toast.success(`Ownership transferred to ${transferTarget.name}. You are now a Manager.`);
+    setTransferTarget(null);
+    refetch();
+  };
+
   // Create unified list
   const unifiedMembers: UnifiedTeamMember[] = [
     ...members.map((m) => ({
@@ -226,6 +254,7 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
             onDeleteMember={handleDeleteMember}
             onResendInvitation={handleResendInvitation}
             onDeleteInvitation={handleDeleteInvitation}
+            onTransferOwnership={(userId, name) => setTransferTarget({ userId, name })}
           />
         </CardContent>
       </Card>
@@ -236,6 +265,25 @@ export function OrganisationTeamTab({ members, invitations, isLoading, refetch }
         onInvite={handleInvite}
         existingEmails={existingEmails}
       />
+
+      <AlertDialog open={!!transferTarget} onOpenChange={(open) => !open && setTransferTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transfer Ownership</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to transfer ownership to <strong>{transferTarget?.name}</strong>? 
+              You will be demoted to Manager and will no longer have owner-level access. 
+              This action can only be reversed by the new owner.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleTransferOwnership}>
+              Transfer Ownership
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

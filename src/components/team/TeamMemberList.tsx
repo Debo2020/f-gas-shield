@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Shield, UserCog, Wrench, Trash2, Package, Ban, CheckCircle, Mail, RefreshCw, Clock } from "lucide-react";
+import { MoreVertical, Shield, UserCog, Wrench, Trash2, Package, Ban, CheckCircle, Mail, RefreshCw, Clock, ArrowRightLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
@@ -38,6 +38,7 @@ interface TeamMemberListProps {
   onDeleteMember?: (userId: string) => void;
   onResendInvitation?: (invitation: { id: string; email: string; role: string }) => Promise<void>;
   onDeleteInvitation?: (id: string) => void;
+  onTransferOwnership?: (userId: string, memberName: string) => void;
 }
 
 export function TeamMemberList({
@@ -49,6 +50,7 @@ export function TeamMemberList({
   onDeleteMember,
   onResendInvitation,
   onDeleteInvitation,
+  onTransferOwnership,
 }: TeamMemberListProps) {
   const [resendingId, setResendingId] = useState<string | null>(null);
 
@@ -228,6 +230,18 @@ export function TeamMemberList({
                     {/* For active members */}
                     {!isPending && (
                       <>
+                        {/* Transfer ownership - only visible to owner for non-owner members */}
+                        {isOwner && onTransferOwnership && member.user_id && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => onTransferOwnership(member.user_id!, member.name)}
+                            >
+                              <ArrowRightLeft className="h-4 w-4 mr-2" />
+                              Transfer Ownership
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                         {onToggleAccess && hasLicense && (
                           <>
                             {member.status === "active" && (
