@@ -35,7 +35,7 @@ const inviteSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
-  role: z.enum(["admin", "manager", "stores_manager", "engineer"]),
+  role: z.enum(["manager", "stores_manager", "engineer"]),
   activationOption: z.enum(["send_invite", "keep_inactive"]),
 });
 
