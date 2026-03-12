@@ -230,6 +230,18 @@ export function TeamMemberList({
                     {/* For active members */}
                     {!isPending && (
                       <>
+                        {/* Transfer ownership - only visible to owner for non-owner members */}
+                        {isOwner && onTransferOwnership && member.user_id && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => onTransferOwnership(member.user_id!, member.name)}
+                            >
+                              <ArrowRightLeft className="h-4 w-4 mr-2" />
+                              Transfer Ownership
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                         {onToggleAccess && hasLicense && (
                           <>
                             {member.status === "active" && (
