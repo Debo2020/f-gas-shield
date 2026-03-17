@@ -371,9 +371,9 @@ export function OrganisationReportsTab() {
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       if (type === "pdf") {
-        await createBrandedPDF(
-          "Compliance Summary",
-          `Equipment inspection compliance status as of ${format(new Date(), "dd MMMM yyyy")}`,
+         await createBrandedPDF(
+           "Compliance Summary",
+           `F-Gas system inspection compliance status as of ${format(new Date(), "dd MMMM yyyy")}`,
           headers, rows,
           `compliance-summary-${dateStr}.pdf`
         );
