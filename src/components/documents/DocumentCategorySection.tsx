@@ -80,15 +80,15 @@ const CATEGORY_CONFIG: Record<DocumentCategory, {
     ],
     description: "Compliance certificates, declarations, and audit reports",
   },
-  equipment: {
-    types: [
-      { type: "label", label: "Equipment Labels" },
-      { type: "photo", label: "Equipment Photos" },
-      { type: "report", label: "Equipment Reports" },
-      { type: "certificate", label: "Equipment Certificates" },
-      { type: "other", label: "Other Documents" },
-    ],
-    description: "Documents related to equipment assets",
+   equipment: {
+     types: [
+       { type: "label", label: "System Labels" },
+       { type: "photo", label: "System Photos" },
+       { type: "report", label: "System Reports" },
+       { type: "certificate", label: "System Certificates" },
+       { type: "other", label: "Other Documents" },
+     ],
+     description: "Documents related to F-Gas system assets",
   },
   media: {
     types: [
