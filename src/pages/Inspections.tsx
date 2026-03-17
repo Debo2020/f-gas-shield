@@ -416,10 +416,10 @@ export default function Inspections() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => navigate(`/equipment?highlight=${insp.equipment_id}`)}
-                          title="View Equipment"
-                        >
-                          <Thermometer className="h-4 w-4" />
+                         onClick={() => navigate(`/equipment?highlight=${insp.equipment_id}`)}
+                           title="View System"
+                         >
+                           <Thermometer className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
