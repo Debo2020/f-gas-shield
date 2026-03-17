@@ -608,7 +608,7 @@ export default function EquipmentDetail() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Inspection History</CardTitle>
-                  <CardDescription>All inspections recorded for this equipment</CardDescription>
+                  <CardDescription>All inspections recorded for this system</CardDescription>
                 </div>
                 <Button
                   onClick={() => navigate(`/inspections?action=new&equipment=${equipment.id}`)}
