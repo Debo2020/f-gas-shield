@@ -386,7 +386,7 @@ export function EquipmentQRScanner({
                     Looking up...
                   </>
                 ) : (
-                  "Look Up Equipment"
+                  "Look Up System"
                 )}
               </Button>
             </form>
