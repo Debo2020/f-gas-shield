@@ -297,7 +297,7 @@ export default function Help() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <a
                     href="mailto:support@ftrack.uk"
                     className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow"
@@ -311,6 +311,18 @@ export default function Help() {
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
                   </a>
+                  <ServiceTicketDialog>
+                    <button className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow text-left w-full">
+                      <div className="p-3 rounded-full bg-primary/10">
+                        <LifeBuoy className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Raise a Ticket</h3>
+                        <p className="text-sm text-muted-foreground">Submit an issue</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
+                    </button>
+                  </ServiceTicketDialog>
                   <Link
                     to="/auth"
                     className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow"

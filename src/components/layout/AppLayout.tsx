@@ -152,6 +152,12 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <Download className="mr-2 h-4 w-4" />
                   Install App
                 </DropdownMenuItem>
+                <ServiceTicketDialog>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    Raise Support Ticket
+                  </DropdownMenuItem>
+                </ServiceTicketDialog>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
