@@ -307,7 +307,7 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Serial Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="Equipment serial number" {...field} />
+                  <Input placeholder="System serial number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
