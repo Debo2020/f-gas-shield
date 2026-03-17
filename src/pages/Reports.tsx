@@ -296,9 +296,9 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const headers = [
-        "Date", "Equipment", "Site", "Refrigerant", "Result",
-        "Leak Check", "Leak Found", "Location", "Repaired",
+       const headers = [
+         "Date", "System", "Site", "Refrigerant", "Result",
+         "Leak Check", "Leak Found", "Location", "Repaired",
         "Inspector", "Cert No."
       ];
 
