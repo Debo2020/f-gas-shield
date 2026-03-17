@@ -499,19 +499,19 @@ export default function Equipment() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 animate-float">
                       <Thermometer className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No equipment registered</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Register your refrigeration equipment to start tracking F-Gas compliance
-                    </p>
-                    {canEdit && sites.length > 0 && (
-                      <Button 
-                        onClick={() => setIsDialogOpen(true)}
-                        disabled={!canPerformActions}
-                        title={!canPerformActions ? "License required" : undefined}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Register Your First Equipment
-                      </Button>
+                     <h3 className="text-lg font-semibold mb-2">No F-Gas systems registered</h3>
+                     <p className="text-muted-foreground mb-4">
+                       Register your refrigeration systems to start tracking F-Gas compliance
+                     </p>
+                     {canEdit && sites.length > 0 && (
+                       <Button 
+                         onClick={() => setIsDialogOpen(true)}
+                         disabled={!canPerformActions}
+                         title={!canPerformActions ? "License required" : undefined}
+                       >
+                         <Plus className="h-4 w-4 mr-2" />
+                         Register Your First System
+                       </Button>
                     )}
                   </>
                 ) : (
