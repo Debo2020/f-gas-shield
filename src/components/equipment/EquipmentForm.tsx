@@ -102,8 +102,8 @@ export function EquipmentForm({
   onCancel,
   isSubmitting = false,
   defaultValues,
-  submitLabel = "Add Equipment",
-  companyId,
+   submitLabel = "Add System",
+   companyId,
 }: EquipmentFormProps) {
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoadingSites, setIsLoadingSites] = useState(true);
