@@ -54,10 +54,10 @@ const faqData: FAQItem[] = [
      answer: "You'll see alerts in your dashboard and receive email notifications (if enabled). The system will be flagged as overdue if the inspection date passes without a recorded inspection."
    },
   {
-    category: "Equipment & Inspections",
-    question: "How do I record an inspection result?",
-    answer: "Go to Inspections, click 'Add Inspection', select the equipment, and fill in the inspection details including result, any leaks found, and refrigerant added or recovered."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "How do I record an inspection result?",
+     answer: "Go to Inspections, click 'Add Inspection', select the system, and fill in the inspection details including result, any leaks found, and refrigerant added or recovered."
+   },
   {
     category: "Equipment & Inspections",
     question: "Can I attach photos to inspections?",
