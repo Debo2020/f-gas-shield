@@ -33,9 +33,9 @@ const faqData: FAQItem[] = [
    },
   {
     category: "Getting Started",
-    question: "Can I import existing equipment data?",
-    answer: "Currently, equipment must be added manually. Bulk import functionality is on our roadmap. Contact support if you have a large dataset to migrate."
-  },
+     question: "Can I import existing F-Gas system data?",
+     answer: "Currently, systems must be added manually. Bulk import functionality is on our roadmap. Contact support if you have a large dataset to migrate."
+   },
   {
     category: "Getting Started",
     question: "How do I invite team members?",
