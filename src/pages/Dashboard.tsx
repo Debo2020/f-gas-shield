@@ -464,7 +464,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-warning">Inspections Due Soon</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      All current, but {equipmentData?.dueSoon} equipment due in the next 30 days
+                      All current, but {equipmentData?.dueSoon} systems due in the next 30 days
                     </p>
                     <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
                       View Upcoming
