@@ -89,9 +89,9 @@ const faqData: FAQItem[] = [
   // Compliance
   {
     category: "Compliance",
-    question: "What reports are required for F-Gas regulations?",
-    answer: "UK F-Gas regulations require records of: equipment containing 5 tCO₂e or more, all leak checks performed, quantities of refrigerant added/recovered, and technician certifications. FTrack tracks all of this automatically."
-  },
+     question: "What reports are required for F-Gas regulations?",
+     answer: "UK F-Gas regulations require records of: systems containing 5 tCO₂e or more, all leak checks performed, quantities of refrigerant added/recovered, and technician certifications. FTrack tracks all of this automatically."
+   },
   {
     category: "Compliance",
     question: "How long must I keep F-Gas records?",
