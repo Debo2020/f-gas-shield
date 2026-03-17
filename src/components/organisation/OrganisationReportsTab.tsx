@@ -299,7 +299,7 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = ["Date", "Equipment", "Site", "Refrigerant Type", "Added (kg)", "Recovered (kg)", "Engineer"];
+      const headers = ["Date", "System", "Site", "Refrigerant Type", "Added (kg)", "Recovered (kg)", "Engineer"];
 
       const rows = (data || []).map((insp: any) => [
         insp.inspection_date, insp.equipment?.name || "", insp.equipment?.site?.name || "",
