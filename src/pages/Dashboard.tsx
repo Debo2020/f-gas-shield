@@ -397,8 +397,8 @@ export default function Dashboard() {
                             <Shield className="h-4 w-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-sm">Register equipment</p>
-                            <p className="text-xs text-muted-foreground">Add F-Gas equipment to track</p>
+                             <p className="font-medium text-sm">Register F-Gas systems</p>
+                             <p className="text-xs text-muted-foreground">Add F-Gas systems to track</p>
                           </div>
                         </div>
                       </div>
