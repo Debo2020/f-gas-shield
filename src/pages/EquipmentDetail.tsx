@@ -422,9 +422,9 @@ export default function EquipmentDetail() {
               {/* Equipment Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Info className="h-5 w-5" />
-                    Equipment Details
+                 <CardTitle className="flex items-center gap-2 text-lg">
+                   <Info className="h-5 w-5" />
+                   System Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
