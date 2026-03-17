@@ -54,13 +54,13 @@ export function EquipmentDialog({
           <DialogTitle className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <Pencil className="h-5 w-5 text-primary" />
-                Edit Equipment
-              </>
-            ) : (
-              <>
-                <Thermometer className="h-5 w-5 text-primary" />
-                Register New Equipment
+               <Pencil className="h-5 w-5 text-primary" />
+                Edit F-Gas System
+               </>
+             ) : (
+               <>
+                 <Thermometer className="h-5 w-5 text-primary" />
+                 Register New F-Gas System
               </>
             )}
           </DialogTitle>
