@@ -181,7 +181,7 @@ export default function EquipmentDetail() {
       setInspections(inspectionsRes.data || []);
       if (companyRes.data) setCompany(companyRes.data);
     } catch (error: any) {
-      toast.error("Failed to load equipment details");
+      toast.error("Failed to load system details");
       navigate("/equipment");
     } finally {
       setIsLoading(false);
