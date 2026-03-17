@@ -241,9 +241,9 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = [
-        "Date", "Equipment", "Site", "Refrigerant", "Result",
-        "Leak Check", "Leak Found", "Location", "Repaired", "Inspector", "Cert No."
+       const headers = [
+         "Date", "System", "Site", "Refrigerant", "Result",
+         "Leak Check", "Leak Found", "Location", "Repaired", "Inspector", "Cert No."
       ];
 
       const rows = (data || []).map((insp: any) => [
