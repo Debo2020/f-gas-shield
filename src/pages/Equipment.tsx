@@ -186,7 +186,7 @@ export default function Equipment() {
         setCompany(companyRes.data);
       }
     } catch (error: any) {
-      toast.error("Failed to load equipment");
+      toast.error("Failed to load F-Gas systems");
     } finally {
       setIsLoading(false);
     }
