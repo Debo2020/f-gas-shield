@@ -207,7 +207,7 @@ export default function SiteDetail() {
                   <p className="text-2xl font-bold">
                     <AnimatedCounter value={activeEquipment.length} />
                   </p>
-                  <p className="text-xs text-muted-foreground">Equipment</p>
+                  <p className="text-xs text-muted-foreground">Systems</p>
                 </div>
               </div>
             </CardContent>
@@ -265,7 +265,7 @@ export default function SiteDetail() {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment ({equipment.length})</TabsTrigger>
+            <TabsTrigger value="equipment">Systems ({equipment.length})</TabsTrigger>
             <TabsTrigger value="inspections">Inspections</TabsTrigger>
             <TabsTrigger value="documents">Documents ({documentCount})</TabsTrigger>
           </TabsList>
@@ -347,31 +347,31 @@ export default function SiteDetail() {
           {/* Equipment Tab */}
           <TabsContent value="equipment">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Equipment at this Site</CardTitle>
-                  <CardDescription>
-                    All refrigeration equipment registered at {site.name}
+               <CardHeader className="flex flex-row items-center justify-between">
+                 <div>
+                   <CardTitle>F-Gas Systems at this Site</CardTitle>
+                   <CardDescription>
+                     All refrigeration systems registered at {site.name}
                   </CardDescription>
                 </div>
                 {canPerformActions && (
                   <Button size="sm" onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Equipment
+                    Add System
                   </Button>
                 )}
               </CardHeader>
               <CardContent>
                 {equipment.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
-                    <Thermometer className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="mb-4">No equipment registered at this site</p>
-                    {canPerformActions && (
-                      <Button onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Equipment
-                      </Button>
-                    )}
+                     <Thermometer className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                     <p className="mb-4">No F-Gas systems registered at this site</p>
+                     {canPerformActions && (
+                       <Button onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
+                         <Plus className="h-4 w-4 mr-2" />
+                         Add System
+                       </Button>
+                     )}
                   </div>
                 ) : (
                   <div className="grid gap-3">

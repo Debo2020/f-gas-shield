@@ -129,10 +129,10 @@ export function EquipmentQRScanner({
         onOpenChange(false);
         toast.success(`Found: ${equipment.name}`);
       } else {
-        setError("Equipment not found. Please ensure it belongs to your company.");
+        setError("System not found. Please ensure it belongs to your company.");
       }
     } catch (err) {
-      setError("Failed to look up equipment. Please try again.");
+      setError("Failed to look up system. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -277,11 +277,11 @@ export function EquipmentQRScanner({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5 text-primary" />
-            Scan Equipment QR Code
-          </DialogTitle>
-          <DialogDescription>
-            Scan an equipment label QR code to view or update its information.
+             <Camera className="h-5 w-5 text-primary" />
+             Scan System QR Code
+           </DialogTitle>
+           <DialogDescription>
+             Scan a system label QR code to view or update its information.
           </DialogDescription>
         </DialogHeader>
 
@@ -367,7 +367,7 @@ export function EquipmentQRScanner({
           <TabsContent value="manual" className="mt-4">
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="manual-input">Equipment ID or Asset Tag</Label>
+                <Label htmlFor="manual-input">System ID or Asset Tag</Label>
                 <Input
                   id="manual-input"
                   placeholder="Enter ID, asset tag, or serial number"
@@ -375,8 +375,8 @@ export function EquipmentQRScanner({
                   onChange={(e) => setManualInput(e.target.value)}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  You can enter the equipment UUID, asset tag, or serial number
+                 <p className="text-xs text-muted-foreground">
+                   You can enter the system UUID, asset tag, or serial number
                 </p>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading || !manualInput.trim()}>
@@ -386,7 +386,7 @@ export function EquipmentQRScanner({
                     Looking up...
                   </>
                 ) : (
-                  "Look Up Equipment"
+                  "Look Up System"
                 )}
               </Button>
             </form>
@@ -405,7 +405,7 @@ export function EquipmentQRScanner({
         {isLoading && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2 text-sm text-muted-foreground">Looking up equipment...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Looking up system...</span>
           </div>
         )}
       </DialogContent>

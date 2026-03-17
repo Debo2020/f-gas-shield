@@ -28,14 +28,14 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Getting Started",
-    question: "How do I add my first piece of equipment?",
-    answer: "Navigate to Sites, create a site first, then go to Equipment and click 'Add Equipment'. Fill in the equipment details including refrigerant type and charge weight."
-  },
+     question: "How do I add my first F-Gas system?",
+     answer: "Navigate to Sites, create a site first, then go to F-Gas Systems and click 'Register System'. Fill in the system details including refrigerant type and charge weight."
+   },
   {
     category: "Getting Started",
-    question: "Can I import existing equipment data?",
-    answer: "Currently, equipment must be added manually. Bulk import functionality is on our roadmap. Contact support if you have a large dataset to migrate."
-  },
+     question: "Can I import existing F-Gas system data?",
+     answer: "Currently, systems must be added manually. Bulk import functionality is on our roadmap. Contact support if you have a large dataset to migrate."
+   },
   {
     category: "Getting Started",
     question: "How do I invite team members?",
@@ -43,26 +43,26 @@ const faqData: FAQItem[] = [
   },
   
   // Equipment & Inspections
+   {
+     category: "F-Gas Systems & Inspections",
+     question: "How often do I need to perform leak checks?",
+     answer: "Leak check frequency depends on the CO₂ equivalent of the system: 5-50 tCO₂e requires annual checks, 50-500 tCO₂e requires checks every 6 months, and above 500 tCO₂e requires quarterly checks. FTrack automatically calculates this and sets reminders."
+   },
   {
-    category: "Equipment & Inspections",
-    question: "How often do I need to perform leak checks?",
-    answer: "Leak check frequency depends on the CO₂ equivalent of the equipment: 5-50 tCO₂e requires annual checks, 50-500 tCO₂e requires checks every 6 months, and above 500 tCO₂e requires quarterly checks. FTrack automatically calculates this and sets reminders."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "What happens when an inspection is due?",
+     answer: "You'll see alerts in your dashboard and receive email notifications (if enabled). The system will be flagged as overdue if the inspection date passes without a recorded inspection."
+   },
   {
-    category: "Equipment & Inspections",
-    question: "What happens when an inspection is due?",
-    answer: "You'll see alerts in your dashboard and receive email notifications (if enabled). The equipment will be flagged as overdue if the inspection date passes without a recorded inspection."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "How do I record an inspection result?",
+     answer: "Go to Inspections, click 'Add Inspection', select the system, and fill in the inspection details including result, any leaks found, and refrigerant added or recovered."
+   },
   {
-    category: "Equipment & Inspections",
-    question: "How do I record an inspection result?",
-    answer: "Go to Inspections, click 'Add Inspection', select the equipment, and fill in the inspection details including result, any leaks found, and refrigerant added or recovered."
-  },
-  {
-    category: "Equipment & Inspections",
-    question: "Can I attach photos to inspections?",
-    answer: "Yes! When recording an inspection, you can upload photos and documents. You can also add documents from the Documents section and link them to specific equipment."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "Can I attach photos to inspections?",
+     answer: "Yes! When recording an inspection, you can upload photos and documents. You can also add documents from the Documents section and link them to specific systems."
+   },
   
   // Gas Logging
   {
@@ -89,9 +89,9 @@ const faqData: FAQItem[] = [
   // Compliance
   {
     category: "Compliance",
-    question: "What reports are required for F-Gas regulations?",
-    answer: "UK F-Gas regulations require records of: equipment containing 5 tCO₂e or more, all leak checks performed, quantities of refrigerant added/recovered, and technician certifications. FTrack tracks all of this automatically."
-  },
+     question: "What reports are required for F-Gas regulations?",
+     answer: "UK F-Gas regulations require records of: systems containing 5 tCO₂e or more, all leak checks performed, quantities of refrigerant added/recovered, and technician certifications. FTrack tracks all of this automatically."
+   },
   {
     category: "Compliance",
     question: "How long must I keep F-Gas records?",
@@ -99,9 +99,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Compliance",
-    question: "How do I generate a compliance report?",
-    answer: "Go to Reports and select the report type you need. You can generate equipment registers, inspection histories, gas movement logs, and more. Reports can be exported as PDF."
-  },
+     question: "How do I generate a compliance report?",
+     answer: "Go to Reports and select the report type you need. You can generate system registers, inspection histories, gas movement logs, and more. Reports can be exported as PDF."
+   },
   {
     category: "Compliance",
     question: "What is the AI Compliance Assistant?",
@@ -116,9 +116,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Account & Billing",
-    question: "What's included in each plan?",
-    answer: "Solo: 1 user, 10 equipment, basic features. Team: 5 users, 50 equipment, full features. Business: Unlimited users and equipment, priority support, API access. Visit our Pricing page for full details."
-  },
+     question: "What's included in each plan?",
+     answer: "Solo: 1 user, 10 systems, basic features. Team: 5 users, 50 systems, full features. Business: Unlimited users and systems, priority support, API access. Visit our Pricing page for full details."
+   },
   {
     category: "Account & Billing",
     question: "Can I change my plan?",
@@ -133,7 +133,7 @@ const faqData: FAQItem[] = [
 
 const categories = [
   { name: "Getting Started", icon: BookOpen, color: "text-blue-500" },
-  { name: "Equipment & Inspections", icon: Wrench, color: "text-orange-500" },
+  { name: "F-Gas Systems & Inspections", icon: Wrench, color: "text-orange-500" },
   { name: "Gas Logging", icon: FileText, color: "text-green-500" },
   { name: "Compliance", icon: Shield, color: "text-purple-500" },
   { name: "Account & Billing", icon: Users, color: "text-pink-500" },

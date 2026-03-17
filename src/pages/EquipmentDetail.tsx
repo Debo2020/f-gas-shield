@@ -172,7 +172,7 @@ export default function EquipmentDetail() {
 
       if (equipmentRes.error) throw equipmentRes.error;
       if (!equipmentRes.data) {
-        toast.error("Equipment not found");
+        toast.error("F-Gas system not found");
         navigate("/equipment");
         return;
       }
@@ -181,7 +181,7 @@ export default function EquipmentDetail() {
       setInspections(inspectionsRes.data || []);
       if (companyRes.data) setCompany(companyRes.data);
     } catch (error: any) {
-      toast.error("Failed to load equipment details");
+      toast.error("Failed to load system details");
       navigate("/equipment");
     } finally {
       setIsLoading(false);
@@ -217,11 +217,11 @@ export default function EquipmentDetail() {
 
       if (error) throw error;
 
-      toast.success("Equipment updated successfully");
+      toast.success("F-Gas system updated successfully");
       setIsEditOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update equipment");
+      toast.error(error.message || "Failed to update F-Gas system");
     } finally {
       setIsSubmitting(false);
     }
@@ -279,7 +279,7 @@ export default function EquipmentDetail() {
             onClick={() => navigate("/equipment")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Equipment
+            Back to F-Gas Systems
           </Button>
 
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -422,9 +422,9 @@ export default function EquipmentDetail() {
               {/* Equipment Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Info className="h-5 w-5" />
-                    Equipment Details
+                 <CardTitle className="flex items-center gap-2 text-lg">
+                   <Info className="h-5 w-5" />
+                   System Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -608,7 +608,7 @@ export default function EquipmentDetail() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Inspection History</CardTitle>
-                  <CardDescription>All inspections recorded for this equipment</CardDescription>
+                  <CardDescription>All inspections recorded for this system</CardDescription>
                 </div>
                 <Button
                   onClick={() => navigate(`/inspections?action=new&equipment=${equipment.id}`)}
@@ -693,9 +693,9 @@ export default function EquipmentDetail() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Refrigerant Gas Log</CardTitle>
-                  <CardDescription>
-                    Track refrigerant additions and recoveries for this equipment
-                  </CardDescription>
+                   <CardDescription>
+                     Track refrigerant additions and recoveries for this system
+                   </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" disabled>
                   <Download className="h-4 w-4 mr-2" />
@@ -781,8 +781,8 @@ export default function EquipmentDetail() {
             <Card>
               <CardHeader>
                 <CardTitle>Attached Documents</CardTitle>
-                <CardDescription>
-                  Certificates, photos, and other documents for this equipment
+                 <CardDescription>
+                   Certificates, photos, and other documents for this system
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

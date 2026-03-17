@@ -186,7 +186,7 @@ export default function Equipment() {
         setCompany(companyRes.data);
       }
     } catch (error: any) {
-      toast.error("Failed to load equipment");
+      toast.error("Failed to load F-Gas systems");
     } finally {
       setIsLoading(false);
     }
@@ -243,11 +243,11 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment registered successfully");
+      toast.success("F-Gas system registered successfully");
       setIsDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to add equipment");
+      toast.error(error.message || "Failed to add F-Gas system");
     } finally {
       setIsSubmitting(false);
     }
@@ -278,11 +278,11 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment updated successfully");
+      toast.success("F-Gas system updated successfully");
       setEditingEquipment(null);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update equipment");
+      toast.error(error.message || "Failed to update F-Gas system");
     } finally {
       setIsSubmitting(false);
     }
@@ -299,11 +299,11 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment deleted successfully");
+      toast.success("F-Gas system deleted successfully");
       setDeletingEquipment(null);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete equipment");
+      toast.error(error.message || "Failed to delete F-Gas system");
     }
   };
 
@@ -387,7 +387,7 @@ export default function Equipment() {
               <div className="p-2 rounded-lg bg-primary/10 animate-float">
                 <Thermometer className="h-7 w-7 text-primary" />
               </div>
-              <span className="gradient-text">Equipment Register</span>
+              <span className="gradient-text">F-Gas Systems</span>
             </h1>
             <p className="text-muted-foreground mt-1 ml-14">
               <AnimatedCounter value={equipment.length} /> units · <AnimatedCounter value={totalCo2} decimals={2} /> tonnes CO₂e
@@ -432,7 +432,7 @@ export default function Equipment() {
                   title={sites.length > 0 && !canPerformActions ? "License required" : undefined}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Register Equipment
+                  Register System
                 </Button>
               )}
             </div>
@@ -451,7 +451,7 @@ export default function Equipment() {
                   <Link to="/sites" className="text-primary hover:underline">
                     add a site
                   </Link>{" "}
-                  before you can register equipment.
+                  before you can register an F-Gas system.
                 </p>
               </div>
             </CardContent>
@@ -463,7 +463,7 @@ export default function Equipment() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search equipment..."
+              placeholder="Search systems..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -490,7 +490,7 @@ export default function Equipment() {
         {/* Equipment Table */}
         <div className="animate-scale-in opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading equipment...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading systems...</div>
           ) : filteredEquipment.length === 0 ? (
             <Card className="card-interactive">
               <CardContent className="py-12 text-center">
@@ -499,26 +499,26 @@ export default function Equipment() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 animate-float">
                       <Thermometer className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No equipment registered</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Register your refrigeration equipment to start tracking F-Gas compliance
-                    </p>
-                    {canEdit && sites.length > 0 && (
-                      <Button 
-                        onClick={() => setIsDialogOpen(true)}
-                        disabled={!canPerformActions}
-                        title={!canPerformActions ? "License required" : undefined}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Register Your First Equipment
-                      </Button>
+                     <h3 className="text-lg font-semibold mb-2">No F-Gas systems registered</h3>
+                     <p className="text-muted-foreground mb-4">
+                       Register your refrigeration systems to start tracking F-Gas compliance
+                     </p>
+                     {canEdit && sites.length > 0 && (
+                       <Button 
+                         onClick={() => setIsDialogOpen(true)}
+                         disabled={!canPerformActions}
+                         title={!canPerformActions ? "License required" : undefined}
+                       >
+                         <Plus className="h-4 w-4 mr-2" />
+                         Register Your First System
+                       </Button>
                     )}
                   </>
                 ) : (
                   <>
                     <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No equipment found</h3>
-                    <p className="text-muted-foreground">Try adjusting your search or filters</p>
+                     <h3 className="text-lg font-semibold mb-2">No systems found</h3>
+                     <p className="text-muted-foreground">Try adjusting your search or filters</p>
                   </>
                 )}
               </CardContent>
@@ -528,7 +528,7 @@ export default function Equipment() {
               <Table>
               <TableHeader>
                 <TableRow>
-              <TableHead>Equipment</TableHead>
+              <TableHead>System</TableHead>
               <TableHead>Asset ID</TableHead>
               <TableHead>Site</TableHead>
                   <TableHead>Refrigerant</TableHead>
@@ -690,8 +690,8 @@ export default function Equipment() {
       <AlertDialog open={!!deletingEquipment} onOpenChange={(open) => !open && setDeletingEquipment(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Equipment</AlertDialogTitle>
-            <AlertDialogDescription>
+             <AlertDialogTitle>Delete F-Gas System</AlertDialogTitle>
+             <AlertDialogDescription>
               Are you sure you want to delete "{deletingEquipment?.name}"? This action cannot be
               undone and will remove all associated inspection records.
             </AlertDialogDescription>
@@ -789,8 +789,8 @@ export default function Equipment() {
               Generate Missing Asset Tags
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will generate asset tags for {equipmentWithoutTags.length} equipment 
-              item{equipmentWithoutTags.length !== 1 ? 's' : ''} that currently don't have tags.
+               This will generate asset tags for {equipmentWithoutTags.length} F-Gas 
+               system{equipmentWithoutTags.length !== 1 ? 's' : ''} that currently don't have tags.
             </AlertDialogDescription>
           </AlertDialogHeader>
           

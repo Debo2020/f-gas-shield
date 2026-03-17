@@ -80,15 +80,15 @@ const CATEGORY_CONFIG: Record<DocumentCategory, {
     ],
     description: "Compliance certificates, declarations, and audit reports",
   },
-  equipment: {
-    types: [
-      { type: "label", label: "Equipment Labels" },
-      { type: "photo", label: "Equipment Photos" },
-      { type: "report", label: "Equipment Reports" },
-      { type: "certificate", label: "Equipment Certificates" },
-      { type: "other", label: "Other Documents" },
-    ],
-    description: "Documents related to equipment assets",
+   equipment: {
+     types: [
+       { type: "label", label: "System Labels" },
+       { type: "photo", label: "System Photos" },
+       { type: "report", label: "System Reports" },
+       { type: "certificate", label: "System Certificates" },
+       { type: "other", label: "Other Documents" },
+     ],
+     description: "Documents related to F-Gas system assets",
   },
   media: {
     types: [
@@ -226,15 +226,15 @@ export function DocumentCategorySection({
             )}
 
             {/* Equipment Selector for Equipment category */}
-            {showEquipmentSelector && equipment.length > 0 && (
-              <div className="space-y-2">
-                <Label>Attach to Equipment (optional)</Label>
-                <Select value={selectedEquipmentId} onValueChange={setSelectedEquipmentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select equipment..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No specific equipment</SelectItem>
+             {showEquipmentSelector && equipment.length > 0 && (
+               <div className="space-y-2">
+                 <Label>Attach to System (optional)</Label>
+                 <Select value={selectedEquipmentId} onValueChange={setSelectedEquipmentId}>
+                   <SelectTrigger>
+                     <SelectValue placeholder="Select system..." />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="none">No specific system</SelectItem>
                     {equipment.map((eq) => (
                       <SelectItem key={eq.id} value={eq.id}>
                         {eq.name}

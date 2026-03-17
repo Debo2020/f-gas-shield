@@ -182,11 +182,11 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = [
-        "Equipment", "Site", "Manufacturer", "Model", "Serial No.",
-        "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
-        "Install Date", "Location", "Status"
-      ];
+       const headers = [
+         "System", "Site", "Manufacturer", "Model", "Serial No.",
+         "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
+         "Install Date", "Location", "Status"
+       ];
 
       const rows = (data || []).map((eq: any) => [
         eq.name, eq.site?.name || "", eq.manufacturer || "", eq.model || "",
@@ -198,16 +198,16 @@ export function OrganisationReportsTab() {
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       if (type === "pdf") {
-        await createBrandedPDF(
-          "Equipment Register",
-          `Complete F-Gas equipment inventory as of ${format(new Date(), "dd MMMM yyyy")}`,
+         await createBrandedPDF(
+           "F-Gas System Register",
+           `Complete F-Gas system inventory as of ${format(new Date(), "dd MMMM yyyy")}`,
           headers, rows,
           `equipment-register-${dateStr}.pdf`
         );
       } else {
         downloadCSV(`equipment-register-${dateStr}.csv`, headers, rows);
       }
-      toast.success(`Equipment register ${type.toUpperCase()} downloaded`);
+      toast.success(`F-Gas system register ${type.toUpperCase()} downloaded`);
     } catch (error) {
       console.error("Error generating report:", error);
       toast.error("Failed to generate report");
@@ -241,9 +241,9 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = [
-        "Date", "Equipment", "Site", "Refrigerant", "Result",
-        "Leak Check", "Leak Found", "Location", "Repaired", "Inspector", "Cert No."
+       const headers = [
+         "Date", "System", "Site", "Refrigerant", "Result",
+         "Leak Check", "Leak Found", "Location", "Repaired", "Inspector", "Cert No."
       ];
 
       const rows = (data || []).map((insp: any) => [
@@ -299,7 +299,7 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = ["Date", "Equipment", "Site", "Refrigerant Type", "Added (kg)", "Recovered (kg)", "Engineer"];
+      const headers = ["Date", "System", "Site", "Refrigerant Type", "Added (kg)", "Recovered (kg)", "Engineer"];
 
       const rows = (data || []).map((insp: any) => [
         insp.inspection_date, insp.equipment?.name || "", insp.equipment?.site?.name || "",
@@ -348,7 +348,7 @@ export function OrganisationReportsTab() {
       if (error) throw error;
 
       const today = new Date();
-      const headers = ["Equipment", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)", "Next Due", "Status"];
+      const headers = ["System", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)", "Next Due", "Status"];
 
       const rows = (data || []).map((eq: any) => {
         const dueDate = eq.next_inspection_due ? new Date(eq.next_inspection_due) : null;
@@ -371,9 +371,9 @@ export function OrganisationReportsTab() {
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       if (type === "pdf") {
-        await createBrandedPDF(
-          "Compliance Summary",
-          `Equipment inspection compliance status as of ${format(new Date(), "dd MMMM yyyy")}`,
+         await createBrandedPDF(
+           "Compliance Summary",
+           `F-Gas system inspection compliance status as of ${format(new Date(), "dd MMMM yyyy")}`,
           headers, rows,
           `compliance-summary-${dateStr}.pdf`
         );
@@ -391,18 +391,18 @@ export function OrganisationReportsTab() {
   };
 
   const reports = [
-    {
-      id: "equipment",
-      title: "Equipment Register",
-      description: "Complete inventory of all F-Gas equipment with specifications and CO2e values",
-      icon: Wrench,
-      onGenerate: generateEquipmentReport,
+     {
+       id: "equipment",
+       title: "F-Gas System Register",
+       description: "Complete inventory of all F-Gas systems with specifications and CO2e values",
+       icon: Wrench,
+       onGenerate: generateEquipmentReport,
     },
     {
       id: "leakcheck",
-      title: "Leak Check Records",
-      description: "Annual record of all leak checks performed on F-Gas equipment",
-      icon: ClipboardCheck,
+       title: "Leak Check Records",
+       description: "Annual record of all leak checks performed on F-Gas systems",
+       icon: ClipboardCheck,
       onGenerate: generateLeakCheckReport,
       yearFilter: true,
     },
@@ -416,8 +416,8 @@ export function OrganisationReportsTab() {
     },
     {
       id: "compliance",
-      title: "Compliance Summary",
-      description: "Overview of inspection compliance status for all equipment",
+       title: "Compliance Summary",
+       description: "Overview of inspection compliance status for all systems",
       icon: FileText,
       onGenerate: generateComplianceReport,
     },

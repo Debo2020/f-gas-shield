@@ -102,8 +102,8 @@ export function EquipmentForm({
   onCancel,
   isSubmitting = false,
   defaultValues,
-  submitLabel = "Add Equipment",
-  companyId,
+   submitLabel = "Add System",
+   companyId,
 }: EquipmentFormProps) {
   const [sites, setSites] = useState<Site[]>([]);
   const [isLoadingSites, setIsLoadingSites] = useState(true);
@@ -252,13 +252,13 @@ export function EquipmentForm({
           )}
         />
 
-        {/* Equipment Name */}
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Equipment Name *</FormLabel>
+         {/* System Name */}
+         <FormField
+           control={form.control}
+           name="name"
+           render={({ field }) => (
+             <FormItem>
+               <FormLabel>System Name *</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. Chiller Unit 1, Cold Room A" {...field} />
               </FormControl>
@@ -307,7 +307,7 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Serial Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="Equipment serial number" {...field} />
+                  <Input placeholder="System serial number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -518,7 +518,7 @@ export function EquipmentForm({
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional information about this equipment"
+                  placeholder="Additional information about this system"
                   className="resize-none"
                   rows={3}
                   {...field}

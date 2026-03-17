@@ -135,7 +135,7 @@ export default function Dashboard() {
       href: "/sites",
     },
     {
-      title: "Equipment",
+      title: "F-Gas Systems",
       value: equipmentData?.count || 0,
       icon: Shield,
       description: `${equipmentData?.totalCo2?.toFixed(1) || 0} tCO₂e total`,
@@ -382,8 +382,8 @@ export default function Dashboard() {
                             <CheckCircle2 className="h-4 w-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-sm">Register equipment</p>
-                            <p className="text-xs text-muted-foreground">{equipmentData?.count} equipment registered</p>
+                             <p className="font-medium text-sm">Register F-Gas systems</p>
+                             <p className="text-xs text-muted-foreground">{equipmentData?.count} systems registered</p>
                           </div>
                         </div>
                       </Link>
@@ -397,8 +397,8 @@ export default function Dashboard() {
                             <Shield className="h-4 w-4" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-sm">Register equipment</p>
-                            <p className="text-xs text-muted-foreground">Add F-Gas equipment to track</p>
+                             <p className="font-medium text-sm">Register F-Gas systems</p>
+                             <p className="text-xs text-muted-foreground">Add F-Gas systems to track</p>
                           </div>
                         </div>
                       </div>
@@ -434,9 +434,9 @@ export default function Dashboard() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
                       <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium">No equipment registered yet</h3>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      Add your first site and equipment to start tracking F-Gas compliance
+                     <h3 className="font-medium">No F-Gas systems registered yet</h3>
+                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                       Add your first site and system to start tracking F-Gas compliance
                     </p>
                     <Button onClick={() => navigate("/sites?action=new")} className="mt-4" variant="outline">
                       Get Started
@@ -450,7 +450,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-destructive">Attention Required</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      {equipmentData?.overdue} of {equipmentData?.count} equipment {equipmentData?.overdue === 1 ? 'has' : 'have'} overdue inspections
+                      {equipmentData?.overdue} of {equipmentData?.count} systems {equipmentData?.overdue === 1 ? 'has' : 'have'} overdue inspections
                     </p>
                     <Button onClick={() => navigate("/inspections?status=overdue")} className="mt-4" variant="destructive">
                       View Overdue
@@ -464,7 +464,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-warning">Inspections Due Soon</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      All current, but {equipmentData?.dueSoon} equipment due in the next 30 days
+                      All current, but {equipmentData?.dueSoon} systems due in the next 30 days
                     </p>
                     <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
                       View Upcoming
@@ -478,7 +478,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-success">Fully Compliant</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      All {equipmentData?.count} equipment {equipmentData?.count === 1 ? 'is' : 'are'} up to date with inspections
+                      All {equipmentData?.count} systems {equipmentData?.count === 1 ? 'is' : 'are'} up to date with inspections
                     </p>
                     <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
                       Record Inspection

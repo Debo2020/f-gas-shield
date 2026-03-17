@@ -299,10 +299,10 @@ export default function Documents() {
                 {categoryCounts.compliance}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="equipment" className="gap-2">
-              <Thermometer className="h-4 w-4 hidden sm:block" />
-              Equipment
-              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+             <TabsTrigger value="equipment" className="gap-2">
+               <Thermometer className="h-4 w-4 hidden sm:block" />
+               Systems
+               <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
                 {categoryCounts.equipment}
               </Badge>
             </TabsTrigger>
@@ -385,12 +385,12 @@ export default function Documents() {
               <TabsContent value="equipment">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Thermometer className="h-5 w-5" />
-                      Equipment Documents
-                    </CardTitle>
-                    <CardDescription>
-                      Labels, photos, and documentation for your equipment assets
+                     <CardTitle className="flex items-center gap-2">
+                       <Thermometer className="h-5 w-5" />
+                       System Documents
+                     </CardTitle>
+                     <CardDescription>
+                       Labels, photos, and documentation for your F-Gas system assets
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

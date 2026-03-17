@@ -23,17 +23,17 @@ const steps = [
     href: "/organisation?tab=clients&action=new",
     icon: MapPin,
   },
-  {
-    key: "step_add_equipment" as const,
-    label: "Add Equipment",
-    description: "Register F-Gas equipment to track",
+   {
+     key: "step_add_equipment" as const,
+     label: "Add F-Gas System",
+     description: "Register an F-Gas system to track",
     href: "/equipment?action=new",
     icon: Thermometer,
   },
   {
     key: "step_first_inspection" as const,
-    label: "Run your first Inspection",
-    description: "Record an equipment inspection",
+     label: "Run your first Inspection",
+     description: "Record a system inspection",
     href: "/inspections?action=new",
     icon: ClipboardCheck,
   },

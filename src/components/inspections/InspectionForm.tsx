@@ -140,14 +140,14 @@ export function InspectionForm({
           name="equipment_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <Thermometer className="h-4 w-4 text-muted-foreground" />
-                Equipment *
-              </FormLabel>
+               <FormLabel className="flex items-center gap-2">
+                 <Thermometer className="h-4 w-4 text-muted-foreground" />
+                 F-Gas System *
+               </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!lockedEquipmentId}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select equipment"} />
+                    <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select system"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

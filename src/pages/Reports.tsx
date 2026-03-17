@@ -217,8 +217,8 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const headers = [
-        "Equipment", "Site", "Manufacturer", "Model", "Serial No.",
+       const headers = [
+         "System", "Site", "Manufacturer", "Model", "Serial No.",
         "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
         "Install Date", "Location", "Status"
       ];
@@ -240,9 +240,9 @@ export default function Reports() {
 
       const dateStr = format(new Date(), "yyyy-MM-dd");
       if (type === "pdf") {
-        await createBrandedPDF(
-          "Equipment Register",
-          `Complete F-Gas equipment inventory as of ${format(new Date(), "dd MMMM yyyy")}`,
+         await createBrandedPDF(
+           "F-Gas System Register",
+           `Complete F-Gas system inventory as of ${format(new Date(), "dd MMMM yyyy")}`,
           headers,
           rows,
           `equipment-register-${dateStr}.pdf`
@@ -250,7 +250,7 @@ export default function Reports() {
       } else {
         downloadCSV(`equipment-register-${dateStr}.csv`, headers, rows);
       }
-      toast.success(`Equipment register ${type.toUpperCase()} downloaded`);
+      toast.success(`F-Gas system register ${type.toUpperCase()} downloaded`);
     } catch (error) {
       console.error("Error generating report:", error);
       toast.error("Failed to generate report");
@@ -296,9 +296,9 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const headers = [
-        "Date", "Equipment", "Site", "Refrigerant", "Result",
-        "Leak Check", "Leak Found", "Location", "Repaired",
+       const headers = [
+         "Date", "System", "Site", "Refrigerant", "Result",
+         "Leak Check", "Leak Found", "Location", "Repaired",
         "Inspector", "Cert No."
       ];
 
@@ -368,9 +368,9 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const headers = [
-        "Date", "Equipment", "Site", "Refrigerant Type",
-        "Added (kg)", "Recovered (kg)", "Engineer"
+       const headers = [
+         "Date", "System", "Site", "Refrigerant Type",
+         "Added (kg)", "Recovered (kg)", "Engineer"
       ];
 
       const rows = (data || []).map((insp: any) => [
@@ -531,8 +531,8 @@ export default function Reports() {
       if (error) throw error;
 
       const today = new Date();
-      const headers = [
-        "Equipment", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)",
+       const headers = [
+         "System", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)",
         "Last Inspection", "Next Due", "Status"
       ];
 
@@ -601,7 +601,7 @@ export default function Reports() {
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...BRAND_COLORS.slateGrey);
-        doc.text(`Equipment inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, textStartX, 36);
+        doc.text(`F-Gas system inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, textStartX, 36);
         doc.setFontSize(9);
         doc.text(`Generated: ${generatedAt}`, textStartX, 43);
         
@@ -697,11 +697,11 @@ export default function Reports() {
   };
 
   const reports = [
-    {
-      id: "equipment",
-      title: "Equipment Register",
-      description: "Complete inventory of all F-Gas equipment including refrigerant details and CO₂e values.",
-      icon: Wrench,
+     {
+       id: "equipment",
+       title: "F-Gas System Register",
+       description: "Complete inventory of all F-Gas systems including refrigerant details and CO₂e values.",
+       icon: Wrench,
       onGeneratePDF: () => generateEquipmentReport("pdf"),
       onGenerateCSV: () => generateEquipmentReport("csv"),
     },
@@ -724,8 +724,8 @@ export default function Reports() {
     {
       id: "compliance",
       title: "Compliance Summary",
-      description: "Overview of equipment compliance status including overdue and upcoming inspections.",
-      icon: FileText,
+       description: "Overview of system compliance status including overdue and upcoming inspections.",
+       icon: FileText,
       onGeneratePDF: () => generateComplianceReport("pdf"),
       onGenerateCSV: () => generateComplianceReport("csv"),
     },

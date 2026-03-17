@@ -54,20 +54,20 @@ export function EquipmentDialog({
           <DialogTitle className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <Pencil className="h-5 w-5 text-primary" />
-                Edit Equipment
-              </>
-            ) : (
-              <>
-                <Thermometer className="h-5 w-5 text-primary" />
-                Register New Equipment
+               <Pencil className="h-5 w-5 text-primary" />
+                Edit F-Gas System
+               </>
+             ) : (
+               <>
+                 <Thermometer className="h-5 w-5 text-primary" />
+                 Register New F-Gas System
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the equipment details below"
-              : "Enter the details for your refrigeration equipment"}
+           <DialogDescription>
+             {isEditing
+               ? "Update the F-Gas system details below"
+               : "Enter the details for your refrigeration system"}
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +96,7 @@ export function EquipmentDialog({
                 }
               : undefined
           }
-          submitLabel={isEditing ? "Save Changes" : "Register Equipment"}
+          submitLabel={isEditing ? "Save Changes" : "Register System"}
         />
       </DialogContent>
     </Dialog>

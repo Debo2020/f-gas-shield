@@ -284,11 +284,11 @@ export default function Inspections() {
           <div className="flex items-center gap-2">
             <Thermometer className="h-4 w-4 text-muted-foreground" />
             <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by equipment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Equipment</SelectItem>
+               <SelectTrigger className="w-48">
+                 <SelectValue placeholder="Filter by system" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="all">All Systems</SelectItem>
                 {uniqueEquipment.map((eq) => (
                   <SelectItem key={eq.id} value={eq.id}>
                     {eq.name}
@@ -302,7 +302,7 @@ export default function Inspections() {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setEquipmentFilter("all")}
-                title="Clear equipment filter"
+                title="Clear system filter"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -324,7 +324,7 @@ export default function Inspections() {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No inspections recorded</h3>
                     <p className="text-muted-foreground mb-4">
-                      Record your first equipment inspection to start tracking compliance
+                      Record your first F-Gas system inspection to start tracking compliance
                     </p>
                     <Button 
                       onClick={() => setIsDialogOpen(true)}
@@ -350,7 +350,7 @@ export default function Inspections() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Equipment</TableHead>
+                  <TableHead>System</TableHead>
                   <TableHead>Site</TableHead>
                   <TableHead>Inspector</TableHead>
                   <TableHead>Result</TableHead>
@@ -416,10 +416,10 @@ export default function Inspections() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => navigate(`/equipment?highlight=${insp.equipment_id}`)}
-                          title="View Equipment"
-                        >
-                          <Thermometer className="h-4 w-4" />
+                         onClick={() => navigate(`/equipment?highlight=${insp.equipment_id}`)}
+                           title="View System"
+                         >
+                           <Thermometer className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -558,9 +558,9 @@ export default function Inspections() {
                     navigate(`/equipment?highlight=${viewingInspection.equipment_id}`);
                   }}
                 >
-                  <Thermometer className="h-4 w-4 mr-2" />
-                  View Equipment
-                </Button>
+                   <Thermometer className="h-4 w-4 mr-2" />
+                   View System
+                 </Button>
               </div>
             </div>
           )}
