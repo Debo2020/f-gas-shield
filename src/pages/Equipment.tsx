@@ -387,7 +387,7 @@ export default function Equipment() {
               <div className="p-2 rounded-lg bg-primary/10 animate-float">
                 <Thermometer className="h-7 w-7 text-primary" />
               </div>
-              <span className="gradient-text">Equipment Register</span>
+              <span className="gradient-text">F-Gas Systems</span>
             </h1>
             <p className="text-muted-foreground mt-1 ml-14">
               <AnimatedCounter value={equipment.length} /> units · <AnimatedCounter value={totalCo2} decimals={2} /> tonnes CO₂e
