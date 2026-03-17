@@ -324,7 +324,7 @@ export default function Inspections() {
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No inspections recorded</h3>
                     <p className="text-muted-foreground mb-4">
-                      Record your first equipment inspection to start tracking compliance
+                      Record your first F-Gas system inspection to start tracking compliance
                     </p>
                     <Button 
                       onClick={() => setIsDialogOpen(true)}
