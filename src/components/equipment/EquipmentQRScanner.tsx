@@ -129,7 +129,7 @@ export function EquipmentQRScanner({
         onOpenChange(false);
         toast.success(`Found: ${equipment.name}`);
       } else {
-        setError("Equipment not found. Please ensure it belongs to your company.");
+        setError("System not found. Please ensure it belongs to your company.");
       }
     } catch (err) {
       setError("Failed to look up equipment. Please try again.");
