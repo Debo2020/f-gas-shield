@@ -177,7 +177,7 @@ export function ServiceTicketDialog({ children }: ServiceTicketDialogProps) {
         {ticketRef ? (
           // Success state
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
+            <CheckCircle2 className="h-16 w-16 text-primary" />
             <h3 className="text-xl font-semibold">Ticket Submitted</h3>
             <p className="text-muted-foreground text-center">
               Your ticket reference is
