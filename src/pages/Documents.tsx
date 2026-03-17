@@ -299,10 +299,10 @@ export default function Documents() {
                 {categoryCounts.compliance}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="equipment" className="gap-2">
-              <Thermometer className="h-4 w-4 hidden sm:block" />
-              Equipment
-              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+             <TabsTrigger value="equipment" className="gap-2">
+               <Thermometer className="h-4 w-4 hidden sm:block" />
+               Systems
+               <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
                 {categoryCounts.equipment}
               </Badge>
             </TabsTrigger>
