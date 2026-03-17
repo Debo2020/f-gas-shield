@@ -490,7 +490,7 @@ export default function Equipment() {
         {/* Equipment Table */}
         <div className="animate-scale-in opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading equipment...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading systems...</div>
           ) : filteredEquipment.length === 0 ? (
             <Card className="card-interactive">
               <CardContent className="py-12 text-center">
