@@ -697,11 +697,11 @@ export default function Reports() {
   };
 
   const reports = [
-    {
-      id: "equipment",
-      title: "Equipment Register",
-      description: "Complete inventory of all F-Gas equipment including refrigerant details and CO₂e values.",
-      icon: Wrench,
+     {
+       id: "equipment",
+       title: "F-Gas System Register",
+       description: "Complete inventory of all F-Gas systems including refrigerant details and CO₂e values.",
+       icon: Wrench,
       onGeneratePDF: () => generateEquipmentReport("pdf"),
       onGenerateCSV: () => generateEquipmentReport("csv"),
     },
