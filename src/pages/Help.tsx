@@ -116,9 +116,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Account & Billing",
-    question: "What's included in each plan?",
-    answer: "Solo: 1 user, 10 equipment, basic features. Team: 5 users, 50 equipment, full features. Business: Unlimited users and equipment, priority support, API access. Visit our Pricing page for full details."
-  },
+     question: "What's included in each plan?",
+     answer: "Solo: 1 user, 10 systems, basic features. Team: 5 users, 50 systems, full features. Business: Unlimited users and systems, priority support, API access. Visit our Pricing page for full details."
+   },
   {
     category: "Account & Billing",
     question: "Can I change my plan?",
