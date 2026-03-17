@@ -284,11 +284,11 @@ export default function Inspections() {
           <div className="flex items-center gap-2">
             <Thermometer className="h-4 w-4 text-muted-foreground" />
             <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by equipment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Equipment</SelectItem>
+               <SelectTrigger className="w-48">
+                 <SelectValue placeholder="Filter by system" />
+               </SelectTrigger>
+               <SelectContent>
+                 <SelectItem value="all">All Systems</SelectItem>
                 {uniqueEquipment.map((eq) => (
                   <SelectItem key={eq.id} value={eq.id}>
                     {eq.name}
