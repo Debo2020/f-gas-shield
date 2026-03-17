@@ -247,7 +247,7 @@ export default function Equipment() {
       setIsDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to add equipment");
+      toast.error(error.message || "Failed to add F-Gas system");
     } finally {
       setIsSubmitting(false);
     }
