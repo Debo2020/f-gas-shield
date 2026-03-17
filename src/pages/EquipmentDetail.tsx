@@ -279,7 +279,7 @@ export default function EquipmentDetail() {
             onClick={() => navigate("/equipment")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Equipment
+            Back to F-Gas Systems
           </Button>
 
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
