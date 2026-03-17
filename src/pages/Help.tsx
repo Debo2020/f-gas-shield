@@ -142,6 +142,7 @@ const categories = [
 ];
 
 export default function Help() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
