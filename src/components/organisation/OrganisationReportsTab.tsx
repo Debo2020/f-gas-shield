@@ -400,9 +400,9 @@ export function OrganisationReportsTab() {
     },
     {
       id: "leakcheck",
-      title: "Leak Check Records",
-      description: "Annual record of all leak checks performed on F-Gas equipment",
-      icon: ClipboardCheck,
+       title: "Leak Check Records",
+       description: "Annual record of all leak checks performed on F-Gas systems",
+       icon: ClipboardCheck,
       onGenerate: generateLeakCheckReport,
       yearFilter: true,
     },
