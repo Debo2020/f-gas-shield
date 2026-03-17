@@ -391,12 +391,12 @@ export function OrganisationReportsTab() {
   };
 
   const reports = [
-    {
-      id: "equipment",
-      title: "Equipment Register",
-      description: "Complete inventory of all F-Gas equipment with specifications and CO2e values",
-      icon: Wrench,
-      onGenerate: generateEquipmentReport,
+     {
+       id: "equipment",
+       title: "F-Gas System Register",
+       description: "Complete inventory of all F-Gas systems with specifications and CO2e values",
+       icon: Wrench,
+       onGenerate: generateEquipmentReport,
     },
     {
       id: "leakcheck",
