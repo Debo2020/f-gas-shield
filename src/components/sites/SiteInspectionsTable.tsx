@@ -209,7 +209,7 @@ export function SiteInspectionsTable({ siteId, siteName }: SiteInspectionsTableP
               Inspections at {siteName}
             </CardTitle>
             <CardDescription>
-              All inspection records for equipment at this site
+              All inspection records for systems at this site
             </CardDescription>
           </div>
           {canAddInspection && (
