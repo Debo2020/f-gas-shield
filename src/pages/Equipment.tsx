@@ -243,7 +243,7 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment registered successfully");
+      toast.success("F-Gas system registered successfully");
       setIsDialogOpen(false);
       fetchData();
     } catch (error: any) {
