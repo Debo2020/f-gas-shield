@@ -22,12 +22,14 @@ import {
   Menu,
   X,
   Download,
+  LifeBuoy,
 } from "lucide-react";
 import { useGasAddon } from "@/hooks/useGasAddon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
 import { TrialBanner } from "./TrialBanner";
 import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
+import { ServiceTicketDialog } from "@/components/support/ServiceTicketDialog";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -150,6 +152,12 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <Download className="mr-2 h-4 w-4" />
                   Install App
                 </DropdownMenuItem>
+                <ServiceTicketDialog>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    Raise Support Ticket
+                  </DropdownMenuItem>
+                </ServiceTicketDialog>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
