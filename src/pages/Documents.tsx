@@ -385,12 +385,12 @@ export default function Documents() {
               <TabsContent value="equipment">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Thermometer className="h-5 w-5" />
-                      Equipment Documents
-                    </CardTitle>
-                    <CardDescription>
-                      Labels, photos, and documentation for your equipment assets
+                     <CardTitle className="flex items-center gap-2">
+                       <Thermometer className="h-5 w-5" />
+                       System Documents
+                     </CardTitle>
+                     <CardDescription>
+                       Labels, photos, and documentation for your F-Gas system assets
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

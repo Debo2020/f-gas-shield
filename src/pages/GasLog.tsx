@@ -178,7 +178,7 @@ export default function GasLog() {
   }, [filteredMovements]);
 
   const handleExportCSV = () => {
-    const headers = ["Date", "Equipment", "Site", "Refrigerant", "Added (kg)", "Recovered (kg)", "Engineer"];
+    const headers = ["Date", "System", "Site", "Refrigerant", "Added (kg)", "Recovered (kg)", "Engineer"];
     const rows = filteredMovements.map((m) => [
       format(new Date(m.inspection_date), "yyyy-MM-dd"),
       m.equipment_name,

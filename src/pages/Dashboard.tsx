@@ -478,7 +478,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-success">Fully Compliant</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      All {equipmentData?.count} equipment {equipmentData?.count === 1 ? 'is' : 'are'} up to date with inspections
+                      All {equipmentData?.count} systems {equipmentData?.count === 1 ? 'is' : 'are'} up to date with inspections
                     </p>
                     <Button onClick={() => navigate("/inspections")} className="mt-4" variant="outline">
                       Record Inspection

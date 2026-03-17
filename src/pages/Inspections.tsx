@@ -558,9 +558,9 @@ export default function Inspections() {
                     navigate(`/equipment?highlight=${viewingInspection.equipment_id}`);
                   }}
                 >
-                  <Thermometer className="h-4 w-4 mr-2" />
-                  View Equipment
-                </Button>
+                   <Thermometer className="h-4 w-4 mr-2" />
+                   View System
+                 </Button>
               </div>
             </div>
           )}

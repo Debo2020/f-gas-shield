@@ -724,8 +724,8 @@ export default function Reports() {
     {
       id: "compliance",
       title: "Compliance Summary",
-      description: "Overview of equipment compliance status including overdue and upcoming inspections.",
-      icon: FileText,
+       description: "Overview of system compliance status including overdue and upcoming inspections.",
+       icon: FileText,
       onGeneratePDF: () => generateComplianceReport("pdf"),
       onGenerateCSV: () => generateComplianceReport("csv"),
     },

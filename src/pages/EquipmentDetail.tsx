@@ -781,8 +781,8 @@ export default function EquipmentDetail() {
             <Card>
               <CardHeader>
                 <CardTitle>Attached Documents</CardTitle>
-                <CardDescription>
-                  Certificates, photos, and other documents for this equipment
+                 <CardDescription>
+                   Certificates, photos, and other documents for this system
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

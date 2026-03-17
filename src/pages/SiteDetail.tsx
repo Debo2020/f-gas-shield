@@ -364,14 +364,14 @@ export default function SiteDetail() {
               <CardContent>
                 {equipment.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
-                    <Thermometer className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="mb-4">No equipment registered at this site</p>
-                    {canPerformActions && (
-                      <Button onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Equipment
-                      </Button>
-                    )}
+                     <Thermometer className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                     <p className="mb-4">No F-Gas systems registered at this site</p>
+                     {canPerformActions && (
+                       <Button onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
+                         <Plus className="h-4 w-4 mr-2" />
+                         Add System
+                       </Button>
+                     )}
                   </div>
                 ) : (
                   <div className="grid gap-3">
