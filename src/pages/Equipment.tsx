@@ -303,7 +303,7 @@ export default function Equipment() {
       setDeletingEquipment(null);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete equipment");
+      toast.error(error.message || "Failed to delete F-Gas system");
     }
   };
 
