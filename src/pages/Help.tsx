@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, HelpCircle, Mail, MessageSquare, BookOpen, Shield, Users, Wrench, FileText, ChevronRight, LifeBuoy } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
@@ -141,6 +142,7 @@ const categories = [
 ];
 
 export default function Help() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -311,18 +313,34 @@ export default function Help() {
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
                   </a>
-                  <ServiceTicketDialog>
-                    <button className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow text-left w-full">
+                  {user ? (
+                    <ServiceTicketDialog>
+                      <button className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow text-left w-full">
+                        <div className="p-3 rounded-full bg-primary/10">
+                          <LifeBuoy className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Raise a Ticket</h3>
+                          <p className="text-sm text-muted-foreground">Submit an issue</p>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
+                      </button>
+                    </ServiceTicketDialog>
+                  ) : (
+                    <Link
+                      to="/auth"
+                      className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow"
+                    >
                       <div className="p-3 rounded-full bg-primary/10">
                         <LifeBuoy className="w-6 h-6 text-primary" />
                       </div>
                       <div>
                         <h3 className="font-semibold">Raise a Ticket</h3>
-                        <p className="text-sm text-muted-foreground">Submit an issue</p>
+                        <p className="text-sm text-muted-foreground">Log in to submit</p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
-                    </button>
-                  </ServiceTicketDialog>
+                    </Link>
+                  )}
                   <Link
                     to="/auth"
                     className="flex items-center gap-4 p-4 rounded-lg border bg-background hover:shadow-md transition-shadow"

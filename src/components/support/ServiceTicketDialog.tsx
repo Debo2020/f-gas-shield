@@ -174,7 +174,13 @@ export function ServiceTicketDialog({ children }: ServiceTicketDialogProps) {
           </SheetDescription>
         </SheetHeader>
 
-        {ticketRef ? (
+        {!user ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <LifeBuoy className="h-12 w-12 text-muted-foreground" />
+            <p className="text-muted-foreground text-center">Please log in to raise a support ticket.</p>
+            <Button onClick={() => setOpen(false)} variant="outline">Close</Button>
+          </div>
+        ) : ticketRef ? (
           // Success state
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <CheckCircle2 className="h-16 w-16 text-primary" />
