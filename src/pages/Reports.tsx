@@ -250,7 +250,7 @@ export default function Reports() {
       } else {
         downloadCSV(`equipment-register-${dateStr}.csv`, headers, rows);
       }
-      toast.success(`Equipment register ${type.toUpperCase()} downloaded`);
+      toast.success(`F-Gas system register ${type.toUpperCase()} downloaded`);
     } catch (error) {
       console.error("Error generating report:", error);
       toast.error("Failed to generate report");
