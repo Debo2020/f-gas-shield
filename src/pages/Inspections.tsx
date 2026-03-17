@@ -350,7 +350,7 @@ export default function Inspections() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Equipment</TableHead>
+                  <TableHead>System</TableHead>
                   <TableHead>Site</TableHead>
                   <TableHead>Inspector</TableHead>
                   <TableHead>Result</TableHead>
