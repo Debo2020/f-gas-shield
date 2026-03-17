@@ -5,6 +5,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ServiceTicketDialog } from "@/components/support/ServiceTicketDialog";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
