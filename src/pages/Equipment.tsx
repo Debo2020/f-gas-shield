@@ -451,7 +451,7 @@ export default function Equipment() {
                   <Link to="/sites" className="text-primary hover:underline">
                     add a site
                   </Link>{" "}
-                  before you can register equipment.
+                  before you can register an F-Gas system.
                 </p>
               </div>
             </CardContent>
