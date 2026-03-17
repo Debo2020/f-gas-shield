@@ -252,13 +252,13 @@ export function EquipmentForm({
           )}
         />
 
-        {/* Equipment Name */}
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Equipment Name *</FormLabel>
+         {/* System Name */}
+         <FormField
+           control={form.control}
+           name="name"
+           render={({ field }) => (
+             <FormItem>
+               <FormLabel>System Name *</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. Chiller Unit 1, Cold Room A" {...field} />
               </FormControl>
