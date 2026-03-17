@@ -147,7 +147,7 @@ export function InspectionForm({
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!lockedEquipmentId}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select equipment"} />
+                    <SelectValue placeholder={isLoadingEquipment ? "Loading..." : "Select system"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

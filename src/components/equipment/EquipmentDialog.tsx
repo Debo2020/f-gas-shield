@@ -96,7 +96,7 @@ export function EquipmentDialog({
                 }
               : undefined
           }
-          submitLabel={isEditing ? "Save Changes" : "Register Equipment"}
+          submitLabel={isEditing ? "Save Changes" : "Register System"}
         />
       </DialogContent>
     </Dialog>

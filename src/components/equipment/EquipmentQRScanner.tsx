@@ -405,7 +405,7 @@ export function EquipmentQRScanner({
         {isLoading && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2 text-sm text-muted-foreground">Looking up equipment...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Looking up system...</span>
           </div>
         )}
       </DialogContent>

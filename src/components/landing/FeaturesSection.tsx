@@ -10,10 +10,10 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const features = [
-  {
-    icon: QrCode,
-    title: "Equipment Tracking",
-    description: "QR code labels for instant equipment identification. Track refrigerant charges, service history, and compliance status.",
+   {
+     icon: QrCode,
+     title: "F-Gas System Tracking",
+     description: "QR code labels for instant system identification. Track refrigerant charges, service history, and compliance status.",
   },
   {
     icon: ClipboardCheck,

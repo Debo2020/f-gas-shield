@@ -395,10 +395,10 @@ export function LabelGenerator({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Generate F-Gas Equipment Label</DialogTitle>
-          <DialogDescription>
-            Create a compliant equipment label with QR code for quick access to records
-          </DialogDescription>
+           <DialogTitle>Generate F-Gas System Label</DialogTitle>
+           <DialogDescription>
+             Create a compliant system label with QR code for quick access to records
+           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

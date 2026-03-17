@@ -518,7 +518,7 @@ export function EquipmentForm({
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Additional information about this equipment"
+                  placeholder="Additional information about this system"
                   className="resize-none"
                   rows={3}
                   {...field}

@@ -357,7 +357,7 @@ export default function SiteDetail() {
                 {canPerformActions && (
                   <Button size="sm" onClick={() => navigate(`/equipment?action=new&siteId=${site.id}`)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Equipment
+                    Add System
                   </Button>
                 )}
               </CardHeader>

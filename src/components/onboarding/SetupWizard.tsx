@@ -32,8 +32,8 @@ const steps = [
   },
   {
     key: "step_first_inspection" as const,
-    label: "Run your first Inspection",
-    description: "Record an equipment inspection",
+     label: "Run your first Inspection",
+     description: "Record a system inspection",
     href: "/inspections?action=new",
     icon: ClipboardCheck,
   },

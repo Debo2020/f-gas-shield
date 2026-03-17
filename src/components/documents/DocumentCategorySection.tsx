@@ -226,15 +226,15 @@ export function DocumentCategorySection({
             )}
 
             {/* Equipment Selector for Equipment category */}
-            {showEquipmentSelector && equipment.length > 0 && (
-              <div className="space-y-2">
-                <Label>Attach to Equipment (optional)</Label>
-                <Select value={selectedEquipmentId} onValueChange={setSelectedEquipmentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select equipment..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No specific equipment</SelectItem>
+             {showEquipmentSelector && equipment.length > 0 && (
+               <div className="space-y-2">
+                 <Label>Attach to System (optional)</Label>
+                 <Select value={selectedEquipmentId} onValueChange={setSelectedEquipmentId}>
+                   <SelectTrigger>
+                     <SelectValue placeholder="Select system..." />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="none">No specific system</SelectItem>
                     {equipment.map((eq) => (
                       <SelectItem key={eq.id} value={eq.id}>
                         {eq.name}
