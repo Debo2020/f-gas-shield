@@ -180,9 +180,7 @@ export function ServiceTicketDialog({ children }: ServiceTicketDialogProps) {
             <p className="text-muted-foreground text-center">Please log in to raise a support ticket.</p>
             <Button onClick={() => setOpen(false)} variant="outline">Close</Button>
           </div>
-        ) :
-
-        {ticketRef ? (
+        ) : ticketRef ? (
           // Success state
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <CheckCircle2 className="h-16 w-16 text-primary" />
