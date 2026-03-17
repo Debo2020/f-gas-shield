@@ -690,8 +690,8 @@ export default function Equipment() {
       <AlertDialog open={!!deletingEquipment} onOpenChange={(open) => !open && setDeletingEquipment(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Equipment</AlertDialogTitle>
-            <AlertDialogDescription>
+             <AlertDialogTitle>Delete F-Gas System</AlertDialogTitle>
+             <AlertDialogDescription>
               Are you sure you want to delete "{deletingEquipment?.name}"? This action cannot be
               undone and will remove all associated inspection records.
             </AlertDialogDescription>
