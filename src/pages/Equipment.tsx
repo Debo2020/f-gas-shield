@@ -789,8 +789,8 @@ export default function Equipment() {
               Generate Missing Asset Tags
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will generate asset tags for {equipmentWithoutTags.length} equipment 
-              item{equipmentWithoutTags.length !== 1 ? 's' : ''} that currently don't have tags.
+               This will generate asset tags for {equipmentWithoutTags.length} F-Gas 
+               system{equipmentWithoutTags.length !== 1 ? 's' : ''} that currently don't have tags.
             </AlertDialogDescription>
           </AlertDialogHeader>
           
