@@ -367,7 +367,7 @@ export function EquipmentQRScanner({
           <TabsContent value="manual" className="mt-4">
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="manual-input">Equipment ID or Asset Tag</Label>
+                <Label htmlFor="manual-input">System ID or Asset Tag</Label>
                 <Input
                   id="manual-input"
                   placeholder="Enter ID, asset tag, or serial number"
