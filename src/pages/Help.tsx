@@ -99,9 +99,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Compliance",
-    question: "How do I generate a compliance report?",
-    answer: "Go to Reports and select the report type you need. You can generate equipment registers, inspection histories, gas movement logs, and more. Reports can be exported as PDF."
-  },
+     question: "How do I generate a compliance report?",
+     answer: "Go to Reports and select the report type you need. You can generate system registers, inspection histories, gas movement logs, and more. Reports can be exported as PDF."
+   },
   {
     category: "Compliance",
     question: "What is the AI Compliance Assistant?",
