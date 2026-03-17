@@ -375,8 +375,8 @@ export function EquipmentQRScanner({
                   onChange={(e) => setManualInput(e.target.value)}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  You can enter the equipment UUID, asset tag, or serial number
+                 <p className="text-xs text-muted-foreground">
+                   You can enter the system UUID, asset tag, or serial number
                 </p>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading || !manualInput.trim()}>
