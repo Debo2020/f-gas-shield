@@ -432,7 +432,7 @@ export default function Equipment() {
                   title={sites.length > 0 && !canPerformActions ? "License required" : undefined}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Register Equipment
+                  Register System
                 </Button>
               )}
             </div>
