@@ -172,7 +172,7 @@ export default function EquipmentDetail() {
 
       if (equipmentRes.error) throw equipmentRes.error;
       if (!equipmentRes.data) {
-        toast.error("Equipment not found");
+        toast.error("F-Gas system not found");
         navigate("/equipment");
         return;
       }
