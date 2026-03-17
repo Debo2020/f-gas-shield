@@ -349,7 +349,8 @@ export function ServiceTicketDialog({ children }: ServiceTicketDialogProps) {
               Submit Ticket
             </Button>
           </div>
-        )}
+        )
+        }
       </SheetContent>
     </Sheet>
   );
