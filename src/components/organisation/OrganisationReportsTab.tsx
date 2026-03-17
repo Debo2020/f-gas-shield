@@ -416,8 +416,8 @@ export function OrganisationReportsTab() {
     },
     {
       id: "compliance",
-      title: "Compliance Summary",
-      description: "Overview of inspection compliance status for all equipment",
+       title: "Compliance Summary",
+       description: "Overview of inspection compliance status for all systems",
       icon: FileText,
       onGenerate: generateComplianceReport,
     },

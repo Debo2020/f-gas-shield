@@ -266,7 +266,7 @@ export function SiteInspectionsTable({ siteId, siteName }: SiteInspectionsTableP
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Equipment</TableHead>
+                    <TableHead>System</TableHead>
                     <TableHead>Result</TableHead>
                     <TableHead>Leak Check</TableHead>
                     <TableHead>Inspector</TableHead>

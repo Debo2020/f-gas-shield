@@ -133,7 +133,7 @@ const faqData: FAQItem[] = [
 
 const categories = [
   { name: "Getting Started", icon: BookOpen, color: "text-blue-500" },
-  { name: "Equipment & Inspections", icon: Wrench, color: "text-orange-500" },
+  { name: "F-Gas Systems & Inspections", icon: Wrench, color: "text-orange-500" },
   { name: "Gas Logging", icon: FileText, color: "text-green-500" },
   { name: "Compliance", icon: Shield, color: "text-purple-500" },
   { name: "Account & Billing", icon: Users, color: "text-pink-500" },
