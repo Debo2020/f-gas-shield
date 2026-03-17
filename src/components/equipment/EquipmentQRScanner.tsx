@@ -132,7 +132,7 @@ export function EquipmentQRScanner({
         setError("System not found. Please ensure it belongs to your company.");
       }
     } catch (err) {
-      setError("Failed to look up equipment. Please try again.");
+      setError("Failed to look up system. Please try again.");
     } finally {
       setIsLoading(false);
     }
