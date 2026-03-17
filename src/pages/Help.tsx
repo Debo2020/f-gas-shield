@@ -43,11 +43,11 @@ const faqData: FAQItem[] = [
   },
   
   // Equipment & Inspections
-  {
-    category: "Equipment & Inspections",
-    question: "How often do I need to perform leak checks?",
-    answer: "Leak check frequency depends on the CO₂ equivalent of the equipment: 5-50 tCO₂e requires annual checks, 50-500 tCO₂e requires checks every 6 months, and above 500 tCO₂e requires quarterly checks. FTrack automatically calculates this and sets reminders."
-  },
+   {
+     category: "F-Gas Systems & Inspections",
+     question: "How often do I need to perform leak checks?",
+     answer: "Leak check frequency depends on the CO₂ equivalent of the system: 5-50 tCO₂e requires annual checks, 50-500 tCO₂e requires checks every 6 months, and above 500 tCO₂e requires quarterly checks. FTrack automatically calculates this and sets reminders."
+   },
   {
     category: "Equipment & Inspections",
     question: "What happens when an inspection is due?",
