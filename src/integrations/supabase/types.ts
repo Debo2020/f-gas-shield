@@ -2063,6 +2063,116 @@ export type Database = {
           },
         ]
       }
+      support_ticket_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          affected_module: string | null
+          app_version: string | null
+          browser_info: string | null
+          company_id: string
+          created_at: string
+          description: string
+          id: string
+          is_recurring: boolean | null
+          issue_type: string
+          metadata: Json | null
+          org_name: string | null
+          page_url: string | null
+          priority: string
+          status: string
+          steps_to_reproduce: string | null
+          ticket_ref: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string | null
+        }
+        Insert: {
+          affected_module?: string | null
+          app_version?: string | null
+          browser_info?: string | null
+          company_id: string
+          created_at?: string
+          description: string
+          id?: string
+          is_recurring?: boolean | null
+          issue_type: string
+          metadata?: Json | null
+          org_name?: string | null
+          page_url?: string | null
+          priority?: string
+          status?: string
+          steps_to_reproduce?: string | null
+          ticket_ref: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role?: string | null
+        }
+        Update: {
+          affected_module?: string | null
+          app_version?: string | null
+          browser_info?: string | null
+          company_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_recurring?: boolean | null
+          issue_type?: string
+          metadata?: Json | null
+          org_name?: string | null
+          page_url?: string | null
+          priority?: string
+          status?: string
+          steps_to_reproduce?: string | null
+          ticket_ref?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       team_invitations: {
         Row: {
           accepted_at: string | null
