@@ -135,7 +135,7 @@ export default function Dashboard() {
       href: "/sites",
     },
     {
-      title: "Equipment",
+      title: "F-Gas Systems",
       value: equipmentData?.count || 0,
       icon: Shield,
       description: `${equipmentData?.totalCo2?.toFixed(1) || 0} tCO₂e total`,
