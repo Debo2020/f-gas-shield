@@ -693,9 +693,9 @@ export default function EquipmentDetail() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Refrigerant Gas Log</CardTitle>
-                  <CardDescription>
-                    Track refrigerant additions and recoveries for this equipment
-                  </CardDescription>
+                   <CardDescription>
+                     Track refrigerant additions and recoveries for this system
+                   </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" disabled>
                   <Download className="h-4 w-4 mr-2" />
