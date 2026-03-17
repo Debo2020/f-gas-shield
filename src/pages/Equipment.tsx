@@ -299,7 +299,7 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment deleted successfully");
+      toast.success("F-Gas system deleted successfully");
       setDeletingEquipment(null);
       fetchData();
     } catch (error: any) {
