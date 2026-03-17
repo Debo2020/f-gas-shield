@@ -64,10 +64,10 @@ export function EquipmentDialog({
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update the equipment details below"
-              : "Enter the details for your refrigeration equipment"}
+           <DialogDescription>
+             {isEditing
+               ? "Update the F-Gas system details below"
+               : "Enter the details for your refrigeration system"}
           </DialogDescription>
         </DialogHeader>
 
