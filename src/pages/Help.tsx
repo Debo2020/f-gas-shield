@@ -49,10 +49,10 @@ const faqData: FAQItem[] = [
      answer: "Leak check frequency depends on the CO₂ equivalent of the system: 5-50 tCO₂e requires annual checks, 50-500 tCO₂e requires checks every 6 months, and above 500 tCO₂e requires quarterly checks. FTrack automatically calculates this and sets reminders."
    },
   {
-    category: "Equipment & Inspections",
-    question: "What happens when an inspection is due?",
-    answer: "You'll see alerts in your dashboard and receive email notifications (if enabled). The equipment will be flagged as overdue if the inspection date passes without a recorded inspection."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "What happens when an inspection is due?",
+     answer: "You'll see alerts in your dashboard and receive email notifications (if enabled). The system will be flagged as overdue if the inspection date passes without a recorded inspection."
+   },
   {
     category: "Equipment & Inspections",
     question: "How do I record an inspection result?",
