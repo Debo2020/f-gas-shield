@@ -450,7 +450,7 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-medium text-destructive">Attention Required</h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      {equipmentData?.overdue} of {equipmentData?.count} equipment {equipmentData?.overdue === 1 ? 'has' : 'have'} overdue inspections
+                      {equipmentData?.overdue} of {equipmentData?.count} systems {equipmentData?.overdue === 1 ? 'has' : 'have'} overdue inspections
                     </p>
                     <Button onClick={() => navigate("/inspections?status=overdue")} className="mt-4" variant="destructive">
                       View Overdue
