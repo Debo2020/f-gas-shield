@@ -601,7 +601,7 @@ export default function Reports() {
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...BRAND_COLORS.slateGrey);
-        doc.text(`Equipment inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, textStartX, 36);
+        doc.text(`F-Gas system inspection compliance status as of ${format(today, "dd MMMM yyyy")}`, textStartX, 36);
         doc.setFontSize(9);
         doc.text(`Generated: ${generatedAt}`, textStartX, 43);
         
