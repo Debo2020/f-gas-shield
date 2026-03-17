@@ -531,8 +531,8 @@ export default function Reports() {
       if (error) throw error;
 
       const today = new Date();
-      const headers = [
-        "Equipment", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)",
+       const headers = [
+         "System", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)",
         "Last Inspection", "Next Due", "Status"
       ];
 
