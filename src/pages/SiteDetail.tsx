@@ -207,7 +207,7 @@ export default function SiteDetail() {
                   <p className="text-2xl font-bold">
                     <AnimatedCounter value={activeEquipment.length} />
                   </p>
-                  <p className="text-xs text-muted-foreground">Equipment</p>
+                  <p className="text-xs text-muted-foreground">Systems</p>
                 </div>
               </div>
             </CardContent>
