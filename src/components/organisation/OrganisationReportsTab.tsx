@@ -348,7 +348,7 @@ export function OrganisationReportsTab() {
       if (error) throw error;
 
       const today = new Date();
-      const headers = ["Equipment", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)", "Next Due", "Status"];
+      const headers = ["System", "Site", "Refrigerant", "Charge (kg)", "CO2e (t)", "Next Due", "Status"];
 
       const rows = (data || []).map((eq: any) => {
         const dueDate = eq.next_inspection_due ? new Date(eq.next_inspection_due) : null;
