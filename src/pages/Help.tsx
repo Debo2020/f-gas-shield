@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, HelpCircle, Mail, MessageSquare, BookOpen, Shield, Users, Wrench, FileText, ChevronRight, LifeBuoy } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
