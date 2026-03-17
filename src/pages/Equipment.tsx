@@ -528,7 +528,7 @@ export default function Equipment() {
               <Table>
               <TableHeader>
                 <TableRow>
-              <TableHead>Equipment</TableHead>
+              <TableHead>System</TableHead>
               <TableHead>Asset ID</TableHead>
               <TableHead>Site</TableHead>
                   <TableHead>Refrigerant</TableHead>
