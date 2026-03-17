@@ -217,8 +217,8 @@ export default function Reports() {
 
       if (error) throw error;
 
-      const headers = [
-        "Equipment", "Site", "Manufacturer", "Model", "Serial No.",
+       const headers = [
+         "System", "Site", "Manufacturer", "Model", "Serial No.",
         "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
         "Install Date", "Location", "Status"
       ];
