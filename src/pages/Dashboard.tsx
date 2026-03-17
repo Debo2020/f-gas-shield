@@ -434,9 +434,9 @@ export default function Dashboard() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4 animate-float">
                       <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="font-medium">No equipment registered yet</h3>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      Add your first site and equipment to start tracking F-Gas compliance
+                     <h3 className="font-medium">No F-Gas systems registered yet</h3>
+                     <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                       Add your first site and system to start tracking F-Gas compliance
                     </p>
                     <Button onClick={() => navigate("/sites?action=new")} className="mt-4" variant="outline">
                       Get Started
