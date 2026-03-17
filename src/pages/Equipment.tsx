@@ -278,7 +278,7 @@ export default function Equipment() {
 
       if (error) throw error;
 
-      toast.success("Equipment updated successfully");
+      toast.success("F-Gas system updated successfully");
       setEditingEquipment(null);
       fetchData();
     } catch (error: any) {
