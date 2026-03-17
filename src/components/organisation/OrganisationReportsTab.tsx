@@ -182,11 +182,11 @@ export function OrganisationReportsTab() {
 
       if (error) throw error;
 
-      const headers = [
-        "Equipment", "Site", "Manufacturer", "Model", "Serial No.",
-        "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
-        "Install Date", "Location", "Status"
-      ];
+       const headers = [
+         "System", "Site", "Manufacturer", "Model", "Serial No.",
+         "Asset Tag", "Refrigerant", "Charge (kg)", "CO2e (t)",
+         "Install Date", "Location", "Status"
+       ];
 
       const rows = (data || []).map((eq: any) => [
         eq.name, eq.site?.name || "", eq.manufacturer || "", eq.model || "",
