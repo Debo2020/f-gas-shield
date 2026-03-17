@@ -282,7 +282,7 @@ export default function Equipment() {
       setEditingEquipment(null);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update equipment");
+      toast.error(error.message || "Failed to update F-Gas system");
     } finally {
       setIsSubmitting(false);
     }
