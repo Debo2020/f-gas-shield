@@ -59,10 +59,10 @@ const faqData: FAQItem[] = [
      answer: "Go to Inspections, click 'Add Inspection', select the system, and fill in the inspection details including result, any leaks found, and refrigerant added or recovered."
    },
   {
-    category: "Equipment & Inspections",
-    question: "Can I attach photos to inspections?",
-    answer: "Yes! When recording an inspection, you can upload photos and documents. You can also add documents from the Documents section and link them to specific equipment."
-  },
+     category: "F-Gas Systems & Inspections",
+     question: "Can I attach photos to inspections?",
+     answer: "Yes! When recording an inspection, you can upload photos and documents. You can also add documents from the Documents section and link them to specific systems."
+   },
   
   // Gas Logging
   {
