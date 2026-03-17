@@ -277,11 +277,11 @@ export function EquipmentQRScanner({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5 text-primary" />
-            Scan Equipment QR Code
-          </DialogTitle>
-          <DialogDescription>
-            Scan an equipment label QR code to view or update its information.
+             <Camera className="h-5 w-5 text-primary" />
+             Scan System QR Code
+           </DialogTitle>
+           <DialogDescription>
+             Scan a system label QR code to view or update its information.
           </DialogDescription>
         </DialogHeader>
 
