@@ -28,9 +28,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Getting Started",
-    question: "How do I add my first piece of equipment?",
-    answer: "Navigate to Sites, create a site first, then go to Equipment and click 'Add Equipment'. Fill in the equipment details including refrigerant type and charge weight."
-  },
+     question: "How do I add my first F-Gas system?",
+     answer: "Navigate to Sites, create a site first, then go to F-Gas Systems and click 'Register System'. Fill in the system details including refrigerant type and charge weight."
+   },
   {
     category: "Getting Started",
     question: "Can I import existing equipment data?",
