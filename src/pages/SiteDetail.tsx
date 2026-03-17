@@ -347,11 +347,11 @@ export default function SiteDetail() {
           {/* Equipment Tab */}
           <TabsContent value="equipment">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Equipment at this Site</CardTitle>
-                  <CardDescription>
-                    All refrigeration equipment registered at {site.name}
+               <CardHeader className="flex flex-row items-center justify-between">
+                 <div>
+                   <CardTitle>F-Gas Systems at this Site</CardTitle>
+                   <CardDescription>
+                     All refrigeration systems registered at {site.name}
                   </CardDescription>
                 </div>
                 {canPerformActions && (
