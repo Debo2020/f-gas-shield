@@ -43,6 +43,7 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
