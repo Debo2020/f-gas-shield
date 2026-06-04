@@ -37,7 +37,7 @@ describe("ServiceTicketDialog smoke", () => {
     );
 
     // Default trigger renders a "Raise a Ticket" button
-    const trigger = screen.getByRole("button", { name: /raise a ticket/i });
+    const trigger = screen.getByRole("button", { name: /support/i });
     expect(trigger).toBeInTheDocument();
 
     fireEvent.click(trigger);
