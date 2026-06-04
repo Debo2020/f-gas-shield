@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
+import { ResendVerificationButton } from "@/components/auth/ResendVerificationButton";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(1, "Password is required");
@@ -26,6 +27,7 @@ export default function Auth() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -41,6 +43,7 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -76,7 +79,11 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (error) {
-      if (error.message.includes("Invalid login credentials")) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("email not confirmed") || msg.includes("not confirmed") || msg.includes("confirm")) {
+        setNeedsVerification(true);
+        setError("Please verify your email address before signing in.");
+      } else if (error.message.includes("Invalid login credentials")) {
         setError("Invalid email or password. Please try again.");
       } else {
         setError(error.message);
@@ -237,6 +244,16 @@ export default function Auth() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
+
+          {needsVerification && !isOffline && (
+            <div className="mb-4">
+              <ResendVerificationButton
+                email={email}
+                emailRedirectTo={`${window.location.origin}/setup-company`}
+                className="w-full"
+              />
+            </div>
           )}
 
           {isOffline && (

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { z } from "zod";
+import { ResendVerificationButton } from "@/components/auth/ResendVerificationButton";
 
 const emailSchema = z.string().trim().email("Please enter a valid email address");
 const passwordSchema = z
@@ -141,9 +142,16 @@ export default function GetStarted() {
             <Button variant="outline" onClick={() => navigate("/auth")} className="w-full">
               Go to Sign In
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Didn't receive the email? Check your spam folder or try signing up again.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Didn't receive the email? Check your spam folder, then try resending.
+              </p>
+              <ResendVerificationButton
+                email={email}
+                emailRedirectTo={`${window.location.origin}/setup-company`}
+                className="w-full"
+              />
+            </div>
           </div>
         </main>
       </div>
