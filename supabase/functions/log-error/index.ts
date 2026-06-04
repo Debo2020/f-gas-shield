@@ -89,11 +89,11 @@ serve(async (req) => {
       user_id: userId,
       company_id: companyId,
       error_message: String(message).slice(0, 2000),
-      error_stack: stack ? String(stack).slice(0, 5000) : null,
-      component_name: component || null,
-      url: url || null,
-      user_agent: userAgent || null,
-      metadata: metadata || {},
+      error_stack: typeof stack === "string" ? stack.slice(0, 5000) : null,
+      component_name: typeof component === "string" ? component.slice(0, 200) : null,
+      url: typeof url === "string" ? url.slice(0, 500) : null,
+      user_agent: typeof userAgent === "string" ? userAgent.slice(0, 500) : null,
+      metadata: safeMetadata,
     });
 
     return new Response(JSON.stringify({ ok: true }), {
