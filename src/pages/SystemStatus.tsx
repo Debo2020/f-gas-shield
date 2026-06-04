@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   RefreshCw,
   Lock,
   Activity,
+  Clock,
 } from "lucide-react";
 
 const HEALTH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-check`;
@@ -78,14 +80,48 @@ function statusMeta(status: HealthState["status"]) {
   }
 }
 
+interface HistoryRow {
+  id: string;
+  status: Status;
+  http_status: number | null;
+  latency_ms: number | null;
+  db: string | null;
+  error: string | null;
+  checked_at: string;
+}
+
 export default function SystemStatus() {
   const { user, isLoading: authLoading } = useAuth();
   const [state, setState] = useState<HealthState>(initialState);
   const [checking, setChecking] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
+
+  const loadHistory = useCallback(async () => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("health_check_log")
+      .select("id, status, http_status, latency_ms, db, error, checked_at")
+      .gte("checked_at", since)
+      .order("checked_at", { ascending: false })
+      .limit(200);
+    if (data) setHistory(data as HistoryRow[]);
+  }, []);
+
+  const recordResult = useCallback(async (result: HealthState) => {
+    if (result.status === "unknown") return;
+    await supabase.from("health_check_log").insert({
+      status: result.status,
+      http_status: result.httpStatus,
+      latency_ms: result.latencyMs,
+      db: result.db,
+      error: result.error,
+    });
+  }, []);
 
   const check = useCallback(async () => {
     setChecking(true);
     const start = performance.now();
+    let next: HealthState;
     try {
       const res = await fetch(HEALTH_URL, { cache: "no-store" });
       const latencyMs = Math.round(performance.now() - start);
@@ -100,7 +136,7 @@ export default function SystemStatus() {
       if (res.ok && body?.status === "ok") status = "ok";
       else if (res.status === 503 || body?.status === "degraded") status = "degraded";
 
-      setState({
+      next = {
         status,
         httpStatus: res.status,
         db: body?.db ?? null,
@@ -108,25 +144,30 @@ export default function SystemStatus() {
         fetchedAt: new Date(),
         latencyMs,
         error: null,
-      });
+      };
     } catch (err) {
-      setState({
+      next = {
         ...initialState,
         status: "error",
         fetchedAt: new Date(),
         error: err instanceof Error ? err.message : "Network error",
-      });
+      };
     } finally {
       setChecking(false);
     }
-  }, []);
+    setState(next);
+    await recordResult(next);
+    await loadHistory();
+  }, [recordResult, loadHistory]);
 
   useEffect(() => {
     if (!user) return;
+    loadHistory();
     check();
     const id = window.setInterval(check, POLL_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [user, check]);
+  }, [user, check, loadHistory]);
+
 
   // Auth gate — public route, but content for logged-in staff only
   if (authLoading) {
@@ -237,6 +278,76 @@ export default function SystemStatus() {
                 {checking ? "Checking" : "Refresh"}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Last 24 hours</CardTitle>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {history.length} check{history.length === 1 ? "" : "s"}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No checks recorded in the last 24 hours. Health entries appear here as staff
+                visit this page.
+              </p>
+            ) : (
+              <>
+                {/* Compact bar timeline (oldest → newest, left → right) */}
+                <div className="mb-4 flex h-8 w-full gap-[2px] overflow-hidden rounded">
+                  {[...history].reverse().map((row) => {
+                    const m = statusMeta(row.status);
+                    return (
+                      <div
+                        key={row.id}
+                        className={`flex-1 ${m.badgeClass.replace(
+                          /text-\S+|border-\S+/g,
+                          ""
+                        )}`}
+                        title={`${m.label} • ${new Date(
+                          row.checked_at
+                        ).toLocaleString()}${
+                          row.latency_ms !== null ? ` • ${row.latency_ms} ms` : ""
+                        }${row.error ? ` • ${row.error}` : ""}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Detailed event list — incidents first, then most recent */}
+                <ul className="divide-y divide-border max-h-80 overflow-y-auto">
+                  {history.map((row) => {
+                    const m = statusMeta(row.status);
+                    const I = m.Icon;
+                    return (
+                      <li
+                        key={row.id}
+                        className="flex items-center gap-3 py-2 text-sm"
+                      >
+                        <I className="h-4 w-4 shrink-0" />
+                        <span className="w-24 shrink-0 font-medium">{m.label}</span>
+                        <span className="text-muted-foreground shrink-0">
+                          {new Date(row.checked_at).toLocaleTimeString()}
+                        </span>
+                        <span className="text-muted-foreground hidden sm:inline shrink-0">
+                          {new Date(row.checked_at).toLocaleDateString()}
+                        </span>
+                        <span className="ml-auto text-xs text-muted-foreground shrink-0">
+                          {row.latency_ms !== null ? `${row.latency_ms} ms` : ""}
+                          {row.http_status ? ` · HTTP ${row.http_status}` : ""}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
           </CardContent>
         </Card>
 

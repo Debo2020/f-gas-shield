@@ -1249,6 +1249,36 @@ export type Database = {
           },
         ]
       }
+      health_check_log: {
+        Row: {
+          checked_at: string
+          db: string | null
+          error: string | null
+          http_status: number | null
+          id: string
+          latency_ms: number | null
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          db?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          status: string
+        }
+        Update: {
+          checked_at?: string
+          db?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          latency_ms?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       inspections: {
         Row: {
           company_id: string
