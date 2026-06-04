@@ -282,6 +282,76 @@ export default function SystemStatus() {
         </Card>
 
         <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Last 24 hours</CardTitle>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {history.length} check{history.length === 1 ? "" : "s"}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No checks recorded in the last 24 hours. Health entries appear here as staff
+                visit this page.
+              </p>
+            ) : (
+              <>
+                {/* Compact bar timeline (oldest → newest, left → right) */}
+                <div className="mb-4 flex h-8 w-full gap-[2px] overflow-hidden rounded">
+                  {[...history].reverse().map((row) => {
+                    const m = statusMeta(row.status);
+                    return (
+                      <div
+                        key={row.id}
+                        className={`flex-1 ${m.badgeClass.replace(
+                          /text-\S+|border-\S+/g,
+                          ""
+                        )}`}
+                        title={`${m.label} • ${new Date(
+                          row.checked_at
+                        ).toLocaleString()}${
+                          row.latency_ms !== null ? ` • ${row.latency_ms} ms` : ""
+                        }${row.error ? ` • ${row.error}` : ""}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Detailed event list — incidents first, then most recent */}
+                <ul className="divide-y divide-border max-h-80 overflow-y-auto">
+                  {history.map((row) => {
+                    const m = statusMeta(row.status);
+                    const I = m.Icon;
+                    return (
+                      <li
+                        key={row.id}
+                        className="flex items-center gap-3 py-2 text-sm"
+                      >
+                        <I className="h-4 w-4 shrink-0" />
+                        <span className="w-24 shrink-0 font-medium">{m.label}</span>
+                        <span className="text-muted-foreground shrink-0">
+                          {new Date(row.checked_at).toLocaleTimeString()}
+                        </span>
+                        <span className="text-muted-foreground hidden sm:inline shrink-0">
+                          {new Date(row.checked_at).toLocaleDateString()}
+                        </span>
+                        <span className="ml-auto text-xs text-muted-foreground shrink-0">
+                          {row.latency_ms !== null ? `${row.latency_ms} ms` : ""}
+                          {row.http_status ? ` · HTTP ${row.http_status}` : ""}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">What each state means</CardTitle>
           </CardHeader>
