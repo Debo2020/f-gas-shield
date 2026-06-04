@@ -1,0 +1,90 @@
+// FTrack email brand tokens
+export const BRAND = {
+  name: 'FTrack',
+  logoUrl: 'https://ftrack.uk/ftrack-logo.png',
+  siteUrl: 'https://ftrack.uk',
+  navy: '#1e3a5f',
+  green: '#22c55e',
+  text: '#1f2937',
+  muted: '#6b7280',
+  border: '#e5e7eb',
+  bg: '#ffffff',
+  surface: '#f8fafc',
+}
+
+export const styles = {
+  main: {
+    backgroundColor: '#ffffff',
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
+    margin: 0,
+    padding: 0,
+  },
+  container: {
+    maxWidth: '560px',
+    margin: '0 auto',
+    padding: '0',
+  },
+  header: {
+    padding: '24px 32px',
+    borderBottom: `3px solid ${BRAND.navy}`,
+    textAlign: 'left' as const,
+  },
+  logo: {
+    height: '36px',
+    width: 'auto',
+  },
+  content: {
+    padding: '32px',
+  },
+  h1: {
+    fontSize: '22px',
+    fontWeight: 700 as const,
+    color: BRAND.navy,
+    margin: '0 0 16px',
+    lineHeight: '1.3',
+  },
+  text: {
+    fontSize: '15px',
+    color: BRAND.text,
+    lineHeight: '1.6',
+    margin: '0 0 16px',
+  },
+  button: {
+    backgroundColor: BRAND.navy,
+    color: '#ffffff',
+    fontSize: '15px',
+    fontWeight: 600 as const,
+    borderRadius: '6px',
+    padding: '12px 24px',
+    textDecoration: 'none',
+    display: 'inline-block',
+    margin: '8px 0 24px',
+  },
+  link: { color: BRAND.navy, textDecoration: 'underline' },
+  code: {
+    display: 'inline-block',
+    fontFamily: "'Courier New', monospace",
+    fontSize: '28px',
+    fontWeight: 700 as const,
+    letterSpacing: '6px',
+    color: BRAND.navy,
+    backgroundColor: BRAND.surface,
+    border: `1px solid ${BRAND.border}`,
+    padding: '16px 24px',
+    borderRadius: '6px',
+    margin: '8px 0 24px',
+  },
+  footer: {
+    fontSize: '12px',
+    color: BRAND.muted,
+    lineHeight: '1.5',
+    padding: '24px 32px',
+    borderTop: `1px solid ${BRAND.border}`,
+    margin: 0,
+  },
+  hint: {
+    fontSize: '13px',
+    color: BRAND.muted,
+    margin: '24px 0 0',
+  },
+}
