@@ -9,14 +9,47 @@ serve(async (req) => {
   }
 
   try {
-    const { message, stack, component, url, userAgent, metadata } = await req.json();
+    // Cap raw body to 16KB to prevent spam/DoS via huge payloads.
+    const rawBody = await req.text();
+    if (rawBody.length > 16 * 1024) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { message, stack, component, url, userAgent, metadata } = parsed as {
+      message?: unknown; stack?: unknown; component?: unknown;
+      url?: unknown; userAgent?: unknown; metadata?: unknown;
+    };
 
-    if (!message) {
+    if (!message || typeof message !== "string") {
       return new Response(JSON.stringify({ error: "message is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Cap metadata to 1KB to prevent table bloat from oversized JSON.
+    let safeMetadata: Record<string, unknown> = {};
+    if (metadata && typeof metadata === "object") {
+      const serialized = JSON.stringify(metadata);
+      if (serialized.length <= 1024) {
+        safeMetadata = metadata as Record<string, unknown>;
+      } else {
+        safeMetadata = { _truncated: true, _size: serialized.length };
+      }
+    }
+
+
 
     // Optionally extract user info from auth header
     let userId: string | null = null;
