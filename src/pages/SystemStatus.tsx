@@ -80,14 +80,48 @@ function statusMeta(status: HealthState["status"]) {
   }
 }
 
+interface HistoryRow {
+  id: string;
+  status: Status;
+  http_status: number | null;
+  latency_ms: number | null;
+  db: string | null;
+  error: string | null;
+  checked_at: string;
+}
+
 export default function SystemStatus() {
   const { user, isLoading: authLoading } = useAuth();
   const [state, setState] = useState<HealthState>(initialState);
   const [checking, setChecking] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
+
+  const loadHistory = useCallback(async () => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("health_check_log")
+      .select("id, status, http_status, latency_ms, db, error, checked_at")
+      .gte("checked_at", since)
+      .order("checked_at", { ascending: false })
+      .limit(200);
+    if (data) setHistory(data as HistoryRow[]);
+  }, []);
+
+  const recordResult = useCallback(async (result: HealthState) => {
+    if (result.status === "unknown") return;
+    await supabase.from("health_check_log").insert({
+      status: result.status,
+      http_status: result.httpStatus,
+      latency_ms: result.latencyMs,
+      db: result.db,
+      error: result.error,
+    });
+  }, []);
 
   const check = useCallback(async () => {
     setChecking(true);
     const start = performance.now();
+    let next: HealthState;
     try {
       const res = await fetch(HEALTH_URL, { cache: "no-store" });
       const latencyMs = Math.round(performance.now() - start);
@@ -102,7 +136,7 @@ export default function SystemStatus() {
       if (res.ok && body?.status === "ok") status = "ok";
       else if (res.status === 503 || body?.status === "degraded") status = "degraded";
 
-      setState({
+      next = {
         status,
         httpStatus: res.status,
         db: body?.db ?? null,
@@ -110,25 +144,30 @@ export default function SystemStatus() {
         fetchedAt: new Date(),
         latencyMs,
         error: null,
-      });
+      };
     } catch (err) {
-      setState({
+      next = {
         ...initialState,
         status: "error",
         fetchedAt: new Date(),
         error: err instanceof Error ? err.message : "Network error",
-      });
+      };
     } finally {
       setChecking(false);
     }
-  }, []);
+    setState(next);
+    await recordResult(next);
+    await loadHistory();
+  }, [recordResult, loadHistory]);
 
   useEffect(() => {
     if (!user) return;
+    loadHistory();
     check();
     const id = window.setInterval(check, POLL_INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [user, check]);
+  }, [user, check, loadHistory]);
+
 
   // Auth gate — public route, but content for logged-in staff only
   if (authLoading) {
