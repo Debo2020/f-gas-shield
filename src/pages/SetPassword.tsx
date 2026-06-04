@@ -48,36 +48,28 @@ export default function SetPassword() {
       }
 
       try {
-        // Fetch invitation details using the token - no session needed
-        // We use the anon key which can read team_invitations by token
-        const { data, error: queryError } = await supabase
-          .from("team_invitations")
-          .select(`
-            id,
-            email,
-            role,
-            expires_at,
-            accepted_at,
-            companies:company_id (
-              id,
-              name
-            )
-          `)
-          .eq("token", token)
-          .maybeSingle();
+        const { data, error: queryError } = await supabase.rpc(
+          "get_invitation_by_token",
+          { _token: token }
+        );
 
-        if (queryError || !data) {
-          console.error("Team invitation lookup failed:", queryError);
-          
-          // Cross-flow detection: check if this token belongs to a license invitation instead
-          const { data: licenseInvite } = await supabase
-            .from("user_licenses")
-            .select("id")
-            .eq("token", token)
-            .maybeSingle();
+        const inv = data as {
+          id: string;
+          email: string;
+          role: AppRole;
+          expires_at: string;
+          accepted_at: string | null;
+          company_id: string;
+          company_name: string | null;
+        } | null;
 
-          if (licenseInvite) {
-            // Token belongs to user_licenses, redirect to the correct page
+        if (queryError || !inv) {
+          // Cross-flow detection
+          const { data: tokenType } = await supabase.rpc("lookup_token_type", {
+            _token: token,
+          });
+
+          if (tokenType === "license") {
             window.location.replace(`/accept-license?token=${token}`);
             return;
           }
@@ -87,30 +79,29 @@ export default function SetPassword() {
           return;
         }
 
-        if (data.accepted_at) {
+        if (inv.accepted_at) {
           setError("This invitation has already been accepted");
           setIsLoading(false);
           return;
         }
 
-        if (new Date(data.expires_at) < new Date()) {
+        if (new Date(inv.expires_at) < new Date()) {
           setError("This invitation has expired. Please ask your administrator to send a new invitation.");
           setIsLoading(false);
           return;
         }
 
-        const companyData = data.companies as unknown as { id: string; name: string } | null;
-
         setInvitation({
-          id: data.id,
-          email: data.email,
-          role: data.role as AppRole,
-          expires_at: data.expires_at,
+          id: inv.id,
+          email: inv.email,
+          role: inv.role,
+          expires_at: inv.expires_at,
           company: {
-            id: companyData?.id || "",
-            name: companyData?.name || "Your Organization",
+            id: inv.company_id || "",
+            name: inv.company_name || "Your Organization",
           },
         });
+
       } catch (err) {
         console.error("Error fetching invitation:", err);
         setError("Failed to load invitation details");
