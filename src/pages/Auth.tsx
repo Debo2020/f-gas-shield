@@ -246,6 +246,16 @@ export default function Auth() {
             </Alert>
           )}
 
+          {needsVerification && !isOffline && (
+            <div className="mb-4">
+              <ResendVerificationButton
+                email={email}
+                emailRedirectTo={`${window.location.origin}/setup-company`}
+                className="w-full"
+              />
+            </div>
+          )}
+
           {isOffline && (
             <Alert className="mb-4 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
               <WifiOff className="h-4 w-4 text-amber-600" />
