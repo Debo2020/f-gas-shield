@@ -40,9 +40,30 @@ const sendEmail = async (to: string, subject: string, html: string) => {
   }
 };
 
-serve(async (_req) => {
+serve(async (req) => {
   try {
+    // Require a shared cron secret so only the scheduler (or admins) can trigger
+    // this function. Without this, anyone could force Stripe trial extensions
+    // and bulk emails by hitting the public URL.
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    if (!cronSecret) {
+      logStep("CRON_SECRET not configured — rejecting all requests");
+      return new Response(JSON.stringify({ error: "Not configured" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const provided = req.headers.get("x-cron-secret") ??
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    if (provided !== cronSecret) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     logStep("Cron started");
+
 
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

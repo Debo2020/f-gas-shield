@@ -174,13 +174,34 @@ serve(async (req) => {
 
     // Parse request body
     const { messages } = await req.json();
-    
+
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: "Messages array is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Sanitize messages: only allow user/assistant roles and cap content length.
+    // This prevents prompt-injection via attacker-supplied `role: "system"`.
+    const MAX_CONTENT_LEN = 4000;
+    const cleanMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+    for (const m of messages) {
+      if (!m || typeof m !== "object") continue;
+      const role = (m as { role?: unknown }).role;
+      const content = (m as { content?: unknown }).content;
+      if (role !== "user" && role !== "assistant") continue;
+      if (typeof content !== "string" || content.length === 0) continue;
+      cleanMessages.push({ role, content: content.slice(0, MAX_CONTENT_LEN) });
+    }
+
+    if (cleanMessages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No valid user/assistant messages provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -191,7 +212,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Sending request to Lovable AI with", messages.length, "messages");
+    console.log("Sending request to Lovable AI with", cleanMessages.length, "messages");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -203,7 +224,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: FGAS_SYSTEM_PROMPT },
-          ...messages.slice(-10), // Limit context to last 10 messages
+          ...cleanMessages.slice(-10), // Limit context to last 10 sanitized messages
         ],
         stream: true,
       }),
