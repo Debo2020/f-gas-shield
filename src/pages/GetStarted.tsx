@@ -141,9 +141,16 @@ export default function GetStarted() {
             <Button variant="outline" onClick={() => navigate("/auth")} className="w-full">
               Go to Sign In
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Didn't receive the email? Check your spam folder or try signing up again.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Didn't receive the email? Check your spam folder, then try resending.
+              </p>
+              <ResendVerificationButton
+                email={email}
+                emailRedirectTo={`${window.location.origin}/setup-company`}
+                className="w-full"
+              />
+            </div>
           </div>
         </main>
       </div>
