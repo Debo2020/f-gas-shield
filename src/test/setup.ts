@@ -21,8 +21,8 @@ class ResizeObserverMock {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error attach to global
-globalThis.ResizeObserver = ResizeObserverMock;
+(globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+
 
 // Silence noisy console.error from React/Radix during tests unless explicitly desired
 const originalError = console.error;
