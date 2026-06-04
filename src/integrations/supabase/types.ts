@@ -2364,6 +2364,8 @@ export type Database = {
         Args: { company_uuid: string }
         Returns: number
       }
+      get_invitation_by_token: { Args: { _token: string }; Returns: Json }
+      get_license_by_token: { Args: { _token: string }; Returns: Json }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -2432,6 +2434,7 @@ export type Database = {
         }
         Returns: string
       }
+      lookup_token_type: { Args: { _token: string }; Returns: string }
       recalculate_activation_score: {
         Args: { _user_id: string }
         Returns: undefined

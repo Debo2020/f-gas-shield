@@ -41,54 +41,50 @@ export default function AcceptInvite() {
       }
 
       try {
-        // Use RPC or direct query - for public access we need a different approach
-        // Since RLS blocks unauthenticated access, we'll check after auth
-        const { data, error: queryError } = await supabase
-          .from("team_invitations")
-          .select(`
-            id,
-            email,
-            role,
-            expires_at,
-            accepted_at,
-            companies:company_id (
-              id,
-              name
-            )
-          `)
-          .eq("token", token)
-          .maybeSingle();
+        const { data, error: queryError } = await supabase.rpc(
+          "get_invitation_by_token",
+          { _token: token }
+        );
 
-        if (queryError || !data) {
+        const inv = data as {
+          id: string;
+          email: string;
+          role: AppRole;
+          expires_at: string;
+          accepted_at: string | null;
+          company_id: string;
+          company_name: string | null;
+        } | null;
+
+        if (queryError || !inv) {
           setError("Invitation not found or has expired");
           setIsLoading(false);
           return;
         }
 
-        if (data.accepted_at) {
+        if (inv.accepted_at) {
           setError("This invitation has already been accepted");
           setIsLoading(false);
           return;
         }
 
-        if (new Date(data.expires_at) < new Date()) {
+        if (new Date(inv.expires_at) < new Date()) {
           setError("This invitation has expired");
           setIsLoading(false);
           return;
         }
 
-        const companyData = data.companies as unknown as { id: string; name: string };
-
         setInvitation({
-          id: data.id,
-          email: data.email,
-          role: data.role as AppRole,
-          expires_at: data.expires_at,
+          id: inv.id,
+          email: inv.email,
+          role: inv.role,
+          expires_at: inv.expires_at,
           company: {
-            id: companyData.id,
-            name: companyData.name,
+            id: inv.company_id,
+            name: inv.company_name || "Unknown Company",
           },
         });
+
       } catch (err) {
         setError("Failed to load invitation details");
       } finally {

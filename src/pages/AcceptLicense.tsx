@@ -44,35 +44,28 @@ export default function AcceptLicense() {
       }
 
       try {
-        // Fetch license details by token (anon RLS policy allows this)
-        const { data: licenseData, error: licenseError } = await supabase
-          .from("user_licenses")
-          .select(`
-            id,
-            email,
-            license_type,
-            status,
-            token,
-            company_id,
-            companies:company_id (
-              name
-            )
-          `)
-          .eq("token", token)
-          .single();
+        const { data: licenseData, error: licenseError } = await supabase.rpc(
+          "get_license_by_token",
+          { _token: token }
+        );
 
-        if (licenseError || !licenseData) {
-          console.error("License lookup failed:", licenseError);
-          
-          // Cross-flow detection: check if this token belongs to a team invitation instead
-          const { data: teamInvite } = await supabase
-            .from("team_invitations")
-            .select("id")
-            .eq("token", token)
-            .maybeSingle();
+        const lic = licenseData as {
+          id: string;
+          email: string | null;
+          license_type: string;
+          status: string;
+          token: string;
+          company_id: string;
+          company_name: string | null;
+        } | null;
 
-          if (teamInvite) {
-            // Token belongs to team_invitations, redirect to the correct page
+        if (licenseError || !lic) {
+          // Cross-flow detection
+          const { data: tokenType } = await supabase.rpc("lookup_token_type", {
+            _token: token,
+          });
+
+          if (tokenType === "invitation") {
             window.location.replace(`/set-password?token=${token}`);
             return;
           }
@@ -82,22 +75,23 @@ export default function AcceptLicense() {
           return;
         }
 
-        if (licenseData.status !== "pending") {
+        if (lic.status !== "pending") {
           setError("This invitation has already been accepted.");
           setLoading(false);
           return;
         }
 
         setLicense({
-          id: licenseData.id,
-          email: licenseData.email || "",
-          license_type: licenseData.license_type,
-          status: licenseData.status,
-          token: licenseData.token,
-          company_id: licenseData.company_id,
-          company_name: (licenseData.companies as { name: string } | null)?.name || "Unknown Company",
+          id: lic.id,
+          email: lic.email || "",
+          license_type: lic.license_type,
+          status: lic.status,
+          token: lic.token,
+          company_id: lic.company_id,
+          company_name: lic.company_name || "Unknown Company",
         });
         setLoading(false);
+
       } catch (err) {
         console.error("Initialization error:", err);
         setError("An error occurred while loading your invitation.");
