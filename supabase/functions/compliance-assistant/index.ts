@@ -212,7 +212,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Sending request to Lovable AI with", messages.length, "messages");
+    console.log("Sending request to Lovable AI with", cleanMessages.length, "messages");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -224,7 +224,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: FGAS_SYSTEM_PROMPT },
-          ...messages.slice(-10), // Limit context to last 10 messages
+          ...cleanMessages.slice(-10), // Limit context to last 10 sanitized messages
         ],
         stream: true,
       }),
