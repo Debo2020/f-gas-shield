@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
   RefreshCw,
   Lock,
   Activity,
+  Clock,
 } from "lucide-react";
 
 const HEALTH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/health-check`;
