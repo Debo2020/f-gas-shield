@@ -1,58 +1,43 @@
 project_id = "vktulbeswsoschfvmrlx"
 
-[functions.create-checkout]
-verify_jwt = false
-
-[functions.check-subscription]
-verify_jwt = false
-
-[functions.customer-portal]
-verify_jwt = false
-
-[functions.update-license-count]
-verify_jwt = false
-
-[functions.invite-member]
-verify_jwt = false
-
-[functions.generate-compliance-export]
-verify_jwt = false
-
-[functions.compliance-assistant]
-verify_jwt = false
-
-[functions.send-license-invitation]
-verify_jwt = false
-
-[functions.enterprise-contact]
-verify_jwt = false
-
-[functions.create-addon-checkout]
-verify_jwt = false
-
-[functions.check-addon]
-verify_jwt = false
-
-[functions.update-addon-license-count]
-verify_jwt = false
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.log-error]
-verify_jwt = false
-
-[functions.health-check]
-verify_jwt = false
-
-[functions.invite-client-user]
-verify_jwt = false
-
-[functions.onboarding-cron]
-verify_jwt = false
-
-[functions.accept-invitation]
-verify_jwt = false
-
-[functions.transfer-ownership]
-verify_jwt = false
+[functions]
+  [functions.accept-invitation]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.check-addon]
+    verify_jwt = false
+  [functions.check-subscription]
+    verify_jwt = false
+  [functions.compliance-assistant]
+    verify_jwt = false
+  [functions.create-addon-checkout]
+    verify_jwt = false
+  [functions.create-checkout]
+    verify_jwt = false
+  [functions.customer-portal]
+    verify_jwt = false
+  [functions.enterprise-contact]
+    verify_jwt = false
+  [functions.generate-compliance-export]
+    verify_jwt = false
+  [functions.health-check]
+    verify_jwt = false
+  [functions.invite-client-user]
+    verify_jwt = false
+  [functions.invite-member]
+    verify_jwt = false
+  [functions.log-error]
+    verify_jwt = false
+  [functions.onboarding-cron]
+    verify_jwt = false
+  [functions.send-license-invitation]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.transfer-ownership]
+    verify_jwt = false
+  [functions.update-addon-license-count]
+    verify_jwt = false
+  [functions.update-license-count]
+    verify_jwt = false
