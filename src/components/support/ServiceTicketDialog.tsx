@@ -104,7 +104,7 @@ export function ServiceTicketDialog({ children }: ServiceTicketDialogProps) {
       // Upload attachments first
       const attachmentUrls: { file_url: string; file_name: string; mime_type?: string; file_size?: number }[] = [];
       for (const file of files) {
-        const path = `${profile?.company_id}/${Date.now()}-${file.name}`;
+        const path = `${user?.id}/${Date.now()}-${file.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("support-attachments")
           .upload(path, file);
