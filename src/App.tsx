@@ -43,6 +43,7 @@ import SetupCompany from "./pages/SetupCompany";
 import EnterpriseContact from "./pages/EnterpriseContact";
 import GasCertificates from "./pages/GasCertificates";
 import GetStarted from "./pages/GetStarted";
+import SystemStatus from "./pages/SystemStatus";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/system-status" element={<SystemStatus />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/enterprise-contact" element={<EnterpriseContact />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
