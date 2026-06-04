@@ -1,80 +1,39 @@
+## Why verification emails aren't arriving
 
+Supabase is doing its job — the auth logs show `user_confirmation_requested` firing and the email hook returning success. The problem is the **delivery side**: this workspace has no verified sender domain, so Lovable is falling back to its default sender. Default-sender mail to real production addresses (Gmail, corporate domains) is regularly rate-limited or silently dropped, which matches what you're seeing.
 
-# Pre-Launch Security & Functionality Assessment
+The fix is to send from your own brand (`ftrack.uk`) and ship branded templates that match the app.
 
-## Summary
-Automated security scans surfaced **3 critical (ERROR-level) data-exposure issues**, **1 medium storage issue**, and **33 warnings**. Functionality-wise the app is feature-complete per memory notes, but several production-readiness items remain (testing, TypeScript strictness, CSP). This plan groups findings into fix tiers — no code is changed until you approve.
+## What I'll do
 
----
+### 1. Set up a verified sender on `ftrack.uk`
+Open the email setup dialog so you can pick a delegated subdomain — recommended: `notify.ftrack.uk`. You'll add 2 NS records at your registrar; Lovable then manages SPF / DKIM / DMARC inside that delegated zone automatically. The root `ftrack.uk` keeps serving the app as it does today.
 
-## 🔴 CRITICAL — Must fix before launch (data exposure)
+This also provisions the queue/cron infrastructure (`process-email-queue`, pgmq queues, send log, suppression list) needed for reliable delivery.
 
-### 1. `companies` table publicly readable
-Anonymous SELECT policy with `USING (true)` exposes **every company's** name, email, phone, and address to unauthenticated requests.
-**Fix:** Drop the broad anon policy. Replace with a narrowly scoped anon policy that returns only `id, name, slug, logo_url` when looked up by `slug` (needed for the invitation flow), or move public name lookup into a SECURITY DEFINER RPC that returns only those safe columns.
+### 2. Scaffold branded auth email templates
+Generate the 6 standard auth templates (signup confirmation, magic link, password recovery, invite, email change, reauthentication) plus the `auth-email-hook` edge function that routes Supabase auth events into the queue.
 
-### 2. `user_licenses` table publicly readable
-Policy `USING (token IS NOT NULL)` is always true (token has a default), so **all license rows including emails** are anon-readable.
-**Fix:** Replace with a parameterised RPC `get_license_by_token(_token text)` returning only the single matching row, and drop the anon SELECT policy on the table.
+### 3. Brand the templates to match FTrack
+Pull tokens from `src/index.css` / `tailwind.config.ts` and the FTrack logo from `public/`, then apply them across all 6 templates:
+- Primary button colour + radius from `--primary` / `--radius`
+- Heading and body colours from `--foreground` / `--muted-foreground`
+- FTrack logo embedded at the top of each template (uploaded to an `email-assets` bucket)
+- Copy adapted to FTrack tone (e.g. "Confirm your FTrack account" not generic "Verify email")
+- Body background stays `#ffffff` per email-client compatibility rules
 
-### 3. `team_invitations` table publicly readable
-Same pattern as #2 — all pending invitations (emails, roles, company IDs) exposed.
-**Fix:** Same remediation — parameterised RPC `get_invitation_by_token(_token text)`, drop anon SELECT.
+### 4. Deploy and verify
+Deploy `auth-email-hook`, then surface a button so you can open **Cloud → Emails** to watch DNS verification complete and inspect the send log. Until DNS verifies, Supabase keeps using default Lovable templates as a safe fallback — there is no outage during the switchover.
 
----
+After this is live, any new signup will:
+1. Hit Supabase `/signup`
+2. Trigger `auth-email-hook`
+3. Enqueue a branded email in `auth_emails`
+4. `process-email-queue` sends it from `noreply@notify.ftrack.uk` within ~5 seconds
 
-## 🟡 MEDIUM — Should fix before launch
+## What you'll need to do
+- Complete the email setup dialog (one click → confirm subdomain → copy 2 NS records into your DNS registrar). DNS propagation is typically minutes to a few hours.
 
-### 4. `support-attachments` bucket — cross-user read
-Any authenticated user can download any other user's ticket attachments.
-**Fix:** Tighten storage SELECT policy to `bucket_id = 'support-attachments' AND (storage.foldername(name))[1] = auth.uid()::text`, and ensure upload code prefixes files with `${userId}/`.
-
-### 5. Public bucket listing
-Public buckets (e.g. `company-logos`) allow listing all files.
-**Fix:** Restrict the storage SELECT policy so files can be fetched by URL but not enumerated, or accept this if logos are intentionally public (decide per bucket).
-
----
-
-## 🟢 LOW — Warnings to review (not blockers)
-
-### 6. SECURITY DEFINER functions executable by anon/authenticated (30+ warnings)
-All current SECURITY DEFINER helpers (`has_role`, `get_user_company_id`, `is_org_member`, etc.) are intentionally callable — they enforce auth internally. Action: explicitly REVOKE EXECUTE FROM anon on the ones that should never run unauthenticated (e.g. `create_company_for_current_user`, `recalculate_activation_score`, `log_audit_event`), then mark the remaining warnings as accepted in security memory with rationale.
-
----
-
-## ⚙️ Auth / Platform hardening (recommended before launch)
-
-- Enable **leaked-password protection (HIBP)** via Supabase auth config.
-- Confirm **email confirmations** are required (no auto-confirm).
-- Verify Google OAuth is configured if used in production.
-
----
-
-## 🧪 Functionality readiness checklist
-
-These items come from project memory (`production-readiness-requirements`, `development-debt-and-risks`) and are not auto-testable here:
-
-- **No automated tests.** Recommend adding Vitest smoke tests for: sign-up/sign-in, invitation acceptance, license purchase webhook, ticket submission.
-- **TypeScript `strictNullChecks: false`** — risky for launch; enable and fix fallout.
-- **Dual toast systems** (Sonner + Radix) — consolidate on Sonner.
-- **No CSP headers** on the deployed site.
-- **No external uptime monitoring** wired to `health-check` endpoint.
-- **GasCertificatePDF.tsx** monolith (>1000 lines) — refactor post-launch.
-
-I will not auto-fix these in this pass; they're flagged for your decision.
-
----
-
-## Proposed execution order (if approved)
-
-1. Migration: fix `companies`, `user_licenses`, `team_invitations` anon exposure (new RPCs + drop policies) — **CRITICAL**.
-2. Migration: tighten `support-attachments` storage policy; audit other buckets — **MEDIUM**.
-3. Migration: REVOKE EXECUTE on truly-private SECURITY DEFINER functions; update security-memory for accepted ones.
-4. Enable HIBP password check via auth config.
-5. Update `ServiceTicketDialog.tsx` upload path to include `${userId}/` prefix (if not already).
-6. Re-run security scan + linter to confirm clean.
-7. Produce a short post-fix report and a "Pre-launch checklist" for the non-automatable items (tests, CSP, strict mode, monitoring).
-
-## Out of scope for this pass
-Refactoring monolith files, writing the test suite, enabling strict TS mode, and adding CSP — these are larger workstreams I'll list as follow-ups rather than bundle into one change.
-
+## Out of scope (call out, not doing now)
+- Migrating existing `send-license-invitation` / `invite-member` / `enterprise-contact` functions off the standalone Resend send to go through the same queued transactional pipeline. Happy to do this in a follow-up — it would give all app emails (invites, support tickets, etc.) the same reliability and unsubscribe / suppression handling.
+- The open security findings still pending (`health_check_log`, token-column exposure on `team_invitations` / `user_licenses` / `client_users`, offline crypto redesign, `SUPA_rls_policy_always_true`) — separate from this email issue.
