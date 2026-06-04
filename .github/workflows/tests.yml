@@ -40,6 +40,10 @@ jobs:
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      # Pin Deno's cache dir so actions/cache and `deno cache` agree on location.
+      # DENO_DIR holds remote module downloads, transpiled JS, type-check info,
+      # and the V8 compilation cache — caching it skips re-download + re-compile.
+      DENO_DIR: ${{ github.workspace }}/.deno_cache
     steps:
       - uses: actions/checkout@v4
 
@@ -48,15 +52,21 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Cache Deno dependencies
+      - name: Cache Deno modules + compiled outputs
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/deno
-            ~/.deno
-          key: ${{ runner.os }}-deno-${{ hashFiles('supabase/functions/**/*.ts') }}
+          path: ${{ env.DENO_DIR }}
+          # Invalidate when any edge function source or test changes (affects
+          # transpiled/type-check artifacts). Remote module downloads still
+          # restore via the prefix fallback below.
+          key: ${{ runner.os }}-deno-v2-${{ hashFiles('supabase/functions/**/*.ts') }}
           restore-keys: |
-            ${{ runner.os }}-deno-
+            ${{ runner.os }}-deno-v2-
+
+      - name: Warm Deno cache (download + transpile dependencies)
+        run: deno cache supabase/functions/**/*.test.ts
+
+
 
 
       - name: Verify required secrets are present
