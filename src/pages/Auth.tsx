@@ -79,7 +79,11 @@ export default function Auth() {
     setIsSubmitting(false);
 
     if (error) {
-      if (error.message.includes("Invalid login credentials")) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("email not confirmed") || msg.includes("not confirmed") || msg.includes("confirm")) {
+        setNeedsVerification(true);
+        setError("Please verify your email address before signing in.");
+      } else if (error.message.includes("Invalid login credentials")) {
         setError("Invalid email or password. Please try again.");
       } else {
         setError(error.message);
