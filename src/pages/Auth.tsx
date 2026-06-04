@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, ArrowLeft, CheckCircle2, Mail, WifiOff, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
+import { ResendVerificationButton } from "@/components/auth/ResendVerificationButton";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(1, "Password is required");
