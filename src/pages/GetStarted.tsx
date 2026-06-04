@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { z } from "zod";
+import { ResendVerificationButton } from "@/components/auth/ResendVerificationButton";
 
 const emailSchema = z.string().trim().email("Please enter a valid email address");
 const passwordSchema = z
