@@ -5,18 +5,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 
-const signOutMock = vi.fn().mockResolvedValue({ error: null });
-const onAuthStateChangeMock = vi.fn(() => ({
-  data: { subscription: { unsubscribe: vi.fn() } },
+const mocks = vi.hoisted(() => ({
+  signOutMock: vi.fn().mockResolvedValue({ error: null }),
+  onAuthStateChangeMock: vi.fn(() => ({
+    data: { subscription: { unsubscribe: vi.fn() } },
+  })),
+  getSessionMock: vi.fn().mockResolvedValue({ data: { session: null } }),
 }));
-const getSessionMock = vi.fn().mockResolvedValue({ data: { session: null } });
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
-      onAuthStateChange: onAuthStateChangeMock,
-      getSession: getSessionMock,
-      signOut: signOutMock,
+      onAuthStateChange: mocks.onAuthStateChangeMock,
+      getSession: mocks.getSessionMock,
+      signOut: mocks.signOutMock,
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
     },
@@ -58,7 +60,7 @@ function Probe() {
 
 describe("AuthProvider smoke", () => {
   beforeEach(() => {
-    signOutMock.mockClear();
+    mocks.signOutMock.mockClear();
   });
 
   it("renders children and exposes unauthenticated state", async () => {
@@ -72,7 +74,7 @@ describe("AuthProvider smoke", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("ready")
     );
     expect(screen.getByTestId("user")).toHaveTextContent("none");
-    expect(onAuthStateChangeMock).toHaveBeenCalled();
+    expect(mocks.onAuthStateChangeMock).toHaveBeenCalled();
   });
 
   it("invokes supabase signOut", async () => {
@@ -87,6 +89,6 @@ describe("AuthProvider smoke", () => {
     await act(async () => {
       screen.getByText("sign-out").click();
     });
-    expect(signOutMock).toHaveBeenCalled();
+    expect(mocks.signOutMock).toHaveBeenCalled();
   });
 });
