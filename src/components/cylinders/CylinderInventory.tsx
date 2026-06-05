@@ -222,10 +222,10 @@ export function CylinderInventory() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search cylinders..."
+              placeholder="Search code / barcode / serial / RFID…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[200px]"
+              className="pl-9 w-[260px]"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
