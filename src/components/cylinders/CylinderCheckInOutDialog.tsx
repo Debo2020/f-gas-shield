@@ -52,6 +52,7 @@ export function CylinderCheckInOutDialog({
   onSuccess,
   cylinder,
   action,
+  scanContext,
 }: CylinderCheckInOutDialogProps) {
   const { user, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
