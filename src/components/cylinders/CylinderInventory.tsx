@@ -129,9 +129,14 @@ export function CylinderInventory() {
   };
 
   const filteredCylinders = cylinders.filter((c) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      c.cylinder_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.refrigerant_type.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      c.cylinder_code.toLowerCase().includes(q) ||
+      c.refrigerant_type.toLowerCase().includes(q) ||
+      (c.supplier_barcode || "").toLowerCase().includes(q) ||
+      (c.manufacturer_serial || "").toLowerCase().includes(q) ||
+      (c.rfid_tag || "").toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesType = typeFilter === "all" || c.refrigerant_type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
