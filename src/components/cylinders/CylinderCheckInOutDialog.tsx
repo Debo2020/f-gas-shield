@@ -124,6 +124,8 @@ export function CylinderCheckInOutDialog({
           cylinder_reference: cylinder.cylinder_code,
           cylinder_id: cylinder.id,
           movement_date: new Date().toISOString().split("T")[0],
+          identifier_used: scanContext?.value || null,
+          identifier_type: scanContext?.type || null,
           notes: `Checked out to ${selectedMember?.full_name}${selectedEngineerId !== user.id ? ` by ${profile.full_name}` : ""}`,
         }]);
 
