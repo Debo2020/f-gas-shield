@@ -120,12 +120,13 @@ export function CylinderInventory() {
     }
   };
 
-  const handleCylinderFound = (cylinder: Cylinder) => {
+  const handleCylinderFound = (cylinder: Cylinder, context?: ScanContext) => {
     if (cylinder.status === "checked_out") {
       setCheckAction("check_in");
     } else if (cylinder.status === "in_stock") {
       setCheckAction("check_out");
     }
+    setScanContext(context);
     setCheckInOutCylinder(cylinder);
   };
 
