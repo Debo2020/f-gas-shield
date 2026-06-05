@@ -43,7 +43,7 @@ import { CylinderStatusBadge } from "./CylinderStatusBadge";
 import { CylinderDialog } from "./CylinderDialog";
 import { CylinderCheckInOutDialog } from "./CylinderCheckInOutDialog";
 import { BulkCylinderDialog } from "./BulkCylinderDialog";
-import { QRScannerDialog } from "./QRScannerDialog";
+import { QRScannerDialog, type ScanContext } from "./QRScannerDialog";
 import { CylinderQRCode } from "./CylinderQRCode";
 import {
   Dialog,
