@@ -72,6 +72,7 @@ export function CylinderInventory() {
   const [checkInOutCylinder, setCheckInOutCylinder] = useState<Cylinder | null>(null);
   const [checkAction, setCheckAction] = useState<"check_out" | "check_in">("check_out");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanContext, setScanContext] = useState<ScanContext | undefined>(undefined);
   const [qrDialogCylinder, setQrDialogCylinder] = useState<Cylinder | null>(null);
   const [bulkAction, setBulkAction] = useState<"bulk_check_out" | "bulk_check_in" | null>(null);
 
