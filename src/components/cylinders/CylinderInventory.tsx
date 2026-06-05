@@ -297,7 +297,14 @@ export function CylinderInventory() {
               {filteredCylinders.map((cylinder) => (
                 <TableRow key={cylinder.id}>
                   <TableCell className="font-mono font-bold">
-                    {cylinder.cylinder_code}
+                    <div>{cylinder.cylinder_code}</div>
+                    {(cylinder.supplier_barcode || cylinder.manufacturer_serial) && (
+                      <div className="text-[10px] font-normal text-muted-foreground mt-0.5">
+                        {cylinder.supplier_barcode
+                          ? `BC ${cylinder.supplier_barcode}`
+                          : `SN ${cylinder.manufacturer_serial}`}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{cylinder.refrigerant_type}</TableCell>
                   <TableCell>
