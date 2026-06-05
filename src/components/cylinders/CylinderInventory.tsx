@@ -404,10 +404,16 @@ export function CylinderInventory() {
 
       <CylinderCheckInOutDialog
         open={!!checkInOutCylinder}
-        onOpenChange={(o) => !o && setCheckInOutCylinder(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCheckInOutCylinder(null);
+            setScanContext(undefined);
+          }
+        }}
         onSuccess={fetchCylinders}
         cylinder={checkInOutCylinder}
         action={checkAction}
+        scanContext={scanContext}
       />
 
       <QRScannerDialog
