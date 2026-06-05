@@ -435,6 +435,90 @@ export function CylinderDialog({
               />
             </div>
 
+            <div className="border-t pt-4 space-y-3">
+              <div>
+                <h4 className="font-medium text-sm">Cylinder Identifiers</h4>
+                <p className="text-xs text-muted-foreground">
+                  Optional. Lets stores and engineers find this bottle by scanning the supplier's barcode/QR, the stamped serial, or an RFID tag.
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="identifier_source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Identifier Source</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="internal">Internal (no supplier sticker)</SelectItem>
+                        <SelectItem value="boc">BOC</SelectItem>
+                        <SelectItem value="linde">Linde</SelectItem>
+                        <SelectItem value="a_gas">A-Gas</SelectItem>
+                        <SelectItem value="other">Other supplier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 gap-3">
+                <FormField
+                  control={form.control}
+                  name="supplier_barcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supplier Barcode / QR</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Scan or paste the supplier sticker" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Value printed on the BOC / Linde / A-Gas asset sticker.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="manufacturer_serial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Manufacturer Serial</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Stamped/engraved serial" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Found on the collar, shoulder, or shroud of the cylinder.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rfid_tag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>RFID Tag UID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="RFID chip UID (optional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="notes"
