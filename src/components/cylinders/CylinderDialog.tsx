@@ -96,6 +96,10 @@ export function CylinderDialog({
       expiry_date: "",
       notes: "",
       is_recovery_cylinder: defaultIsRecovery,
+      manufacturer_serial: "",
+      supplier_barcode: "",
+      rfid_tag: "",
+      identifier_source: "internal",
     },
   });
 
