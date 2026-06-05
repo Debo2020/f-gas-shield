@@ -120,6 +120,10 @@ export function CylinderDialog({
           expiry_date: cylinder.expiry_date || "",
           notes: cylinder.notes || "",
           is_recovery_cylinder: cylinder.is_recovery_cylinder || false,
+          manufacturer_serial: cylinder.manufacturer_serial || "",
+          supplier_barcode: cylinder.supplier_barcode || "",
+          rfid_tag: cylinder.rfid_tag || "",
+          identifier_source: (cylinder.identifier_source as IdentifierSource) || "internal",
         });
       } else {
         const prefix = defaultIsRecovery ? "REC" : "CYL";
@@ -135,6 +139,10 @@ export function CylinderDialog({
           expiry_date: "",
           notes: "",
           is_recovery_cylinder: defaultIsRecovery,
+          manufacturer_serial: "",
+          supplier_barcode: "",
+          rfid_tag: "",
+          identifier_source: "internal",
         });
       }
     }
