@@ -43,6 +43,7 @@ interface CylinderCheckInOutDialogProps {
   onSuccess?: () => void;
   cylinder: Cylinder | null;
   action: "check_out" | "check_in";
+  scanContext?: { value: string; type: string };
 }
 
 export function CylinderCheckInOutDialog({
