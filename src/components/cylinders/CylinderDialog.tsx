@@ -40,6 +40,9 @@ import { AlertTriangle, Recycle } from "lucide-react";
 const REFRIGERANT_TYPES = Constants.public.Enums.refrigerant_type;
 type RefrigerantType = Database["public"]["Enums"]["refrigerant_type"];
 
+const IDENTIFIER_SOURCES = ["internal", "boc", "linde", "a_gas", "other"] as const;
+type IdentifierSource = typeof IDENTIFIER_SOURCES[number];
+
 const cylinderSchema = z.object({
   cylinder_code: z.string().min(1, "Cylinder code is required"),
   refrigerant_type: z.string(),
@@ -52,6 +55,10 @@ const cylinderSchema = z.object({
   expiry_date: z.string().optional(),
   notes: z.string().optional(),
   is_recovery_cylinder: z.boolean().default(false),
+  manufacturer_serial: z.string().max(120).optional(),
+  supplier_barcode: z.string().max(120).optional(),
+  rfid_tag: z.string().max(120).optional(),
+  identifier_source: z.enum(IDENTIFIER_SOURCES).default("internal"),
 });
 
 type CylinderFormValues = z.infer<typeof cylinderSchema>;
