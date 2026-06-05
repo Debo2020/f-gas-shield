@@ -169,6 +169,10 @@ export function CylinderDialog({
         expiry_date: values.expiry_date || null,
         notes: values.notes || null,
         is_recovery_cylinder: values.is_recovery_cylinder,
+        manufacturer_serial: values.manufacturer_serial?.trim() || null,
+        supplier_barcode: values.supplier_barcode?.trim() || null,
+        rfid_tag: values.rfid_tag?.trim() || null,
+        identifier_source: values.identifier_source,
         // Recovery cylinders start empty
         status: values.is_recovery_cylinder ? "empty" as const : "in_stock" as const,
       };
