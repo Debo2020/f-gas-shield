@@ -1756,15 +1756,19 @@ export type Database = {
           disposal_reference: string | null
           expiry_date: string | null
           id: string
+          identifier_source: Database["public"]["Enums"]["cylinder_identifier_source"]
           initial_weight_kg: number
           is_recovery_cylinder: boolean | null
+          manufacturer_serial: string | null
           notes: string | null
           purchase_date: string | null
           purchase_invoice_id: string | null
           purchase_order_number: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          rfid_tag: string | null
           status: Database["public"]["Enums"]["cylinder_status"]
           supplier: string | null
+          supplier_barcode: string | null
           supplier_id: string | null
           tare_weight_kg: number | null
           updated_at: string
@@ -1786,15 +1790,19 @@ export type Database = {
           disposal_reference?: string | null
           expiry_date?: string | null
           id?: string
+          identifier_source?: Database["public"]["Enums"]["cylinder_identifier_source"]
           initial_weight_kg: number
           is_recovery_cylinder?: boolean | null
+          manufacturer_serial?: string | null
           notes?: string | null
           purchase_date?: string | null
           purchase_invoice_id?: string | null
           purchase_order_number?: string | null
           refrigerant_type: Database["public"]["Enums"]["refrigerant_type"]
+          rfid_tag?: string | null
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
+          supplier_barcode?: string | null
           supplier_id?: string | null
           tare_weight_kg?: number | null
           updated_at?: string
@@ -1816,15 +1824,19 @@ export type Database = {
           disposal_reference?: string | null
           expiry_date?: string | null
           id?: string
+          identifier_source?: Database["public"]["Enums"]["cylinder_identifier_source"]
           initial_weight_kg?: number
           is_recovery_cylinder?: boolean | null
+          manufacturer_serial?: string | null
           notes?: string | null
           purchase_date?: string | null
           purchase_invoice_id?: string | null
           purchase_order_number?: string | null
           refrigerant_type?: Database["public"]["Enums"]["refrigerant_type"]
+          rfid_tag?: string | null
           status?: Database["public"]["Enums"]["cylinder_status"]
           supplier?: string | null
+          supplier_barcode?: string | null
           supplier_id?: string | null
           tare_weight_kg?: number | null
           updated_at?: string
@@ -1870,6 +1882,8 @@ export type Database = {
           engineer_name: string
           equipment_id: string | null
           id: string
+          identifier_type: string | null
+          identifier_used: string | null
           issued_by_user_id: string | null
           issued_to_engineer_id: string | null
           job_reference: string | null
@@ -1893,6 +1907,8 @@ export type Database = {
           engineer_name: string
           equipment_id?: string | null
           id?: string
+          identifier_type?: string | null
+          identifier_used?: string | null
           issued_by_user_id?: string | null
           issued_to_engineer_id?: string | null
           job_reference?: string | null
@@ -1916,6 +1932,8 @@ export type Database = {
           engineer_name?: string
           equipment_id?: string | null
           id?: string
+          identifier_type?: string | null
+          identifier_used?: string | null
           issued_by_user_id?: string | null
           issued_to_engineer_id?: string | null
           job_reference?: string | null
@@ -2499,6 +2517,12 @@ export type Database = {
         | "export_generated"
         | "settings_updated"
       company_certificate_type: "refcom" | "quidos" | "fgas_company" | "other"
+      cylinder_identifier_source:
+        | "internal"
+        | "boc"
+        | "linde"
+        | "a_gas"
+        | "other"
       cylinder_status: "in_stock" | "checked_out" | "empty" | "disposed"
       disposal_method:
         | "returned_to_supplier"
@@ -2713,6 +2737,13 @@ export const Constants = {
         "settings_updated",
       ],
       company_certificate_type: ["refcom", "quidos", "fgas_company", "other"],
+      cylinder_identifier_source: [
+        "internal",
+        "boc",
+        "linde",
+        "a_gas",
+        "other",
+      ],
       cylinder_status: ["in_stock", "checked_out", "empty", "disposed"],
       disposal_method: [
         "returned_to_supplier",

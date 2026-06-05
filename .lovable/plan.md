@@ -1,39 +1,87 @@
-## Why verification emails aren't arriving
+## Goal
 
-Supabase is doing its job — the auth logs show `user_confirmation_requested` firing and the email hook returning success. The problem is the **delivery side**: this workspace has no verified sender domain, so Lovable is falling back to its default sender. Default-sender mail to real production addresses (Gmail, corporate domains) is regularly rate-limited or silently dropped, which matches what you're seeing.
+Track F-Gas cylinders by the real-world identifiers suppliers (BOC, Linde, A-Gas, etc.) put on the bottle, so stores can scan/lookup cylinders during receipt, return, and engineer issuance — not just by our internally-generated `CYL-xxx` code.
 
-The fix is to send from your own brand (`ftrack.uk`) and ship branded templates that match the app.
+## New identifier fields on `refrigerant_cylinders`
 
-## What I'll do
+Add three optional, indexed identifiers alongside the existing `cylinder_code`:
 
-### 1. Set up a verified sender on `ftrack.uk`
-Open the email setup dialog so you can pick a delegated subdomain — recommended: `notify.ftrack.uk`. You'll add 2 NS records at your registrar; Lovable then manages SPF / DKIM / DMARC inside that delegated zone automatically. The root `ftrack.uk` keeps serving the app as it does today.
+- `manufacturer_serial` (text) — serial stamped/engraved on the collar/shroud
+- `supplier_barcode` (text) — barcode/QR sticker value from the supplier
+- `rfid_tag` (text) — RFID chip UID
 
-This also provisions the queue/cron infrastructure (`process-email-queue`, pgmq queues, send log, suppression list) needed for reliable delivery.
+Plus:
+- `identifier_source` (enum: `internal | boc | linde | a_gas | other`) to flag where the barcode came from
+- Unique index per company on each non-null identifier (a cylinder can't be registered twice in the same company under the same supplier barcode/serial/RFID)
 
-### 2. Scaffold branded auth email templates
-Generate the 6 standard auth templates (signup confirmation, magic link, password recovery, invite, email change, reauthentication) plus the `auth-email-hook` edge function that routes Supabase auth events into the queue.
+`cylinder_code` remains the internal handle; the new fields are the lookup keys used during check-in/out.
 
-### 3. Brand the templates to match FTrack
-Pull tokens from `src/index.css` / `tailwind.config.ts` and the FTrack logo from `public/`, then apply them across all 6 templates:
-- Primary button colour + radius from `--primary` / `--radius`
-- Heading and body colours from `--foreground` / `--muted-foreground`
-- FTrack logo embedded at the top of each template (uploaded to an `email-assets` bucket)
-- Copy adapted to FTrack tone (e.g. "Confirm your FTrack account" not generic "Verify email")
-- Body background stays `#ffffff` per email-client compatibility rules
+## Cylinder dialog (`CylinderDialog.tsx`)
 
-### 4. Deploy and verify
-Deploy `auth-email-hook`, then surface a button so you can open **Cloud → Emails** to watch DNS verification complete and inspect the send log. Until DNS verifies, Supabase keeps using default Lovable templates as a safe fallback — there is no outage during the switchover.
+Add an "Identifiers" section with three inputs (Manufacturer Serial, Supplier Barcode/QR, RFID Tag) plus a "Scan" button next to each that opens the existing camera scanner and writes the decoded value into the field. Supplier dropdown drives `identifier_source`.
 
-After this is live, any new signup will:
-1. Hit Supabase `/signup`
-2. Trigger `auth-email-hook`
-3. Enqueue a branded email in `auth_emails`
-4. `process-email-queue` sends it from `noreply@notify.ftrack.uk` within ~5 seconds
+## Scanner upgrade (`QRScannerDialog.tsx`)
 
-## What you'll need to do
-- Complete the email setup dialog (one click → confirm subdomain → copy 2 NS records into your DNS registrar). DNS propagation is typically minutes to a few hours.
+Currently the "Camera" tab is a placeholder. Replace with real scanning via `html5-qrcode` (already used elsewhere per memory: Systems QR Scanning). The dialog:
 
-## Out of scope (call out, not doing now)
-- Migrating existing `send-license-invitation` / `invite-member` / `enterprise-contact` functions off the standalone Resend send to go through the same queued transactional pipeline. Happy to do this in a follow-up — it would give all app emails (invites, support tickets, etc.) the same reliability and unsubscribe / suppression handling.
-- The open security findings still pending (`health_check_log`, token-column exposure on `team_invitations` / `user_licenses` / `client_users`, offline crypto redesign, `SUPA_rls_policy_always_true`) — separate from this email issue.
+1. Decodes QR **and** 1D barcodes (Code128/EAN — what BOC/Linde stickers use).
+2. Looks up the scanned value across all four columns: `cylinder_code`, `supplier_barcode`, `manufacturer_serial`, `rfid_tag` — first hit wins.
+3. Manual-entry tab gets a "Search by" selector (Any / Internal code / Supplier barcode / Serial / RFID).
+4. RFID: no web API for NFC on iOS Safari, so RFID stays manual-entry only with a clear hint. Android Chrome `NDEFReader` is added as a progressive enhancement behind a feature check.
+
+The same dialog is reused by:
+- Stores receipt flow (`StockReceiptDialog`) — scan supplier barcode to pre-fill new cylinder
+- Stores issuance (`StockIssuanceDialog`) — scan to pick the cylinder instead of using the dropdown
+- Engineer check-in/out (`CylinderCheckInOutDialog`)
+- Supplier return flow (`CylinderDisposalDialog` for return-to-supplier)
+
+## Movement log
+
+`refrigerant_movements` already stores `cylinder_id` + `cylinder_reference`. Add `identifier_used` (text) + `identifier_type` (text) so the audit trail records *which* identifier the operator scanned (e.g. "BOC barcode 7290..." vs "RFID E2801..."). Useful for chain-of-custody disputes with suppliers.
+
+## Inventory display
+
+- `CylinderInventory` shows supplier barcode as the primary subtitle when present, internal code as secondary.
+- Search box on the inventory page matches across all four identifier columns.
+
+## Out of scope (call out to user)
+
+- Physical RFID reader hardware integration (USB/Bluetooth scanners) — covered by manual entry / browser NDEF only.
+- Supplier API integration (e.g. pulling cylinder metadata from BOC's database from a scanned barcode) — would need per-supplier credentials.
+
+## Technical details
+
+**Migration** (new columns + indexes + enum):
+```sql
+CREATE TYPE public.cylinder_identifier_source AS ENUM
+  ('internal','boc','linde','a_gas','other');
+
+ALTER TABLE public.refrigerant_cylinders
+  ADD COLUMN manufacturer_serial text,
+  ADD COLUMN supplier_barcode text,
+  ADD COLUMN rfid_tag text,
+  ADD COLUMN identifier_source public.cylinder_identifier_source
+    NOT NULL DEFAULT 'internal';
+
+CREATE UNIQUE INDEX refrigerant_cylinders_company_serial_uniq
+  ON public.refrigerant_cylinders (company_id, manufacturer_serial)
+  WHERE manufacturer_serial IS NOT NULL AND is_deleted = false;
+-- same pattern for supplier_barcode and rfid_tag
+
+ALTER TABLE public.refrigerant_movements
+  ADD COLUMN identifier_used text,
+  ADD COLUMN identifier_type text;
+```
+No RLS changes (existing company-scoped policies cover the new columns).
+
+**Frontend packages**: `html5-qrcode` (already in project per Systems QR Scanning memory) — no new deps.
+
+**Files touched**:
+- `supabase/migrations/<new>.sql`
+- `src/components/cylinders/CylinderDialog.tsx` — add identifiers section + inline scan
+- `src/components/cylinders/QRScannerDialog.tsx` — real html5-qrcode camera + multi-column lookup + identifier-type selector
+- `src/components/cylinders/CylinderInventory.tsx` — show supplier barcode, extend search
+- `src/components/gas-log/StockReceiptDialog.tsx` — scan-to-receive
+- `src/components/gas-log/StockIssuanceDialog.tsx` — scan-to-select
+- `src/components/cylinders/CylinderCheckInOutDialog.tsx` — record `identifier_used`/`identifier_type` on movement insert
+- `src/components/cylinders/CylinderDisposalDialog.tsx` — same for supplier returns

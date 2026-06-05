@@ -43,7 +43,7 @@ import { CylinderStatusBadge } from "./CylinderStatusBadge";
 import { CylinderDialog } from "./CylinderDialog";
 import { CylinderCheckInOutDialog } from "./CylinderCheckInOutDialog";
 import { BulkCylinderDialog } from "./BulkCylinderDialog";
-import { QRScannerDialog } from "./QRScannerDialog";
+import { QRScannerDialog, type ScanContext } from "./QRScannerDialog";
 import { CylinderQRCode } from "./CylinderQRCode";
 import {
   Dialog,
@@ -72,6 +72,7 @@ export function CylinderInventory() {
   const [checkInOutCylinder, setCheckInOutCylinder] = useState<Cylinder | null>(null);
   const [checkAction, setCheckAction] = useState<"check_out" | "check_in">("check_out");
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanContext, setScanContext] = useState<ScanContext | undefined>(undefined);
   const [qrDialogCylinder, setQrDialogCylinder] = useState<Cylinder | null>(null);
   const [bulkAction, setBulkAction] = useState<"bulk_check_out" | "bulk_check_in" | null>(null);
 
@@ -119,19 +120,25 @@ export function CylinderInventory() {
     }
   };
 
-  const handleCylinderFound = (cylinder: Cylinder) => {
+  const handleCylinderFound = (cylinder: Cylinder, context?: ScanContext) => {
     if (cylinder.status === "checked_out") {
       setCheckAction("check_in");
     } else if (cylinder.status === "in_stock") {
       setCheckAction("check_out");
     }
+    setScanContext(context);
     setCheckInOutCylinder(cylinder);
   };
 
   const filteredCylinders = cylinders.filter((c) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      c.cylinder_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.refrigerant_type.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      c.cylinder_code.toLowerCase().includes(q) ||
+      c.refrigerant_type.toLowerCase().includes(q) ||
+      (c.supplier_barcode || "").toLowerCase().includes(q) ||
+      (c.manufacturer_serial || "").toLowerCase().includes(q) ||
+      (c.rfid_tag || "").toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesType = typeFilter === "all" || c.refrigerant_type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
@@ -217,10 +224,10 @@ export function CylinderInventory() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search cylinders..."
+              placeholder="Search code / barcode / serial / RFID…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[200px]"
+              className="pl-9 w-[260px]"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -292,7 +299,14 @@ export function CylinderInventory() {
               {filteredCylinders.map((cylinder) => (
                 <TableRow key={cylinder.id}>
                   <TableCell className="font-mono font-bold">
-                    {cylinder.cylinder_code}
+                    <div>{cylinder.cylinder_code}</div>
+                    {(cylinder.supplier_barcode || cylinder.manufacturer_serial) && (
+                      <div className="text-[10px] font-normal text-muted-foreground mt-0.5">
+                        {cylinder.supplier_barcode
+                          ? `BC ${cylinder.supplier_barcode}`
+                          : `SN ${cylinder.manufacturer_serial}`}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{cylinder.refrigerant_type}</TableCell>
                   <TableCell>
@@ -390,10 +404,16 @@ export function CylinderInventory() {
 
       <CylinderCheckInOutDialog
         open={!!checkInOutCylinder}
-        onOpenChange={(o) => !o && setCheckInOutCylinder(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCheckInOutCylinder(null);
+            setScanContext(undefined);
+          }
+        }}
         onSuccess={fetchCylinders}
         cylinder={checkInOutCylinder}
         action={checkAction}
+        scanContext={scanContext}
       />
 
       <QRScannerDialog

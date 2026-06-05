@@ -43,6 +43,7 @@ interface CylinderCheckInOutDialogProps {
   onSuccess?: () => void;
   cylinder: Cylinder | null;
   action: "check_out" | "check_in";
+  scanContext?: { value: string; type: string };
 }
 
 export function CylinderCheckInOutDialog({
@@ -51,6 +52,7 @@ export function CylinderCheckInOutDialog({
   onSuccess,
   cylinder,
   action,
+  scanContext,
 }: CylinderCheckInOutDialogProps) {
   const { user, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,6 +124,8 @@ export function CylinderCheckInOutDialog({
           cylinder_reference: cylinder.cylinder_code,
           cylinder_id: cylinder.id,
           movement_date: new Date().toISOString().split("T")[0],
+          identifier_used: scanContext?.value || null,
+          identifier_type: scanContext?.type || null,
           notes: `Checked out to ${selectedMember?.full_name}${selectedEngineerId !== user.id ? ` by ${profile.full_name}` : ""}`,
         }]);
 
@@ -154,6 +158,8 @@ export function CylinderCheckInOutDialog({
           cylinder_reference: cylinder.cylinder_code,
           cylinder_id: cylinder.id,
           movement_date: new Date().toISOString().split("T")[0],
+          identifier_used: scanContext?.value || null,
+          identifier_type: scanContext?.type || null,
           notes: `Checked in cylinder ${cylinder.cylinder_code}`,
         }]);
 

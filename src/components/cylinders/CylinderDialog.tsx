@@ -40,6 +40,9 @@ import { AlertTriangle, Recycle } from "lucide-react";
 const REFRIGERANT_TYPES = Constants.public.Enums.refrigerant_type;
 type RefrigerantType = Database["public"]["Enums"]["refrigerant_type"];
 
+const IDENTIFIER_SOURCES = ["internal", "boc", "linde", "a_gas", "other"] as const;
+type IdentifierSource = typeof IDENTIFIER_SOURCES[number];
+
 const cylinderSchema = z.object({
   cylinder_code: z.string().min(1, "Cylinder code is required"),
   refrigerant_type: z.string(),
@@ -52,6 +55,10 @@ const cylinderSchema = z.object({
   expiry_date: z.string().optional(),
   notes: z.string().optional(),
   is_recovery_cylinder: z.boolean().default(false),
+  manufacturer_serial: z.string().max(120).optional(),
+  supplier_barcode: z.string().max(120).optional(),
+  rfid_tag: z.string().max(120).optional(),
+  identifier_source: z.enum(IDENTIFIER_SOURCES).default("internal"),
 });
 
 type CylinderFormValues = z.infer<typeof cylinderSchema>;
@@ -89,6 +96,10 @@ export function CylinderDialog({
       expiry_date: "",
       notes: "",
       is_recovery_cylinder: defaultIsRecovery,
+      manufacturer_serial: "",
+      supplier_barcode: "",
+      rfid_tag: "",
+      identifier_source: "internal",
     },
   });
 
@@ -109,6 +120,10 @@ export function CylinderDialog({
           expiry_date: cylinder.expiry_date || "",
           notes: cylinder.notes || "",
           is_recovery_cylinder: cylinder.is_recovery_cylinder || false,
+          manufacturer_serial: cylinder.manufacturer_serial || "",
+          supplier_barcode: cylinder.supplier_barcode || "",
+          rfid_tag: cylinder.rfid_tag || "",
+          identifier_source: (cylinder.identifier_source as IdentifierSource) || "internal",
         });
       } else {
         const prefix = defaultIsRecovery ? "REC" : "CYL";
@@ -124,6 +139,10 @@ export function CylinderDialog({
           expiry_date: "",
           notes: "",
           is_recovery_cylinder: defaultIsRecovery,
+          manufacturer_serial: "",
+          supplier_barcode: "",
+          rfid_tag: "",
+          identifier_source: "internal",
         });
       }
     }
@@ -150,6 +169,10 @@ export function CylinderDialog({
         expiry_date: values.expiry_date || null,
         notes: values.notes || null,
         is_recovery_cylinder: values.is_recovery_cylinder,
+        manufacturer_serial: values.manufacturer_serial?.trim() || null,
+        supplier_barcode: values.supplier_barcode?.trim() || null,
+        rfid_tag: values.rfid_tag?.trim() || null,
+        identifier_source: values.identifier_source,
         // Recovery cylinders start empty
         status: values.is_recovery_cylinder ? "empty" as const : "in_stock" as const,
       };
@@ -410,6 +433,90 @@ export function CylinderDialog({
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="border-t pt-4 space-y-3">
+              <div>
+                <h4 className="font-medium text-sm">Cylinder Identifiers</h4>
+                <p className="text-xs text-muted-foreground">
+                  Optional. Lets stores and engineers find this bottle by scanning the supplier's barcode/QR, the stamped serial, or an RFID tag.
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="identifier_source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Identifier Source</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="internal">Internal (no supplier sticker)</SelectItem>
+                        <SelectItem value="boc">BOC</SelectItem>
+                        <SelectItem value="linde">Linde</SelectItem>
+                        <SelectItem value="a_gas">A-Gas</SelectItem>
+                        <SelectItem value="other">Other supplier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 gap-3">
+                <FormField
+                  control={form.control}
+                  name="supplier_barcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supplier Barcode / QR</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Scan or paste the supplier sticker" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Value printed on the BOC / Linde / A-Gas asset sticker.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="manufacturer_serial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Manufacturer Serial</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Stamped/engraved serial" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Found on the collar, shoulder, or shroud of the cylinder.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rfid_tag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>RFID Tag UID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="RFID chip UID (optional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <FormField
