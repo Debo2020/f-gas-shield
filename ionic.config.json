@@ -1,0 +1,7 @@
+{
+  "name": "f-gas-shield",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
