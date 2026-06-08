@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.0b33a0ababa943f09671c6f0a67e5212',
-  appName: 'f-gas-shield',
+  appId: 'uk.ftrack.app',
+  appName: 'FTrack',
   webDir: 'dist',
   // For local dev hot-reload against the Lovable sandbox, uncomment:
   // server: {
