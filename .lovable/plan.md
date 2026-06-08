@@ -1,46 +1,72 @@
-# Convert FTrack to Native iOS & Android (Capacitor)
+## Goal
 
-Wrap the existing React app in a Capacitor native shell. No UI, routing, Supabase, Dexie, or business logic changes. The same codebase continues to power the web app, PWA, and now the native apps.
+Get FTrack building on Appflow for both Android and iOS by adding the missing native folders and fixing the two config issues blocking production builds.
 
-## What changes in the project
+## What I'll change in the repo (Lovable side)
 
-1. **Install Capacitor packages**
-   - `@capacitor/core`, `@capacitor/ios`, `@capacitor/android`
-   - `@capacitor/cli` as a dev dependency
+1. **Fix `capacitor.config.ts` for production builds**
+   - Remove the hardcoded `server.url` pointing at the Lovable sandbox (this is what currently makes Appflow builds load the preview instead of the bundled app).
+   - Keep a commented-out dev block so you can re-enable hot-reload locally when you want it.
+   - Result: Appflow builds will load `dist/` from inside the app bundle, as they should for store submission.
 
-2. **Create `capacitor.config.ts` in the project root**
-   - `appId`: `app.lovable.0b33a0ababa943f09671c6f0a67e5212`
-   - `appName`: `f-gas-shield`
-   - `webDir`: `dist`
-   - `server.url`: `https://0b33a0ab-aba9-43f0-9671-c6f0a67e5212.lovableproject.com?forceHideBadge=true`
-   - `server.cleartext`: `true`
-   - This enables hot-reload from the Lovable sandbox so you can iterate without rebuilding.
+2. **Add `package-lock.json` generation note + Appflow build config**
+   - Add a small `ionic.config.json` (or document the Appflow build settings) so Appflow uses the right Node version and install command.
+   - Recommend committing a `package-lock.json` (generated locally via `npm install`) so Appflow's default `npm ci` works. The project currently has `bun.lock` only, which Appflow doesn't understand.
 
-3. **No code changes** to React components, Supabase client, Dexie offline layer, html5-qrcode scanner, NFC code, PWA service worker, or routing. Everything keeps working in the browser exactly as it does today.
+3. **Update `.lovable/plan.md`** to reflect the new dual-platform workflow (Mac for iOS, PC for Android, both pushing native folders to the same repo).
 
-## What you do on your machine (one-time per platform)
+## What you'll do locally (one-time)
 
-Capacitor requires a local dev environment — Lovable cannot run Xcode or Android Studio in the sandbox.
+Native folders **must be generated on your machines** and committed to GitHub. Appflow then builds from them. You only do this once per platform.
 
-```text
-1. Export to GitHub → git clone your repo
-2. npm install
-3. npx cap add ios          (needs macOS + Xcode)
-   npx cap add android      (needs Android Studio)
-4. npm run build
-5. npx cap sync
-6. npx cap run ios          or   npx cap run android
+**On your PC (Android):**
+```
+git pull
+npm install
+npx cap add android
+git add android/
+git commit -m "Add Android native project"
+git push
 ```
 
-**Whenever you `git pull` future Lovable changes:** run `npm install` then `npx cap sync` before launching again.
+**On your Mac (iOS):**
+```
+git pull                 # picks up the android/ folder too — harmless
+npm install
+npx cap add ios
+cd ios/App && pod install && cd ../..
+git add ios/
+git commit -m "Add iOS native project"
+git push
+```
 
-## Requirements & limitations
+After both pushes, Appflow will have `android/` and `ios/` in the repo and `npx cap sync` will succeed.
 
-- **iOS builds** require a Mac with Xcode. **Android builds** require Android Studio (any OS).
-- **App Store / Play Store** publishing requires Apple Developer ($99/yr) and Google Play ($25 one-time) accounts — handled outside Lovable.
-- The hot-reload config points the native app at the Lovable preview during development. For production builds you'll comment out the `server.url` block so the native app loads the bundled `dist/` assets instead.
-- Native upgrades (native barcode scanner, native NFC for iOS RFID, native push notifications, biometrics) are **not included in this step** — the app will continue using its current web APIs inside the native shell. These can be added as follow-ups.
+## Appflow configuration
 
-## After this step
+- **Android build**: Debug or Release, native binary, target `android/` — should now succeed.
+- **iOS build**: requires an Apple Developer account ($99/yr) for signing certificates and a provisioning profile uploaded to Appflow. Debug builds for simulator work without it; device/store builds don't.
+- **Build stack**: set Node to 20.x, install command `npm ci`.
 
-I'll point you to the official Lovable mobile guide for the local run-through, and we can plan any native plugin upgrades (scanner / NFC / push) as separate follow-ups.
+## Ongoing workflow after future Lovable changes
+
+You won't need to re-run `cap add`. Just:
+```
+git pull
+npm install
+npm run build
+npx cap sync
+```
+Appflow does the equivalent automatically on each build trigger.
+
+## Risks / things to know
+
+- The `android/` and `ios/` folders are large (~hundreds of MB unbuilt, much more once Gradle/CocoaPods cache). They go in git but `.gitignore` from `cap add` excludes the build artifacts correctly.
+- Future Capacitor plugin additions (native scanner, NFC, push) will require re-running `npx cap sync` locally and possibly editing native files — Lovable can't do that part.
+- The iOS bundle ID is currently `app.lovable.0b33a0ababa943f09671c6f0a67e5212`. If you want a real ID like `uk.ftrack.app` for the App Store, tell me and I'll change it before you run `cap add` (changing it after is painful).
+
+## Want me to proceed?
+
+If yes, I'll make the three repo changes above. Then you run the `cap add` commands on each machine and push.
+
+Also — should I rename the bundle ID to something like `uk.ftrack.app` first?
