@@ -1,73 +1,44 @@
-# Welcome to your Lovable project
+# FTrack
 
-## Project info
+UK F-Gas compliance, refrigerant tracking and Gas Safe certification — mobile-first, offline-capable, multi-tenant SaaS.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Built with React 18, TypeScript, Vite, Tailwind, shadcn/ui and a Supabase backend (Auth, Postgres + RLS, Edge Functions, Storage). Native mobile builds are wrapped with Capacitor (`uk.ftrack.app`).
 
-## How can I edit this code?
+## Local development
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requirements: Node.js 20 LTS + npm, Git.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+cd f-gas-shield
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The dev server runs on <http://localhost:8080>.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Run on an Android emulator
 
-**Use GitHub Codespaces**
+To preview FTrack inside an Android Virtual Device (AVD) via Android Studio, follow the full checklist:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+➡️ **[docs/android-emulator-setup.md](docs/android-emulator-setup.md)** — prerequisites (WHPX / Hypervisor.framework), SDK packages, AVD creation, build/sync/run commands and troubleshooting for Windows and macOS.
 
-## What technologies are used for this project?
+TL;DR after first-time setup:
 
-This project is built with:
+```sh
+git pull
+npm install
+npm run build
+npx cap sync android
+npx cap run android
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Editing the project
 
-## How can I deploy this project?
+You can edit FTrack in the Lovable workspace, your own IDE, directly in GitHub, or in a Codespace. Pushes from any of these stay in sync with the Lovable workspace.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Deployment
 
-## Can I connect a custom domain to my Lovable project?
+Web app: published via Lovable (Share → Publish). Custom domain configured under Project → Settings → Domains.
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Native apps: built locally with Capacitor and submitted to the Apple App Store and Google Play Console (`uk.ftrack.app`).
