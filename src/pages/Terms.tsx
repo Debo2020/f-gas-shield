@@ -273,7 +273,7 @@ export default function Terms() {
                 <p className="font-medium">Build IQ Tech Ltd</p>
                 <p className="text-muted-foreground">Trading as: FTrack</p>
                 <p className="text-muted-foreground">Company Number: 15883295</p>
-                <p className="text-muted-foreground">Registered Address: 19 Upper King Street, Norwich, NR3 1RB, United Kingdom</p>
+                <p className="text-muted-foreground">Registered Address: 4th Floor, Silverstream House, 45 Fitzroy Street, Fitzrovia, London, W1T 6EB, United Kingdom</p>
                 <p className="text-muted-foreground">Email: hello@build-iq.co.uk</p>
               </div>
             </section>
