@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Search, HelpCircle, Mail, MessageSquare, BookOpen, Shield, Users, Wrench, FileText, ChevronRight, LifeBuoy } from "lucide-react";
+import { Search, HelpCircle, Mail, MessageSquare, BookOpen, Shield, Users, Wrench, FileText, ChevronRight, LifeBuoy, Smartphone } from "lucide-react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { Input } from "@/components/ui/input";
@@ -131,6 +131,28 @@ const faqData: FAQItem[] = [
     question: "How do I update my payment method?",
     answer: "Go to Settings > Company, then click 'Manage Billing' to access the customer portal where you can update your payment method and view invoices."
   },
+
+  // Mobile App (Android)
+  {
+    category: "Mobile App (Android)",
+    question: "What do I need installed to run FTrack on an Android emulator?",
+    answer: "Android Studio (Hedgehog 2023.1 or newer), Node.js 20 LTS + npm, Git, and JDK 17 (bundled with Android Studio). On Windows you also need hardware virtualization enabled in BIOS plus the Windows Hypervisor Platform feature. On Apple Silicon Macs Hypervisor.framework is built in — nothing to enable. Inside Android Studio's SDK Manager, install Android 14 (API 34), the Platform-Tools, the Emulator, and the Android Emulator hypervisor driver."
+  },
+  {
+    category: "Mobile App (Android)",
+    question: "How do I create a virtual device (AVD) for FTrack?",
+    answer: "In Android Studio open Tools → Device Manager → Create Device. Pick a Pixel 7 profile, choose an API 34 system image (arm64-v8a on Apple Silicon, x86_64 on Windows/Intel Mac), set RAM to at least 2 GB and Graphics to Hardware – GLES 2.0. Boot it once to confirm it reaches the home screen before installing FTrack."
+  },
+  {
+    category: "Mobile App (Android)",
+    question: "How do I build and run FTrack on the emulator?",
+    answer: "First time after cloning the repo: npm install, then npx cap add android, npm run build, npx cap sync android, npx cap run android. After every git pull just re-run npm install, npm run build, npx cap sync android, npx cap run android. The app installs as FTrack (uk.ftrack.app). Skipping npm run build before cap sync is the #1 cause of a white screen — the native build ships whatever is in dist/."
+  },
+  {
+    category: "Mobile App (Android)",
+    question: "Where is the full Android setup checklist and troubleshooting guide?",
+    answer: "See docs/android-emulator-setup.md in the project repository. It covers virtualization prerequisites (WHPX, Hypervisor.framework), the exact SDK packages, AVD creation, the build/sync/run loop, and fixes for the common errors: HAXM/WHPX failures, missing adb, slow boot, Gradle 'SDK location not found', proxy/Supabase connectivity, and camera setup for the QR scanner."
+  },
 ];
 
 const categories = [
@@ -139,6 +161,7 @@ const categories = [
   { name: "Gas Logging", icon: FileText, color: "text-green-500" },
   { name: "Compliance", icon: Shield, color: "text-purple-500" },
   { name: "Account & Billing", icon: Users, color: "text-pink-500" },
+  { name: "Mobile App (Android)", icon: Smartphone, color: "text-teal-500" },
 ];
 
 export default function Help() {
