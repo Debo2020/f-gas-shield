@@ -106,7 +106,7 @@ export function FooterSection() {
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Build IQ Tech Ltd. All rights reserved.</p>
           <p className="mt-1">Company No. 15883295 | Registered in England and Wales</p>
-          <p className="mt-1">19 Upper King Street, Norwich, NR3 1RB, United Kingdom</p>
+          <p className="mt-1">4th Floor, Silverstream House, 45 Fitzroy Street, Fitzrovia, London, W1T 6EB, United Kingdom</p>
         </div>
       </div>
     </footer>
