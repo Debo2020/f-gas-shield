@@ -1,10 +1,17 @@
+import { Helmet } from "react-helmet-async";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
 
 export default function Terms() {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Terms of Service — FTrack F-Gas Compliance</title>
+        <meta name="description" content="Terms governing use of FTrack's F-Gas compliance platform — subscriptions, acceptable use, data ownership and liability for UK customers." />
+        <link rel="canonical" href="https://www.ftrack.uk/terms" />
+      </Helmet>
       <LandingHeader />
+      
       
       <main className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="space-y-8">
