@@ -19,7 +19,7 @@ const benefits: SeoBenefit[] = [
   {
     title: "Article 6 record-keeping built in",
     description:
-      "Every movement captures equipment, reason and job reference — the exact fields UK F-Gas Regulation 2015 requires.",
+      "Every movement captures equipment, reason and job reference — the exact fields Article 6 of the UK F-Gas Regulation requires.",
   },
   {
     title: "Stock reconciliation",

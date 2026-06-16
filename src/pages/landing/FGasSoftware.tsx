@@ -76,11 +76,6 @@ const jsonLd = {
     price: "0",
     description: "7-day free trial",
   },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.8",
-    ratingCount: "150",
-  },
 };
 
 export default function FGasSoftware() {
