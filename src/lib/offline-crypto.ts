@@ -14,14 +14,14 @@ const APP_SALT = "ftrack-offline-pii-v2";
 const VERIFIER_PLAINTEXT = "ftrack-offline-verifier-v1";
 const PBKDF2_ITERATIONS = 210_000;
 
-function saltFor(email: string): Uint8Array {
-  return new TextEncoder().encode(`${APP_SALT}:${email.trim().toLowerCase()}`);
+function saltFor(email: string): BufferSource {
+  return new TextEncoder().encode(`${APP_SALT}:${email.trim().toLowerCase()}`) as unknown as BufferSource;
 }
 
 export async function deriveOfflineKey(password: string, email: string): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(password),
+    new TextEncoder().encode(password) as unknown as BufferSource,
     "PBKDF2",
     false,
     ["deriveKey"]
@@ -38,7 +38,11 @@ export async function deriveOfflineKey(password: string, email: string): Promise
 async function encryptWithKey(data: unknown, key: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(JSON.stringify(data));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
+    key,
+    encoded as unknown as BufferSource
+  );
   const ctBytes = new Uint8Array(ciphertext);
   const combined = new Uint8Array(iv.length + ctBytes.length);
   combined.set(iv);
@@ -50,7 +54,11 @@ async function decryptWithKey<T>(encrypted: string, key: CryptoKey): Promise<T> 
   const combined = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
-  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
+    key,
+    ciphertext as unknown as BufferSource
+  );
   return JSON.parse(new TextDecoder().decode(decrypted)) as T;
 }
 

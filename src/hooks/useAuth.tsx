@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineDb, hashCredentials, CachedProfile } from "@/lib/offline-db";
-import { encryptData, decryptData } from "@/lib/offline-crypto";
+import { encryptData, decryptData, deriveOfflineKey, buildVerifier, verifyKey } from "@/lib/offline-crypto";
 import { cacheCompanyData } from "@/lib/sync-service";
 
 type AppRole = "owner" | "manager" | "engineer" | "stores_manager" | "admin" | "auditor" | "read_only";
@@ -82,31 +82,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles(rolesData.map((r) => r.role as AppRole));
     }
 
-    // Cache profile for offline use (encrypted)
+    // Cache profile for offline use (encrypted).
+    //
+    // Security: we NEVER persist key material. We only encrypt when we have the
+    // user's plaintext password in memory (immediately after online sign-in,
+    // passed via __pendingPassword and dropped here). On later auth events
+    // (token refresh, page reload) we don't have the password, so we update
+    // only non-sensitive fields and leave the existing ciphertext intact.
     if (profileData) {
       try {
         const credentialHash = await hashCredentials(profileData.email);
-        const pendingHash = (window as unknown as Record<string, string>).__pendingPasswordHash || "";
-        delete (window as unknown as Record<string, string>).__pendingPasswordHash;
-        
-        // Preserve existing password_hash if we don't have a new one
+        const pendingPassword = (window as unknown as Record<string, string>).__pendingPassword || "";
+        delete (window as unknown as Record<string, string>).__pendingPassword;
+
         const existing = await offlineDb.cachedProfile.get(userId);
-        const passwordHash = pendingHash || existing?.password_hash || "";
 
-        // Encrypt profile data with the password hash
-        const encryptedProfile = passwordHash
-          ? await encryptData(profileData, passwordHash)
-          : JSON.stringify(profileData);
+        if (pendingPassword) {
+          const key = await deriveOfflineKey(pendingPassword, profileData.email);
+          const encryptedProfile = await encryptData(profileData, key);
+          const verifier = await buildVerifier(key);
 
-        await offlineDb.cachedProfile.put({
-          user_id: userId,
-          profile: encryptedProfile,
-          roles: rolesData?.map((r) => r.role) || [],
-          license_status: licenseStatus,
-          cached_at: new Date().toISOString(),
-          credential_hash: credentialHash,
-          password_hash: passwordHash,
-        });
+          await offlineDb.cachedProfile.put({
+            user_id: userId,
+            profile: encryptedProfile,
+            verifier,
+            roles: rolesData?.map((r) => r.role) || [],
+            license_status: licenseStatus,
+            cached_at: new Date().toISOString(),
+            credential_hash: credentialHash,
+          });
+        } else if (existing) {
+          // Refresh non-sensitive metadata without re-encrypting.
+          await offlineDb.cachedProfile.update(userId, {
+            roles: rolesData?.map((r) => r.role) || [],
+            license_status: licenseStatus,
+            cached_at: new Date().toISOString(),
+            credential_hash: credentialHash,
+          });
+        }
 
         // Cache company data for offline access
         if (profileData.company_id && navigator.onLine) {
