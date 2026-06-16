@@ -57,10 +57,48 @@ serve(async (req) => {
     const userEmail = claimsData.claims.email as string;
     if (!userEmail) throw new Error("User email not available in claims");
     logStep("User authenticated via getClaims", { userId });
-    
+
+    // Role check: only owner or manager may initiate a subscription checkout
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["owner", "manager"])
+      .maybeSingle();
+    if (!roleRow) {
+      logStep("Forbidden: not owner/manager", { userId });
+      return new Response(JSON.stringify({ error: "Owner or manager access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { priceId, quantity = 1, companyName, tier, trial = false } = await req.json();
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Request received", { priceId, quantity, companyName, tier, trial });
+
+    // Validate inputs against server-side allowlists
+    if (!ALLOWED_PRICE_IDS.has(priceId)) {
+      return new Response(JSON.stringify({ error: "Invalid price ID" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (tier && !ALLOWED_TIERS.has(String(tier).toLowerCase())) {
+      return new Response(JSON.stringify({ error: "Invalid tier" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const qty = Number(quantity);
+    if (!Number.isInteger(qty) || qty < 1 || qty > MAX_LICENSE_QUANTITY) {
+      return new Response(JSON.stringify({ error: `Quantity must be between 1 and ${MAX_LICENSE_QUANTITY}` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    logStep("Request validated", { priceId, quantity: qty, companyName, tier, trial });
 
     // Overage price IDs for metered AI credits billing
     const OVERAGE_PRICES: Record<string, string> = {
