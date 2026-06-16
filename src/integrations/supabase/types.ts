@@ -1646,6 +1646,168 @@ export type Database = {
           },
         ]
       }
+      partner_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          partner_id: string
+          redemptions_used: number
+          stripe_coupon_id: string | null
+          stripe_promotion_code_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          partner_id: string
+          redemptions_used?: number
+          stripe_coupon_id?: string | null
+          stripe_promotion_code_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          partner_id?: string
+          redemptions_used?: number
+          stripe_coupon_id?: string | null
+          stripe_promotion_code_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_codes_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_redemptions: {
+        Row: {
+          canceled_at: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          mrr_pennies: number | null
+          partner_code_id: string
+          partner_id: string
+          plan_interval: string | null
+          redeemed_at: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          mrr_pennies?: number | null
+          partner_code_id: string
+          partner_id: string
+          plan_interval?: string | null
+          redeemed_at?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          mrr_pennies?: number | null
+          partner_code_id?: string
+          partner_id?: string
+          plan_interval?: string | null
+          redeemed_at?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_redemptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_redemptions_partner_code_id_fkey"
+            columns: ["partner_code_id"]
+            isOneToOne: false
+            referencedRelation: "partner_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_redemptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          commission_pct: number | null
+          contact_email: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_pct?: number | null
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_pct?: number | null
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profile_type_config: {
         Row: {
           avatar_required: boolean | null
