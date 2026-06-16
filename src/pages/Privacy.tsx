@@ -9,6 +9,10 @@ const Privacy = () => {
         <title>Privacy Policy — FTrack F-Gas Compliance</title>
         <meta name="description" content="How FTrack collects, uses and safeguards personal information for UK F-Gas compliance customers, engineers and site contacts." />
         <link rel="canonical" href="https://www.ftrack.uk/privacy" />
+        <meta property="og:title" content="Privacy Policy — FTrack F-Gas Compliance" />
+        <meta property="og:description" content="How FTrack collects, uses and safeguards personal information for UK F-Gas compliance customers, engineers and site contacts." />
+        <meta property="og:url" content="https://www.ftrack.uk/privacy" />
+        <meta property="og:type" content="article" />
       </Helmet>
       <LandingHeader />
       
