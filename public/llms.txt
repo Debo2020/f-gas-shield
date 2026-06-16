@@ -1,0 +1,19 @@
+# FTrack
+
+> UK F-Gas compliance, refrigerant tracking, and inspection scheduling for HVAC engineers and contractors.
+
+FTrack is a mobile-first SaaS platform that helps UK HVAC businesses meet F-Gas Regulation requirements: automated leak-check scheduling driven by CO₂e thresholds, full refrigerant chain of custody, digital inspection records, and Gas Safe certificate workflows.
+
+## Pages
+
+- [Home](/): Product overview and key features for F-Gas compliance.
+- [Pricing](/pricing): Basic, Premium, and Enterprise subscription tiers with monthly and annual options.
+- [Help & FAQ](/help): Answers on getting started, leak-check frequencies, billing, and team management.
+- [Privacy Policy](/privacy): How FTrack handles personal and company data under UK GDPR.
+- [Terms of Service](/terms): Subscription, acceptable-use, and liability terms.
+- [Enterprise Contact](/enterprise-contact): Request a custom Enterprise plan with BMS and ERP integration.
+- [System Status](/system-status): Live availability of FTrack services.
+
+## Optional
+
+- [Install App](/install): Add FTrack to a phone or tablet home screen as a PWA for offline-capable site visits.

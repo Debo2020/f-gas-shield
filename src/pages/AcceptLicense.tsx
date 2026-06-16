@@ -208,7 +208,7 @@ export default function AcceptLicense() {
       <div className="min-h-screen bg-muted/30 flex flex-col">
         <header className="bg-card border-b py-4">
           <div className="container mx-auto px-4 flex items-center gap-3">
-            <img src="/ftrack-logo.png" alt="FTrack" className="h-10 w-10" />
+            <img src="/ftrack-logo.png" alt="FTrack logo" className="h-10 w-10" />
             <div>
               <h1 className="text-xl font-bold text-foreground">FTrack</h1>
               <p className="text-xs text-muted-foreground">F-Gas Compliance</p>
@@ -230,7 +230,7 @@ export default function AcceptLicense() {
       <div className="min-h-screen bg-muted/30 flex flex-col">
         <header className="bg-card border-b py-4">
           <div className="container mx-auto px-4 flex items-center gap-3">
-            <img src="/ftrack-logo.png" alt="FTrack" className="h-10 w-10" />
+            <img src="/ftrack-logo.png" alt="FTrack logo" className="h-10 w-10" />
             <div>
               <h1 className="text-xl font-bold text-foreground">FTrack</h1>
               <p className="text-xs text-muted-foreground">F-Gas Compliance</p>
@@ -263,7 +263,7 @@ export default function AcceptLicense() {
     <div className="min-h-screen bg-muted/30 flex flex-col">
       <header className="bg-card border-b py-4">
         <div className="container mx-auto px-4 flex items-center gap-3">
-          <img src="/ftrack-logo.png" alt="FTrack" className="h-10 w-10" />
+          <img src="/ftrack-logo.png" alt="FTrack logo" className="h-10 w-10" />
           <div>
             <h1 className="text-xl font-bold text-foreground">FTrack</h1>
             <p className="text-xs text-muted-foreground">F-Gas Compliance</p>

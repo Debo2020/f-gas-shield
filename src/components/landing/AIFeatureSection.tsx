@@ -156,7 +156,7 @@ export function AIFeatureSection() {
                 <div className="flex-1 rounded-lg border bg-background px-4 py-2.5 text-sm text-muted-foreground">
                   Ask about F-Gas regulations...
                 </div>
-                <Button size="sm" className="px-4">
+                <Button size="sm" className="px-4" aria-label="Send message">
                   <MessageSquare className="h-4 w-4" />
                 </Button>
               </div>
