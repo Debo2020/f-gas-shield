@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://ftrack.uk/sitemap.xml
+Sitemap: https://www.ftrack.uk/sitemap.xml
