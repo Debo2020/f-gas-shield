@@ -31,10 +31,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-    const { data: roleRow } = await admin
-      .from("user_roles").select("role").eq("user_id", userId).eq("role", "owner").maybeSingle();
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+    const { data: adminRow } = await admin
+      .from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle();
+    if (!adminRow) {
+      return new Response(JSON.stringify({ error: "Forbidden: platform admin required" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

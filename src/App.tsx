@@ -44,6 +44,7 @@ import EnterpriseContact from "./pages/EnterpriseContact";
 import GasCertificates from "./pages/GasCertificates";
 import GetStarted from "./pages/GetStarted";
 import SystemStatus from "./pages/SystemStatus";
+import AdminPartners from "./pages/admin/AdminPartners";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -226,6 +227,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/admin/partners" element={<AdminPartners />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

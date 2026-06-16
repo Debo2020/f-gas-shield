@@ -23,7 +23,9 @@ import {
   X,
   Download,
   LifeBuoy,
+  ShieldCheck,
 } from "lucide-react";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useGasAddon } from "@/hooks/useGasAddon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LicenseWarningBanner } from "./LicenseWarningBanner";
@@ -54,6 +56,7 @@ const storesManagerNavigation = [
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { profile, signOut, hasRole } = useAuth();
+  const { isPlatformAdmin } = usePlatformAdmin();
   const { hasGasAddon } = useGasAddon();
   const location = useLocation();
   const navigate = useNavigate();
@@ -158,6 +161,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                     Raise Support Ticket
                   </DropdownMenuItem>
                 </ServiceTicketDialog>
+                {isPlatformAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/admin/partners")}>
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Admin · Partners
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
