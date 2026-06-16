@@ -55,7 +55,68 @@ serve(async (req) => {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         logStep("Checkout completed", { sessionId: session.id, customerId: session.customer });
-        // Subscription sync will happen via subscription events below
+
+        // Partner code attribution
+        try {
+          const expanded = await stripe.checkout.sessions.retrieve(session.id, {
+            expand: ["total_details.breakdown.discounts.discount.promotion_code"],
+          });
+          const discounts = expanded.total_details?.breakdown?.discounts ?? [];
+          const promoCodeId = discounts
+            .map((d) => {
+              const pc = d.discount?.promotion_code;
+              return typeof pc === "string" ? pc : pc?.id;
+            })
+            .find(Boolean);
+
+          if (promoCodeId) {
+            const { data: pCode } = await adminClient
+              .from("partner_codes").select("*")
+              .eq("stripe_promotion_code_id", promoCodeId).maybeSingle();
+
+            if (pCode) {
+              const userId = session.metadata?.user_id || expanded.metadata?.user_id;
+              let companyId: string | null = null;
+              if (userId) {
+                const { data: prof } = await adminClient
+                  .from("profiles").select("company_id").eq("user_id", userId).maybeSingle();
+                companyId = prof?.company_id ?? null;
+              }
+              const tier = session.metadata?.tier || null;
+              const subId = typeof expanded.subscription === "string"
+                ? expanded.subscription : expanded.subscription?.id ?? null;
+              const custId = typeof expanded.customer === "string"
+                ? expanded.customer : expanded.customer?.id ?? null;
+              const mrrPennies = expanded.amount_subtotal ?? 0;
+
+              const { error: redErr } = await adminClient
+                .from("partner_redemptions")
+                .upsert({
+                  partner_code_id: pCode.id,
+                  partner_id: pCode.partner_id,
+                  company_id: companyId,
+                  stripe_subscription_id: subId,
+                  stripe_customer_id: custId,
+                  tier,
+                  plan_interval: "year",
+                  mrr_pennies: Math.round(mrrPennies / 12),
+                  status: "active",
+                }, { onConflict: "stripe_subscription_id" });
+
+              if (redErr) {
+                logStep("ERROR: Failed to record redemption", { error: redErr.message });
+              } else {
+                await adminClient
+                  .from("partner_codes")
+                  .update({ redemptions_used: (pCode.redemptions_used ?? 0) + 1 })
+                  .eq("id", pCode.id);
+                logStep("Partner redemption recorded", { partner_id: pCode.partner_id, code: pCode.code });
+              }
+            }
+          }
+        } catch (e) {
+          logStep("WARN: Partner attribution failed", { error: String(e) });
+        }
         break;
       }
 

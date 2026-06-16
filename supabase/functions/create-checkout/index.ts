@@ -110,7 +110,11 @@ serve(async (req) => {
       logStep("Trial enabled", { trial_period_days: 7 });
     }
 
+    // Allow promo codes only on annual Basic/Premium subscriptions
+    const allowPromo = ANNUAL_PRICE_IDS.includes(priceId) && tierLower !== "enterprise";
+
     const session = await stripe.checkout.sessions.create({
+      allow_promotion_codes: allowPromo || undefined,
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
       line_items: lineItems,
