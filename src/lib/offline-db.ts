@@ -4,11 +4,13 @@ import Dexie, { Table } from 'dexie';
 export interface CachedProfile {
   user_id: string;
   profile: string; // AES-GCM encrypted JSON of profile data
+  // Encrypted sentinel used to verify the password offline without
+  // persisting any key material. See src/lib/offline-crypto.ts.
+  verifier: string;
   roles: string[];
   license_status: string | null;
   cached_at: string;
   credential_hash: string;
-  password_hash: string;
 }
 
 export interface CachedSite {
@@ -156,6 +158,21 @@ class FTrackOfflineDatabase extends Dexie {
       gasMovements: 'id, engineer_id, company_id, movement_date, local_id',
       cylinders: 'id, company_id, cylinder_code, status',
       syncQueue: '++id, table, local_id, synced, created_at'
+    });
+
+    // v3: drop the persisted `password_hash` field (security hardening).
+    // Existing cached profiles are wiped so users re-establish an offline
+    // session via online sign-in, which provisions the new `verifier` field.
+    this.version(3).stores({
+      cachedProfile: 'user_id',
+      sites: 'id, company_id, name',
+      equipment: 'id, site_id, company_id, name',
+      inspections: 'id, equipment_id, company_id, inspection_date, local_id',
+      gasMovements: 'id, engineer_id, company_id, movement_date, local_id',
+      cylinders: 'id, company_id, cylinder_code, status',
+      syncQueue: '++id, table, local_id, synced, created_at'
+    }).upgrade(async (tx) => {
+      await tx.table('cachedProfile').clear();
     });
   }
 }

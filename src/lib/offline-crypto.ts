@@ -39,10 +39,11 @@ async function encryptWithKey(data: unknown, key: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(JSON.stringify(data));
   const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
-  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+  const ctBytes = new Uint8Array(ciphertext);
+  const combined = new Uint8Array(iv.length + ctBytes.length);
   combined.set(iv);
-  combined.set(new Uint8Array(ciphertext), iv.length);
-  return btoa(String.fromCharCode(...combined));
+  combined.set(ctBytes, iv.length);
+  return btoa(String.fromCharCode(...Array.from(combined)));
 }
 
 async function decryptWithKey<T>(encrypted: string, key: CryptoKey): Promise<T> {
