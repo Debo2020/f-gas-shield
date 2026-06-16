@@ -102,6 +102,11 @@ export function PricingSection({ showHeader = true }: PricingSectionProps) {
                 </Badge>
               )}
             </div>
+            {isAnnual && (
+              <p className="text-xs text-muted-foreground mt-3">
+                Got a partner code? Apply it at checkout for 20% off your first 3 months.
+              </p>
+            )}
           </div>
         )}
 
