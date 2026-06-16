@@ -252,6 +252,12 @@ serve(async (req) => {
         } else {
           logStep("Subscription canceled", { customerId });
         }
+
+        // Mark partner redemption as canceled
+        await adminClient
+          .from("partner_redemptions")
+          .update({ status: "canceled", canceled_at: new Date().toISOString() })
+          .eq("stripe_subscription_id", subscription.id);
         break;
       }
 
