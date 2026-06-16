@@ -9,6 +9,10 @@ export default function Terms() {
         <title>Terms of Service — FTrack F-Gas Compliance</title>
         <meta name="description" content="Terms governing use of FTrack's F-Gas compliance platform — subscriptions, acceptable use, data ownership and liability for UK customers." />
         <link rel="canonical" href="https://www.ftrack.uk/terms" />
+        <meta property="og:title" content="Terms of Service — FTrack F-Gas Compliance" />
+        <meta property="og:description" content="Terms governing use of FTrack's F-Gas compliance platform — subscriptions, acceptable use, data ownership and liability for UK customers." />
+        <meta property="og:url" content="https://www.ftrack.uk/terms" />
+        <meta property="og:type" content="article" />
       </Helmet>
       <LandingHeader />
       
