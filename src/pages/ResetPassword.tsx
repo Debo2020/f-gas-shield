@@ -115,7 +115,7 @@ export default function ResetPassword() {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-            <img src="/ftrack-logo.png" alt="FTrack" className="h-8 w-auto" />
+            <img src="/ftrack-logo.png" alt="FTrack logo" className="h-8 w-auto" />
             <span className="text-xl font-semibold text-foreground">FTrack</span>
           </div>
         </header>
@@ -132,7 +132,7 @@ export default function ResetPassword() {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-            <img src="/ftrack-logo.png" alt="FTrack" className="h-8 w-auto" />
+            <img src="/ftrack-logo.png" alt="FTrack logo" className="h-8 w-auto" />
             <span className="text-xl font-semibold text-foreground">FTrack</span>
           </div>
         </header>
@@ -167,7 +167,7 @@ export default function ResetPassword() {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="border-b bg-card">
           <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-            <img src="/ftrack-logo.png" alt="FTrack" className="h-8 w-8" />
+            <img src="/ftrack-logo.png" alt="FTrack logo" className="h-8 w-8" />
             <span className="text-xl font-semibold text-foreground">FTrack</span>
           </div>
         </header>
@@ -201,7 +201,7 @@ export default function ResetPassword() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-          <img src="/ftrack-logo.png" alt="FTrack" className="h-8 w-8" />
+          <img src="/ftrack-logo.png" alt="FTrack logo" className="h-8 w-8" />
           <span className="text-xl font-semibold text-foreground">FTrack</span>
         </div>
       </header>
