@@ -1,10 +1,17 @@
+import { Helmet } from "react-helmet-async";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { FooterSection } from "@/components/landing/FooterSection";
 
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Privacy Policy — FTrack F-Gas Compliance</title>
+        <meta name="description" content="How FTrack collects, uses and safeguards personal information for UK F-Gas compliance customers, engineers and site contacts." />
+        <link rel="canonical" href="https://www.ftrack.uk/privacy" />
+      </Helmet>
       <LandingHeader />
+      
       
       <main className="container mx-auto px-4 py-16 md:py-24 max-w-4xl">
         <div className="space-y-8">
