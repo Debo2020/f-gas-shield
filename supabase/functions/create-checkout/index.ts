@@ -1,7 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders, getSafeOrigin } from "../_shared/cors.ts";
+
+const ALLOWED_TIERS = new Set(["basic", "premium", "enterprise"]);
+const ALLOWED_PRICE_IDS = new Set<string>([
+  "price_1SnLONF9KjzL48NkDMmoDPq1", // basic monthly
+  "price_1SnLZ9F9KjzL48Nkwq1dmZOH", // basic annual
+  "price_1SnLOdF9KjzL48NkPZ4u3cQ1", // premium monthly
+  "price_1SnLZZF9KjzL48Nk6IJW7XR9", // premium annual
+  "price_1SnLOxF9KjzL48NkB4bVnKWh", // enterprise
+]);
+const MAX_LICENSE_QUANTITY = 500;
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -47,10 +57,50 @@ serve(async (req) => {
     const userEmail = claimsData.claims.email as string;
     if (!userEmail) throw new Error("User email not available in claims");
     logStep("User authenticated via getClaims", { userId });
-    
-    const { priceId, quantity = 1, companyName, tier, trial = false } = await req.json();
+
+    // Role check: only owner or manager may initiate a subscription checkout
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["owner", "manager"])
+      .maybeSingle();
+    if (!roleRow) {
+      logStep("Forbidden: not owner/manager", { userId });
+      return new Response(JSON.stringify({ error: "Owner or manager access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const { priceId, companyName, tier, trial = false } = body;
+    let { quantity = 1 } = body;
     if (!priceId) throw new Error("Price ID is required");
-    logStep("Request received", { priceId, quantity, companyName, tier, trial });
+
+    // Validate inputs against server-side allowlists
+    if (!ALLOWED_PRICE_IDS.has(priceId)) {
+      return new Response(JSON.stringify({ error: "Invalid price ID" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (tier && !ALLOWED_TIERS.has(String(tier).toLowerCase())) {
+      return new Response(JSON.stringify({ error: "Invalid tier" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    quantity = Number(quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_LICENSE_QUANTITY) {
+      return new Response(JSON.stringify({ error: `Quantity must be between 1 and ${MAX_LICENSE_QUANTITY}` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    logStep("Request validated", { priceId, quantity, companyName, tier, trial });
 
     // Overage price IDs for metered AI credits billing
     const OVERAGE_PRICES: Record<string, string> = {
@@ -93,7 +143,7 @@ serve(async (req) => {
       logStep("Skipping overage price for annual billing", { tier: tierLower, priceId });
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = getSafeOrigin(req);
     
     const subscriptionData: Record<string, unknown> = {
       metadata: {
