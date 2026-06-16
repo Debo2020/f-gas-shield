@@ -71,6 +71,22 @@ serve(async (req) => {
     const companyId = profileData.company_id;
     logStep("Company found", { companyId });
 
+    // Role check: only owner or manager may change billing
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["owner", "manager"])
+      .maybeSingle();
+    if (!roleRow) {
+      logStep("Insufficient permissions", { userId });
+      return new Response(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const results: Record<string, number> = {};
 

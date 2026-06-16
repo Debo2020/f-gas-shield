@@ -53,6 +53,27 @@ serve(async (req) => {
     if (!userEmail) throw new Error("User email not available in claims");
     logStep("User authenticated via getClaims", { userId, email: userEmail });
 
+    // Role check: only owner may access billing portal (cancel/payment changes)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "owner")
+      .maybeSingle();
+    if (!roleRow) {
+      logStep("Owner access required", { userId });
+      return new Response(JSON.stringify({ error: "Owner access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     if (customers.data.length === 0) {

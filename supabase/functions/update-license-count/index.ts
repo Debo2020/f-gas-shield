@@ -78,6 +78,22 @@ serve(async (req) => {
     const companyId = profileData.company_id;
     logStep("Company found", { companyId });
 
+    // Role check: only owner or manager may change billing
+    const { data: roleRow } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["owner", "manager"])
+      .maybeSingle();
+    if (!roleRow) {
+      logStep("Insufficient permissions", { userId });
+      return new Response(JSON.stringify({ error: "Insufficient permissions" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     // Check that new count isn't less than current active licenses
     const { count: activeLicenses } = await supabaseClient
       .from("user_licenses")
