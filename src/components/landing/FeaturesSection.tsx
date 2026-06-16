@@ -1,11 +1,12 @@
-import { 
-  QrCode, 
-  ClipboardCheck, 
-  FileText, 
-  Users, 
+import {
+  QrCode,
+  ClipboardCheck,
+  FileText,
+  Users,
   Calendar,
   BarChart3,
-  Bot
+  Bot,
+  Building2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -39,6 +40,11 @@ const features = [
     icon: BarChart3,
     title: "Carbon Reporting",
     description: "Track refrigerant usage and CO₂ equivalent emissions. Ready for sustainability reporting requirements.",
+  },
+  {
+    icon: Building2,
+    title: "Client Portal Access",
+    description: "Give your customers their own secure login to view live F-Gas systems, inspection status, and refrigerant usage across their sites — keeping them compliant without the back-and-forth.",
   },
   {
     icon: Bot,
