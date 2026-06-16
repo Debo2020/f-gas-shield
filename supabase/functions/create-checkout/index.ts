@@ -78,7 +78,9 @@ serve(async (req) => {
       });
     }
 
-    const { priceId, quantity = 1, companyName, tier, trial = false } = await req.json();
+    const body = await req.json();
+    const { priceId, companyName, tier, trial = false } = body;
+    let { quantity = 1 } = body;
     if (!priceId) throw new Error("Price ID is required");
 
     // Validate inputs against server-side allowlists
@@ -92,13 +94,13 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const qty = Number(quantity);
-    if (!Number.isInteger(qty) || qty < 1 || qty > MAX_LICENSE_QUANTITY) {
+    quantity = Number(quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_LICENSE_QUANTITY) {
       return new Response(JSON.stringify({ error: `Quantity must be between 1 and ${MAX_LICENSE_QUANTITY}` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    logStep("Request validated", { priceId, quantity: qty, companyName, tier, trial });
+    logStep("Request validated", { priceId, quantity, companyName, tier, trial });
 
     // Overage price IDs for metered AI credits billing
     const OVERAGE_PRICES: Record<string, string> = {
@@ -141,7 +143,7 @@ serve(async (req) => {
       logStep("Skipping overage price for annual billing", { tier: tierLower, priceId });
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = getSafeOrigin(req);
     
     const subscriptionData: Record<string, unknown> = {
       metadata: {
