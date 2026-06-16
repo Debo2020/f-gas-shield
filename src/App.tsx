@@ -45,6 +45,10 @@ import GasCertificates from "./pages/GasCertificates";
 import GetStarted from "./pages/GetStarted";
 import SystemStatus from "./pages/SystemStatus";
 import AdminPartners from "./pages/admin/AdminPartners";
+import FGasSoftware from "./pages/landing/FGasSoftware";
+import RefrigerantTrackingSoftware from "./pages/landing/RefrigerantTrackingSoftware";
+import RefrigerantManagementSoftware from "./pages/landing/RefrigerantManagementSoftware";
+import FGasRegisterGuide from "./pages/landing/FGasRegisterGuide";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +88,10 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/enterprise-contact" element={<EnterpriseContact />} />
             <Route path="/checkout-redirect" element={<CheckoutRedirect />} />
+            <Route path="/f-gas-software" element={<FGasSoftware />} />
+            <Route path="/refrigerant-tracking-software" element={<RefrigerantTrackingSoftware />} />
+            <Route path="/refrigerant-management-software" element={<RefrigerantManagementSoftware />} />
+            <Route path="/f-gas-register-guide" element={<FGasRegisterGuide />} />
             <Route
               path="/setup-company"
               element={

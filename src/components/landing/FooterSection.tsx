@@ -4,7 +4,7 @@ export function FooterSection() {
   return (
     <footer className="py-12 bg-muted/50 border-t">
       <div className="container mx-auto px-4">
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-5">
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-3">
@@ -59,6 +59,33 @@ export function FooterSection() {
                 >
                   How It Works
                 </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Solutions */}
+          <div>
+            <h3 className="font-semibold mb-4">Solutions</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/f-gas-software" className="text-muted-foreground hover:text-foreground transition-colors">
+                  F-Gas Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/refrigerant-tracking-software" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Refrigerant Tracking
+                </Link>
+              </li>
+              <li>
+                <Link to="/refrigerant-management-software" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Refrigerant Management
+                </Link>
+              </li>
+              <li>
+                <Link to="/f-gas-register-guide" className="text-muted-foreground hover:text-foreground transition-colors">
+                  F-Gas Register Guide
+                </Link>
               </li>
             </ul>
           </div>
