@@ -1,62 +1,44 @@
-# Back-office Partners & Loyalty Scheme
+## Add role-based authorization to billing edge functions
 
-Currently the "Partners" tab is exposed to every tenant's company owner, which both leaks cross-tenant data and isn't what you want. We'll move it into a true platform back office gated to the FTrack platform owner (d.allison@solusgsc.com), and keep the merchant/Stripe flow that's already in place.
+Three related security findings flag that billing-sensitive edge functions validate the JWT but never check the caller's role. Any authenticated company member (including engineers) can currently trigger Stripe billing changes.
 
-## Access model
+### Functions to harden
 
-Introduce a **platform admin** concept separate from tenant `app_role`:
+1. **`supabase/functions/update-addon-license-count/index.ts`** — restrict to `owner` or `manager`
+2. **`supabase/functions/update-license-count/index.ts`** — restrict to `owner` or `manager`
+3. **`supabase/functions/customer-portal/index.ts`** — restrict to `owner` only (portal can cancel subscription / change payment method)
 
-- New table `public.platform_admins` (`user_id` PK → `auth.users`, `granted_at`).
-- SECURITY DEFINER helper `public.is_platform_admin(uuid)`.
-- Seed `d.allison@solusgsc.com` as the sole platform admin.
-- `useAuth` exposes `isPlatformAdmin`.
-- Future admins added by inserting a row (no UI for now).
+### Approach
 
-## Database changes
+After the existing `getClaims` JWT validation, add a role lookup using the service-role client against `public.user_roles`. If the caller lacks the required role, return `403 { error: "Insufficient permissions" }` (or `"Owner access required"` for customer-portal) before any Stripe call.
 
-- Create `platform_admins` + `is_platform_admin()`.
-- Rewrite RLS on `partners`, `partner_codes`, `partner_redemptions` so only `is_platform_admin(auth.uid())` can SELECT/INSERT/UPDATE/DELETE (service_role keeps full access for the webhook).
-- Seed Darren by email lookup from `auth.users`.
+```typescript
+const { data: roleRow } = await supabaseAdmin
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', userId)
+  .in('role', ['owner', 'manager']) // ['owner'] for customer-portal
+  .maybeSingle();
+if (!roleRow) {
+  return new Response(JSON.stringify({ error: 'Insufficient permissions' }), {
+    status: 403,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+```
 
-## Remove the tenant-facing surface
+`customer-portal` currently has no service-role client — I'll add one solely for the role lookup (Stripe calls remain unchanged).
 
-- Drop the `partners` tab from `src/pages/Organisation.tsx` and its `TAB_CONFIG` entry.
-- `OrganisationPartnersTab.tsx` is moved/renamed into the back office (below); old import removed.
+### Frontend impact
 
-## New back-office area
+`ClientUsersDialog` calls `update-addon-license-count` after invite/disable/remove. Today this dialog is reachable from the Clients module; access to that module is already restricted to owners/managers in practice, so the 403 path should not fire for legitimate users. No frontend changes planned — if QA shows an engineer-accessible path that triggers it, we'll gate the UI separately.
 
-- New route `/admin/partners` (lazy-loaded in `App.tsx`), wrapped in a `PlatformAdminGuard` that redirects non-admins to `/dashboard`.
-- New page `src/pages/admin/AdminPartners.tsx` rendering the existing partners dashboard (KPIs, partner table, recent redemptions, create/pause flows) inside `AppLayout` with an "Admin · Partners & Loyalty" header.
-- New `src/components/admin/PlatformAdminGuard.tsx` using `isPlatformAdmin` + loading state.
-- Add a discreet "Admin" link in the user menu (only visible when `isPlatformAdmin` is true) pointing at `/admin/partners`.
+### Search path linter
 
-## Edge functions (small hardening, no behaviour change)
+The remaining Supabase linter warning (`Function Search Path Mutable`) is unrelated to this finding. I'll leave it for a separate pass unless you want it bundled in.
 
-- `create-partner-code` and `update-partner-code`: replace the current `has_role('owner')` JWT check with a `platform_admins` lookup so only Darren can mint/pause codes. Stripe coupon (20% off, 3 months, annual Basic & Premium product restriction), optional `max_redemptions` and `expires_at` logic stays as-is.
-- `stripe-webhook` attribution → no change (writes via service role; restriction is annual-only enforced at coupon level + checkout, as already configured).
-- `create-checkout`: confirms `allow_promotion_codes: true` is set only for annual Basic/Premium (already the case from previous step) — no edit needed unless we spot a gap when wiring.
+### Out of scope
 
-## Files to add / edit
-
-Add:
-- `supabase/migrations/<new>.sql` — platform_admins table + grants + RLS + helper fn + RLS rewrite for partner tables + seed.
-- `src/components/admin/PlatformAdminGuard.tsx`
-- `src/pages/admin/AdminPartners.tsx`
-
-Edit:
-- `src/hooks/useAuth.tsx` — expose `isPlatformAdmin`.
-- `src/App.tsx` — register `/admin/partners` route.
-- `src/pages/Organisation.tsx` — remove `partners` tab + import.
-- `src/components/organisation/OrganisationPartnersTab.tsx` — relocate logic into `AdminPartners.tsx` (delete old file).
-- User menu component (whichever currently renders the avatar dropdown) — conditional "Admin" entry.
-- `supabase/functions/create-partner-code/index.ts` and `update-partner-code/index.ts` — platform-admin check.
-
-## Out of scope
-
-- No partner self-service portal, no commission payouts, no email to partners on redemption — happy to add later.
-- No UI to grant/revoke platform admin (insert manually for now).
-
-## Verification
-
-- Sign in as a tenant owner → no Partners tab, `/admin/partners` redirects to `/dashboard`.
-- Sign in as Darren → Admin link appears, dashboard loads, create a test code, run a £0 Stripe test checkout with annual Basic, confirm `partner_redemptions` row appears with correct MRR and `active` status.
+- No RLS/policy changes
+- No Stripe behaviour changes
+- No new tables or migrations
