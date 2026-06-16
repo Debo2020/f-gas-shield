@@ -1,7 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders, getSafeOrigin } from "../_shared/cors.ts";
+
+const ALLOWED_ADDON_PRICE_IDS = new Set<string>([
+  "price_1T7u0OF9KjzL48NkyYDPnOqO", // natural_gas monthly
+  "price_1T91J5F9KjzL48NkDhPKittG", // client_portal monthly
+]);
+const MAX_ADDON_QUANTITY = 500;
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-ADDON-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);

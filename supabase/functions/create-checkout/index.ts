@@ -1,7 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders, getSafeOrigin } from "../_shared/cors.ts";
+
+const ALLOWED_TIERS = new Set(["basic", "premium", "enterprise"]);
+const ALLOWED_PRICE_IDS = new Set<string>([
+  "price_1SnLONF9KjzL48NkDMmoDPq1", // basic monthly
+  "price_1SnLZ9F9KjzL48Nkwq1dmZOH", // basic annual
+  "price_1SnLOdF9KjzL48NkPZ4u3cQ1", // premium monthly
+  "price_1SnLZZF9KjzL48Nk6IJW7XR9", // premium annual
+  "price_1SnLOxF9KjzL48NkB4bVnKWh", // enterprise
+]);
+const MAX_LICENSE_QUANTITY = 500;
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
