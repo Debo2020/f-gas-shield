@@ -7,6 +7,7 @@ import {
   FolderOpen,
   Truck,
   Settings,
+  Handshake,
   Loader2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,12 +21,14 @@ import { OrganisationDocumentsTab } from "@/components/organisation/Organisation
 import { OrganisationSuppliersTab } from "@/components/organisation/OrganisationSuppliersTab";
 import { OrganisationSettingsTab } from "@/components/organisation/OrganisationSettingsTab";
 import { OrganisationClientsTab } from "@/components/organisation/OrganisationClientsTab";
+import { OrganisationPartnersTab } from "@/components/organisation/OrganisationPartnersTab";
 
 const TAB_CONFIG = [
   { id: "team", label: "Team", icon: Users, roles: ["owner", "manager"] },
   { id: "clients", label: "Clients", icon: Building2, roles: ["owner", "manager"] },
   { id: "suppliers", label: "Suppliers", icon: Truck, roles: ["owner", "manager", "stores_manager"] },
   { id: "documents", label: "Documents", icon: FolderOpen, roles: ["owner", "manager", "stores_manager", "engineer"] },
+  { id: "partners", label: "Partners", icon: Handshake, roles: ["owner"] },
   { id: "settings", label: "Settings", icon: Settings, roles: ["owner"] },
 ] as const;
 
@@ -138,6 +141,12 @@ export default function Organisation() {
           {accessibleTabs.some((t) => t.id === "documents") && (
             <TabsContent value="documents">
               <OrganisationDocumentsTab />
+            </TabsContent>
+          )}
+
+          {accessibleTabs.some((t) => t.id === "partners") && (
+            <TabsContent value="partners">
+              <OrganisationPartnersTab />
             </TabsContent>
           )}
 
