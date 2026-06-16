@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Check, Loader2, Sparkles, Building2, Users, Phone, Flame } from "lucide-react";
 import { AICreditInfo } from "@/components/pricing/AICreditInfo";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,54 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+
+const PRICING_PRODUCT_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "FTrack F-Gas Compliance Platform",
+  description:
+    "UK F-Gas compliance, refrigerant tracking, leak-check scheduling, and Gas Safe certificate workflows for HVAC engineers and contractors.",
+  brand: { "@type": "Brand", name: "FTrack" },
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Basic Business",
+      price: "15",
+      priceCurrency: "GBP",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "15",
+        priceCurrency: "GBP",
+        unitText: "per user per month, billed annually",
+      },
+      url: "https://ftrack.uk/pricing",
+      availability: "https://schema.org/InStock",
+    },
+    {
+      "@type": "Offer",
+      name: "Premium",
+      price: "30",
+      priceCurrency: "GBP",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "30",
+        priceCurrency: "GBP",
+        unitText: "per user per month, billed annually",
+      },
+      url: "https://ftrack.uk/pricing",
+      availability: "https://schema.org/InStock",
+    },
+    {
+      "@type": "Offer",
+      name: "Enterprise",
+      priceCurrency: "GBP",
+      url: "https://ftrack.uk/enterprise-contact",
+      availability: "https://schema.org/InStock",
+      description: "Custom pricing with BMS, ERP, and platform licensing for national operators.",
+    },
+  ],
+};
+
 
 const tierIcons = {
   basic: Users,
@@ -91,6 +140,22 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Pricing — FTrack F-Gas Compliance</title>
+        <meta
+          name="description"
+          content="FTrack pricing for UK HVAC contractors. Basic from £15/user/month annual, Premium from £30/user/month annual, and custom Enterprise plans with BMS and ERP integration."
+        />
+        <link rel="canonical" href="https://ftrack.uk/pricing" />
+        <meta property="og:title" content="FTrack Pricing — Basic, Premium & Enterprise" />
+        <meta
+          property="og:description"
+          content="Simple per-user pricing for F-Gas compliance. Compare Basic, Premium, and Enterprise plans."
+        />
+        <meta property="og:url" content="https://ftrack.uk/pricing" />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify(PRICING_PRODUCT_JSONLD)}</script>
+      </Helmet>
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, HelpCircle, Mail, MessageSquare, BookOpen, Shield, Users, Wrench, FileText, ChevronRight, LifeBuoy, Smartphone } from "lucide-react";
@@ -194,8 +195,34 @@ export default function Help() {
     return groups;
   }, [filteredFAQs]);
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqData.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Help & FAQ — FTrack F-Gas Compliance</title>
+        <meta
+          name="description"
+          content="Answers to common questions about FTrack: onboarding, F-Gas leak-check frequencies, refrigerant logging, billing, and team management."
+        />
+        <link rel="canonical" href="https://ftrack.uk/help" />
+        <meta property="og:title" content="FTrack Help & FAQ" />
+        <meta
+          property="og:description"
+          content="How to set up FTrack, log inspections, and meet UK F-Gas regulatory requirements."
+        />
+        <meta property="og:url" content="https://ftrack.uk/help" />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
       <LandingHeader />
       
       <main className="pt-24 pb-16">
