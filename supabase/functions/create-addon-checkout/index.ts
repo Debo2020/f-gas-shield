@@ -48,8 +48,39 @@ serve(async (req) => {
     if (!userEmail) throw new Error("User email not available");
     logStep("User authenticated", { userId, email: userEmail });
 
-    const { priceId, quantity = 1 } = await req.json();
+    // Role check: only owner or manager may purchase add-ons
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["owner", "manager"])
+      .maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Owner or manager access required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const { priceId } = body;
+    let { quantity = 1 } = body;
     if (!priceId) throw new Error("Price ID is required");
+    if (!ALLOWED_ADDON_PRICE_IDS.has(priceId)) {
+      return new Response(JSON.stringify({ error: "Invalid price ID" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    quantity = Number(quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_ADDON_QUANTITY) {
+      return new Response(JSON.stringify({ error: `Quantity must be between 1 and ${MAX_ADDON_QUANTITY}` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
@@ -58,7 +89,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = getSafeOrigin(req);
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
