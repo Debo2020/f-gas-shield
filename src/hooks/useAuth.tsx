@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineDb, hashCredentials, CachedProfile } from "@/lib/offline-db";
-import { encryptData, decryptData } from "@/lib/offline-crypto";
+import { encryptData, decryptData, deriveOfflineKey, buildVerifier, verifyKey } from "@/lib/offline-crypto";
 import { cacheCompanyData } from "@/lib/sync-service";
 
 type AppRole = "owner" | "manager" | "engineer" | "stores_manager" | "admin" | "auditor" | "read_only";
@@ -82,31 +82,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles(rolesData.map((r) => r.role as AppRole));
     }
 
-    // Cache profile for offline use (encrypted)
+    // Cache profile for offline use (encrypted).
+    //
+    // Security: we NEVER persist key material. We only encrypt when we have the
+    // user's plaintext password in memory (immediately after online sign-in,
+    // passed via __pendingPassword and dropped here). On later auth events
+    // (token refresh, page reload) we don't have the password, so we update
+    // only non-sensitive fields and leave the existing ciphertext intact.
     if (profileData) {
       try {
         const credentialHash = await hashCredentials(profileData.email);
-        const pendingHash = (window as unknown as Record<string, string>).__pendingPasswordHash || "";
-        delete (window as unknown as Record<string, string>).__pendingPasswordHash;
-        
-        // Preserve existing password_hash if we don't have a new one
+        const pendingPassword = (window as unknown as Record<string, string>).__pendingPassword || "";
+        delete (window as unknown as Record<string, string>).__pendingPassword;
+
         const existing = await offlineDb.cachedProfile.get(userId);
-        const passwordHash = pendingHash || existing?.password_hash || "";
 
-        // Encrypt profile data with the password hash
-        const encryptedProfile = passwordHash
-          ? await encryptData(profileData, passwordHash)
-          : JSON.stringify(profileData);
+        if (pendingPassword) {
+          const key = await deriveOfflineKey(pendingPassword, profileData.email);
+          const encryptedProfile = await encryptData(profileData, key);
+          const verifier = await buildVerifier(key);
 
-        await offlineDb.cachedProfile.put({
-          user_id: userId,
-          profile: encryptedProfile,
-          roles: rolesData?.map((r) => r.role) || [],
-          license_status: licenseStatus,
-          cached_at: new Date().toISOString(),
-          credential_hash: credentialHash,
-          password_hash: passwordHash,
-        });
+          await offlineDb.cachedProfile.put({
+            user_id: userId,
+            profile: encryptedProfile,
+            verifier,
+            roles: rolesData?.map((r) => r.role) || [],
+            license_status: licenseStatus,
+            cached_at: new Date().toISOString(),
+            credential_hash: credentialHash,
+          });
+        } else if (existing) {
+          // Refresh non-sensitive metadata without re-encrypting.
+          await offlineDb.cachedProfile.update(userId, {
+            roles: rolesData?.map((r) => r.role) || [],
+            license_status: licenseStatus,
+            cached_at: new Date().toISOString(),
+            credential_hash: credentialHash,
+          });
+        }
 
         // Cache company data for offline access
         if (profileData.company_id && navigator.onLine) {
@@ -213,21 +226,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
 
-    // Cache password hash for offline login after successful online login
+    // Stash the plaintext password briefly so fetchProfile (triggered by the
+    // onAuthStateChange callback) can derive the offline encryption key.
+    // It is read and deleted there, never persisted to storage.
     if (!error) {
-      try {
-        const passwordHash = await hashCredentials(email + ":" + password);
-        const credentialHash = await hashCredentials(email);
-        const existing = await offlineDb.cachedProfile.get(credentialHash);
-        if (existing) {
-          await offlineDb.cachedProfile.update(existing.user_id, { password_hash: passwordHash });
-        }
-        // If profile hasn't been cached yet, fetchProfile will handle caching
-        // We store the password hash temporarily so fetchProfile can use it
-        (window as unknown as Record<string, string>).__pendingPasswordHash = passwordHash;
-      } catch (err) {
-        console.error("Failed to cache password hash:", err);
-      }
+      (window as unknown as Record<string, string>).__pendingPassword = password;
     }
 
     return { error: error as Error | null };
@@ -249,33 +252,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const credentialHash = await hashCredentials(email);
-      
+
       // Find cached profile matching the email hash
       const cachedProfiles = await offlineDb.cachedProfile.toArray();
       const cached = cachedProfiles.find(p => p.credential_hash === credentialHash);
-      
+
       if (!cached) {
         return { error: new Error("No cached credentials found. Please sign in online first.") };
-      }
-
-      // Verify password hash matches what was cached during online login
-      const passwordHash = await hashCredentials(email + ":" + password);
-      if (cached.password_hash !== passwordHash) {
-        return { error: new Error("Invalid password. Please try again or sign in online.") };
       }
 
       // Check if cache is not too old (7 days)
       const cacheAge = Date.now() - new Date(cached.cached_at).getTime();
       const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-      
       if (cacheAge > maxAge) {
         return { error: new Error("Cached credentials expired. Please sign in online.") };
       }
 
-      // Decrypt the cached profile data
+      // Derive the AES key from the supplied password and verify against the
+      // stored sentinel. The key is held only in memory and never persisted.
+      const key = await deriveOfflineKey(password, email);
+      const ok = cached.verifier ? await verifyKey(cached.verifier, key) : false;
+      if (!ok) {
+        return { error: new Error("Invalid password. Please try again or sign in online.") };
+      }
+
       let profileData: Profile;
       try {
-        profileData = await decryptData<Profile>(cached.profile, passwordHash);
+        profileData = await decryptData<Profile>(cached.profile, key);
       } catch {
         return { error: new Error("Failed to decrypt cached data. Please sign in online.") };
       }

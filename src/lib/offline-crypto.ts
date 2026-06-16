@@ -1,17 +1,33 @@
-// AES-GCM encryption utilities for protecting PII in IndexedDB
+// AES-GCM encryption utilities for protecting PII in IndexedDB.
+//
+// Security model:
+// - The AES key is derived from the user's PLAINTEXT password using PBKDF2
+//   with the user's email as a per-user salt (combined with an app-wide salt).
+// - The derived key is NEVER persisted. We only hold it in memory while
+//   encrypting/decrypting, then it is dropped.
+// - To verify an offline password without exposing the key, we encrypt a
+//   known sentinel string ("verifier") and store the ciphertext. On offline
+//   login we re-derive the key from the supplied password and attempt to
+//   decrypt the verifier; success == correct password.
 
-const SALT = new TextEncoder().encode("ftrack-offline-pii-v1");
+const APP_SALT = "ftrack-offline-pii-v2";
+const VERIFIER_PLAINTEXT = "ftrack-offline-verifier-v1";
+const PBKDF2_ITERATIONS = 210_000;
 
-async function deriveKey(passwordHash: string): Promise<CryptoKey> {
+function saltFor(email: string): BufferSource {
+  return new TextEncoder().encode(`${APP_SALT}:${email.trim().toLowerCase()}`) as unknown as BufferSource;
+}
+
+export async function deriveOfflineKey(password: string, email: string): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(passwordHash),
+    new TextEncoder().encode(password) as unknown as BufferSource,
     "PBKDF2",
     false,
     ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: SALT, iterations: 100000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: saltFor(email), iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -19,34 +35,52 @@ async function deriveKey(passwordHash: string): Promise<CryptoKey> {
   );
 }
 
-export async function encryptData(data: unknown, passwordHash: string): Promise<string> {
-  if (!passwordHash) return JSON.stringify(data);
-  const key = await deriveKey(passwordHash);
+async function encryptWithKey(data: unknown, key: CryptoKey): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(JSON.stringify(data));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
-  // Store as base64: iv (12 bytes) + ciphertext
-  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
+    key,
+    encoded as unknown as BufferSource
+  );
+  const ctBytes = new Uint8Array(ciphertext);
+  const combined = new Uint8Array(iv.length + ctBytes.length);
   combined.set(iv);
-  combined.set(new Uint8Array(ciphertext), iv.length);
-  return btoa(String.fromCharCode(...combined));
+  combined.set(ctBytes, iv.length);
+  return btoa(String.fromCharCode(...Array.from(combined)));
 }
 
-export async function decryptData<T>(encrypted: string, passwordHash: string): Promise<T> {
-  if (!passwordHash) return JSON.parse(encrypted) as T;
+async function decryptWithKey<T>(encrypted: string, key: CryptoKey): Promise<T> {
+  const combined = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
+    key,
+    ciphertext as unknown as BufferSource
+  );
+  return JSON.parse(new TextDecoder().decode(decrypted)) as T;
+}
+
+export async function encryptData(data: unknown, key: CryptoKey): Promise<string> {
+  return encryptWithKey(data, key);
+}
+
+export async function decryptData<T>(encrypted: string, key: CryptoKey): Promise<T> {
+  return decryptWithKey<T>(encrypted, key);
+}
+
+/** Build a verifier ciphertext bound to the supplied key. */
+export async function buildVerifier(key: CryptoKey): Promise<string> {
+  return encryptWithKey(VERIFIER_PLAINTEXT, key);
+}
+
+/** Returns true if the key successfully decrypts the stored verifier. */
+export async function verifyKey(verifier: string, key: CryptoKey): Promise<boolean> {
   try {
-    const key = await deriveKey(passwordHash);
-    const combined = Uint8Array.from(atob(encrypted), (c) => c.charCodeAt(0));
-    const iv = combined.slice(0, 12);
-    const ciphertext = combined.slice(12);
-    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-    return JSON.parse(new TextDecoder().decode(decrypted)) as T;
+    const plaintext = await decryptWithKey<string>(verifier, key);
+    return plaintext === VERIFIER_PLAINTEXT;
   } catch {
-    // If decryption fails (e.g. wrong key, unencrypted data), try parsing as plain JSON
-    try {
-      return JSON.parse(encrypted) as T;
-    } catch {
-      throw new Error("Failed to decrypt offline data");
-    }
+    return false;
   }
 }
