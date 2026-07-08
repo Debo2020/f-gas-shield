@@ -32,6 +32,7 @@ import { LicenseWarningBanner } from "./LicenseWarningBanner";
 import { TrialBanner } from "./TrialBanner";
 import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
 import { InstallPrompt } from "./InstallPrompt";
+import { EngineerWebFallbackBanner } from "./EngineerWebFallbackBanner";
 import { ServiceTicketDialog } from "@/components/support/ServiceTicketDialog";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
