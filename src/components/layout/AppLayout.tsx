@@ -218,6 +218,10 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Mandatory PWA install prompt (desktop, office roles) */}
       <InstallPrompt />
 
+      {/* Engineer web fallback → nudge to native app */}
+      <EngineerWebFallbackBanner />
+
+
       {/* Trial Banner */}
       <TrialBanner />
 
