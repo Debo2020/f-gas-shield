@@ -34,6 +34,7 @@ import { OfflineBanner, OfflineIndicator } from "./OfflineBanner";
 import { InstallPrompt } from "./InstallPrompt";
 import { EngineerWebFallbackBanner } from "./EngineerWebFallbackBanner";
 import { ServiceTicketDialog } from "@/components/support/ServiceTicketDialog";
+import { useLicenseEnforcement } from "@/hooks/useLicenseEnforcement";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useLicenseEnforcement();
 
   // Stores managers get limited navigation
   const isStoresManagerOnly = hasRole("stores_manager") && !hasRole("owner") && !hasRole("manager") && !hasRole("engineer");
