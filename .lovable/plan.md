@@ -28,13 +28,15 @@
 - **New:** `<InstallPrompt />` component — detects `beforeinstallprompt`, shows persistent banner for Owner/Manager/Office roles when not installed. iOS Safari fallback = instructional modal ("Share → Add to Home Screen"). Engineers signing in on web get a soft prompt only.
 - Track install state in `profiles.pwa_installed_at` for analytics.
 
-### Phase 2 — Native shell (Weeks 2–4)
-- `npx cap add ios android`, Capacitor config (appName `FTrack — F-Gas Compliance`, appId `uk.ftrack.app`).
-- **iPad universal**: enable iPhone + iPad device family in Xcode target; verify responsive breakpoints ≥768px for Manager screens (dashboards, approvals, gas logs).
-- Plugins: Camera, Barcode Scanner, Geolocation, Push Notifications, Biometrics, Browser (for Stripe portal), Share, Haptics, App (state/deep-links).
-- `useIsNativeApp()` hook + `usePlatform()` (web / ios / android / ipad).
-- `ProtectedRoute` gains `platform` prop; role+platform matrix enforced.
-- Engineer web fallback: allow sign-in, render read-only Systems/Logs, hide edit CTAs, banner "For full features install the FTrack mobile app" with store links.
+### Phase 2 — Native shell (Weeks 2–4) ✅ scaffolded in-repo
+- ✅ Capacitor config updated (`appName: FTrack — F-Gas Compliance`, `appId: uk.ftrack.app`, iOS/Android blocks, Push presentation).
+- ✅ Plugins installed: Camera, Barcode Scanner, Geolocation, Push, Browser, Share, Haptics, App, Preferences.
+- ✅ `usePlatform()` + `useIsNativeApp()` hooks (web / ios / android / ipad).
+- ✅ `ProtectedRoute` gained `platform` prop for role+platform matrix.
+- ✅ Engineer web fallback banner with App Store / Play Store links.
+- ✅ `MOBILE_HANDOFF.md` written for the mobile developer (Xcode capabilities, universal iPad target, permissions strings, checklist).
+- ⏭ Next: run `npx cap add ios android` on the developer Mac (out of Lovable sandbox).
+
 
 ### Phase 3 — Licence enforcement + Apple Sign-In (Weeks 5–6)
 - App-launch + foreground: re-run `check-subscription`, cache encrypted result (Capacitor Preferences + existing AES-GCM helper) for offline grace (72h).
