@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import {
   ArrowRight,
   Loader2,
