@@ -38,10 +38,11 @@
 - ⏭ Next: run `npx cap add ios android` on the developer Mac (out of Lovable sandbox).
 
 
-### Phase 3 — Licence enforcement + Apple Sign-In (Weeks 5–6)
-- App-launch + foreground: re-run `check-subscription`, cache encrypted result (Capacitor Preferences + existing AES-GCM helper) for offline grace (72h).
-- **Sign in with Apple**: enable via Lovable Cloud managed Apple provider (web + native). Add Apple button to `/auth` and native login screen. Configure Universal Link callback `ftrack.uk/~oauth/callback`.
-- Revoke flow: on `licence_revoked` push, clear cache, force sign-out, show "Access removed by admin".
+### Phase 3 — Licence enforcement + Apple Sign-In (Weeks 5–6) ✅
+- ✅ **Sign in with Apple** enabled via Lovable Cloud managed provider. Apple button added alongside Google on `/auth` and `/get-started` via shared `<OAuthButtons />`. Same code path works in desktop PWA, iOS Safari, and iOS PWA.
+- ✅ Encrypted license snapshot cache (`src/lib/license-cache.ts`) using AES-GCM + per-device key, stored in Capacitor Preferences on native (Keychain-backed) and localStorage on web. 72h offline grace constant exported.
+- ✅ `useLicenseEnforcement()` hook wired into `AppLayout`: runs `check-subscription` on mount, on foreground (Capacitor `appStateChange` + `visibilitychange`), and every 15 min. Falls back to encrypted cache when offline; forces sign-out when grace expires. Owners exempt.
+- ✅ Revoke flow: realtime subscription to the current user's `user_licenses` row. On `status → disabled` or DELETE → clears cache, signs out, toasts "Access removed by admin". Phase 4 push will complement this with an out-of-band trigger.
 
 ### Phase 4 — Push + Deep Links (Weeks 7–8)
 - `device_tokens` table (user_id, token, platform, last_seen).
