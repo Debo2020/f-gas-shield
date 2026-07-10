@@ -1,69 +1,43 @@
-# FTrack Hybrid Architecture — Final Decisions & Build Plan
+## Problem
 
-## Confirmed Answers
+On the published site (`www.ftrack.uk`) clicking **Continue with Google** shows an error containing "404 Oops! Page not found" instead of completing sign-in. Sign-in works in preview.
 
-| # | Question | Decision |
-|---|---|---|
-| 1 | Engineer web fallback | ✅ Engineers **can** sign in to the PWA (read-only + limited actions where sensible; primary UX stays mobile) |
-| 2 | Desktop PWA install requirement | ✅ **Mandatory** — persistent "Install FTrack" banner for Owner / Manager / Office roles until installed (dismissible per-session, re-prompts next login) |
-| 3 | Sign in with Apple | ✅ Add alongside Google + email/password (required by App Store since Google is offered) |
-| 4 | iPad support | ✅ **Universal iOS binary** — single build runs on iPhone + iPad, layout adapts for Manager iPad workflows |
-| 5 | App store name | ✅ **"FTrack — F-Gas Compliance"** (subtitle: "UK F-Gas logbook & compliance") |
+The Lovable OAuth proxy at `/~oauth/initiate` and `/~oauth/callback` on `www.ftrack.uk` responds correctly (verified — it 302s to `oauth.lovable.app`). So the 404 is being returned *inside* the OAuth broker flow (most likely a redirect or token-exchange step whose expected URL is not routable on the custom domain, or the Google provider redirect allow-list is not honouring the ftrack.uk origin at the broker).
 
----
+## Plan
 
-## Locked Architecture (recap)
+### 1. Reproduce and capture the exact failure
 
-- **One codebase**, one backend (Lovable Cloud), one billing system (Stripe, web-only).
-- **Web (ftrack.uk)** — sign-up, subscription purchase, seat management, PWA for Admin/Manager/Office; engineer fallback allowed.
-- **Native mobile (iOS Universal + Android)** — free download, licence-gated, no IAP, no prices shown. Opens Stripe Customer Portal via in-app browser for any billing action.
-- Universal Links / App Links on `ftrack.uk/invite/:token` and `ftrack.uk/accept-license`.
+Drive Playwright against `https://www.ftrack.uk/auth` in headless Chromium:
+- Click **Continue with Google**, follow the popup / redirect.
+- Capture the full network waterfall (all `~oauth`, `oauth.lovable.app`, `accounts.google.com`, `supabase.co/auth/v1` requests), the request that returns 404, and the HTML body that is being surfaced as the on-card error.
+- Screenshot each step.
 
----
+Also verify from the shell:
+- `curl -I https://www.ftrack.uk/~oauth/callback?...` with a realistic state/code
+- `curl` the auth discovery + Google provider metadata on the Supabase issuer
+- Compare against the same probe on `f-gas-shield.lovable.app`
 
-## Build Phases (revised with decisions)
+### 2. Fix based on what the trace shows
 
-### Phase 1 — Desktop PWA polish + mandatory install prompt (Week 1)
-- Manifest audit: `display: standalone`, correct icons (192/512/maskable), theme colour, `id`, `scope`.
-- **New:** `<InstallPrompt />` component — detects `beforeinstallprompt`, shows persistent banner for Owner/Manager/Office roles when not installed. iOS Safari fallback = instructional modal ("Share → Add to Home Screen"). Engineers signing in on web get a soft prompt only.
-- Track install state in `profiles.pwa_installed_at` for analytics.
+Most likely one of:
 
-### Phase 2 — Native shell (Weeks 2–4) ✅ scaffolded in-repo
-- ✅ Capacitor config updated (`appName: FTrack — F-Gas Compliance`, `appId: uk.ftrack.app`, iOS/Android blocks, Push presentation).
-- ✅ Plugins installed: Camera, Barcode Scanner, Geolocation, Push, Browser, Share, Haptics, App, Preferences.
-- ✅ `usePlatform()` + `useIsNativeApp()` hooks (web / ios / android / ipad).
-- ✅ `ProtectedRoute` gained `platform` prop for role+platform matrix.
-- ✅ Engineer web fallback banner with App Store / Play Store links.
-- ✅ `MOBILE_HANDOFF.md` written for the mobile developer (Xcode capabilities, universal iPad target, permissions strings, checklist).
-- ⏭ Next: run `npx cap add ios android` on the developer Mac (out of Lovable sandbox).
+- **a. Broker post-back URL not registered for `www.ftrack.uk`.** Re-run `supabase--configure_social_auth` for `["google", "apple"]` so the current canonical Site URL / redirect allow-list is re-declared, then re-test.
+- **b. Wrapper (`@lovable.dev/cloud-auth-js`) resolves to a path that 404s on custom domain.** Switch `redirect_uri` from bare `window.location.origin` to an explicit public callback route (`${window.location.origin}/auth/callback`) that renders a tiny "signing you in…" page and lets `onAuthStateChange` hydrate the session before navigating. This avoids relying on the SPA fallback catching the origin root with hash fragments.
+- **c. Custom-domain proxy edge case.** If (a) and (b) don't resolve it, temporarily route the OAuth click through `https://f-gas-shield.lovable.app/auth` (open in a new tab), which is guaranteed to hit the proxy on the Lovable subdomain. This is a diagnostic step, not a shipped workaround.
 
+### 3. Verify
 
-### Phase 3 — Licence enforcement + Apple Sign-In (Weeks 5–6) ✅
-- ✅ **Sign in with Apple** enabled via Lovable Cloud managed provider. Apple button added alongside Google on `/auth` and `/get-started` via shared `<OAuthButtons />`. Same code path works in desktop PWA, iOS Safari, and iOS PWA.
-- ✅ Encrypted license snapshot cache (`src/lib/license-cache.ts`) using AES-GCM + per-device key, stored in Capacitor Preferences on native (Keychain-backed) and localStorage on web. 72h offline grace constant exported.
-- ✅ `useLicenseEnforcement()` hook wired into `AppLayout`: runs `check-subscription` on mount, on foreground (Capacitor `appStateChange` + `visibilitychange`), and every 15 min. Falls back to encrypted cache when offline; forces sign-out when grace expires. Owners exempt.
-- ✅ Revoke flow: realtime subscription to the current user's `user_licenses` row. On `status → disabled` or DELETE → clears cache, signs out, toasts "Access removed by admin". Phase 4 push will complement this with an out-of-band trigger.
+- Playwright end-to-end sign-in on `www.ftrack.uk` completes and lands on `/dashboard` (or `/setup-company` for new accounts).
+- Repeat on `ftrack.uk` (root) and `f-gas-shield.lovable.app` (both should still work).
+- Apple button unchanged behaviour on all three origins.
 
-### Phase 4 — Push + Deep Links (Weeks 7–8)
-- `device_tokens` table (user_id, token, platform, last_seen).
-- Edge function `send-push` (APNs + FCM via Firebase Admin).
-- Push categories: expiring certs, new assignments, licence changes, ticket updates.
-- Universal Links (`apple-app-site-association`) + App Links (`assetlinks.json`) served from `ftrack.uk/.well-known/`.
+### Files likely touched
 
-### Phase 5 — Store submission (Weeks 9–10)
-- Apple: $99 dev account, App Store Connect, TestFlight → review. Data Safety, Privacy Manifest, screenshots for iPhone 6.7"/6.5" **and iPad 12.9"/13"** (required for universal).
-- Google: $25 one-time, closed testing → production, Data Safety form.
-- Store listing name: **"FTrack — F-Gas Compliance"**; subtitle & keywords tuned for "F-Gas", "refrigerant logbook", "REFCOM".
+- `src/components/auth/OAuthButtons.tsx` — if we adopt the explicit `/auth/callback` redirect URI.
+- Possibly a new `src/pages/AuthCallback.tsx` + a public route entry in `src/App.tsx`.
+- No changes to `src/integrations/lovable/index.ts` (auto-generated).
 
-### Phase 6 — Owner controls polish (Weeks 11–12)
-- Active devices per user (revoke individual sessions/tokens).
-- Licence revoke → invalidates push tokens + forces re-check.
-- Audit log entries for install, licence attach/revoke, device sign-out.
+### Out of scope
 
----
-
-## Deliverable for Mobile Developer
-
-Once you approve this plan I'll switch to build mode and start with **Phase 1** (manifest + mandatory install prompt) which is fully doable in-app today. Native phases (2+) will be scaffolded here, but need to be run on your developer's Mac (`npx cap add ios`, Xcode signing, TestFlight upload) — I'll produce a `MOBILE_HANDOFF.md` with exact commands, capabilities checklist, and store metadata.
-
-Approve to begin Phase 1.
+- Any change to Apple sign-in, email/password, offline auth, license enforcement, or Capacitor iOS OAuth — those keep working.
