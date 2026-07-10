@@ -20,6 +20,12 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // OAuth broker paths must always hit the network — the Lovable proxy
+        // worker returns a 302 to oauth.lovable.app. Without this deny-list,
+        // Workbox's default navigateFallback serves index.html for
+        // /~oauth/initiate and the SPA router shows a 404 page instead of
+        // continuing the OAuth flow.
+        navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
             // Cache Supabase API responses for offline access
